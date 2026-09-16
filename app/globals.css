@@ -1,26 +1,83 @@
 @import "tailwindcss";
 
+/*
+ * RWA Lens — a calm financial-operations surface.
+ * Light canvas, deep navy text, indigo for action, amber for attention,
+ * green only for a verified observation, red only for an actual block.
+ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --canvas: #f6f7fb;
+  --surface: #ffffff;
+  --surface-sunken: #eef0f7;
+  --navy: #101a3a;
+  --navy-soft: #42506f;
+  --navy-faint: #6b7794;
+  --line: #dfe3ee;
+  --indigo: #5b5ce2;
+  --indigo-dark: #4344c4;
+  --indigo-wash: #eeeefc;
+  --amber: #f59e0b;
+  --amber-wash: #fef3c7;
+  --amber-ink: #92620a;
+  --green: #0f7a52;
+  --green-wash: #dcf3e8;
+  --red: #b3213c;
+  --red-wash: #fce6ea;
+  --slate-wash: #eceef5;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-sunken: var(--surface-sunken);
+  --color-navy: var(--navy);
+  --color-navy-soft: var(--navy-soft);
+  --color-navy-faint: var(--navy-faint);
+  --color-line: var(--line);
+  --color-indigo: var(--indigo);
+  --color-indigo-dark: var(--indigo-dark);
+  --color-indigo-wash: var(--indigo-wash);
+  --color-amber: var(--amber);
+  --color-amber-wash: var(--amber-wash);
+  --color-amber-ink: var(--amber-ink);
+  --color-green: var(--green);
+  --color-green-wash: var(--green-wash);
+  --color-red: var(--red);
+  --color-red-wash: var(--red-wash);
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-mono-stack);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html,
+body {
+  background: var(--canvas);
+  color: var(--navy);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+/* Numeric columns must line up; this app is read as a ledger. */
+.tabular {
+  font-variant-numeric: tabular-nums;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+
+/* Every interactive element keeps a visible keyboard ring. */
+:where(a, button, input, select, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--indigo);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
