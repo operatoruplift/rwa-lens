@@ -137,12 +137,24 @@ structured errors that never leak a provider URL or a stack. Details and the
 honest limits of each control are in
 [docs/rwa-limitations.md](docs/rwa-limitations.md).
 
+## Optional surfaces, all off by default
+
+The app is complete as a guest tool. Everything below is additive, disabled
+unless an operator configures it, and says so plainly when it is off.
+
+| Surface | Endpoint | Default |
+| --- | --- | --- |
+| Token metadata | `POST /api/rwa/metadata` | **No host allowlisted, so no URI is ever fetched.** https only; loopback, private, link-local and bare-IP hosts are rejected; redirects are not followed; 128 KB and 5 s caps; JSON content types only. |
+| Wallet sign-in | `POST /api/rwa/auth` | Off unless `RWA_SESSION_SECRET` is set. Asks for a **message signature only, never a transaction**. Server-issued single-use nonce with expiry, ed25519 verification, HMAC session in an HttpOnly SameSite cookie. |
+| Saved reports | `GET`/`POST /api/rwa/reports`, `GET /api/rwa/reports/[reportId]` | Off unless `RWA_REPORTS_ENABLED=true`. Owner-scoped in the query *and* by row-level security. Another owner's id returns 404, never 403, so an id cannot be probed. |
+| Issuer registry | adapter interface | Off. **No issuer endpoint is hard-coded.** Results are labelled issuer-supplied, with a stale flag. |
+| NAV / price | adapter interface | Off, and returns `null`. No fiat value is ever fabricated. |
+
 ## Status
 
-Read-only inspection is complete and verified against mainnet. Saved reports,
-the issuer-registry adapter and the NAV adapter are **defined but disabled**; no
-issuer endpoint is hard-coded and no USD value is ever fabricated. See the
-evidence document for exactly which integrations are verified versus deferred.
+Read-only inspection is complete and verified against mainnet. The optional
+surfaces above are implemented and tested but ship disabled. See the evidence
+document for exactly which integrations are verified versus deferred.
 
 ## Licence
 

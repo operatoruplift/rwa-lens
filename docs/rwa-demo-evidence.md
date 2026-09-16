@@ -106,7 +106,7 @@ No provider URL, key or stack trace appears in any error body.
 | --- | --- |
 | `npm run lint` | clean |
 | `npm run typecheck` | clean |
-| `npm test` | **56 passed** |
+| `npm test` | **88 passed** |
 | `npm run build` | succeeds |
 | `npm run test:e2e` | **11 passed** (fixture-only, no RPC) |
 
@@ -121,12 +121,41 @@ navigation, and fixtures still usable when the live provider is unavailable.
 
 | Capability | State |
 | --- | --- |
-| Saved cloud reports | Supabase project provisioned; feature flag `RWA_REPORTS_ENABLED=false`. Local JSON/CSV export works without it. |
-| Wallet sign-in for reports | Not implemented in this release. No signing path exists. |
-| Issuer registry adapter | Interface defined, disabled, **no issuer endpoint hard-coded**. |
-| NAV / price adapter | Interface defined, disabled. No USD value is ever fabricated. |
-| Metadata URI fetching | Implemented deny-by-default; no host allowlisted by default, so nothing is fetched. |
+| Saved cloud reports | **Implemented**, owner-scoped, tested. Supabase table migrated. Ships off behind `RWA_REPORTS_ENABLED=false`; local JSON/CSV export works without it. |
+| Wallet sign-in for reports | **Implemented** and verified end to end with a real ed25519 keypair: challenge → signature → HttpOnly session; replayed nonce rejected (400), wrong key rejected (401). Ships off unless `RWA_SESSION_SECRET` is set. Message signature only — no transaction path exists. |
+| Issuer registry adapter | Implemented, disabled, **no issuer endpoint hard-coded**. |
+| NAV / price adapter | Interface defined, returns `null`. No USD value is ever fabricated. |
+| Metadata URI fetching | **Implemented** deny-by-default with SSRF protections; no host allowlisted by default, so nothing is fetched. |
 | `InterestBearingConfig` | Detected and reported as "calculation unavailable"; not computed. |
+
+## Verified: optional surfaces refuse safely
+
+With nothing configured, each optional endpoint states its own status rather
+than erroring vaguely:
+
+| Request | Result |
+| --- | --- |
+| `POST /api/rwa/auth` | `503 feature-disabled` — "Wallet sign-in is not enabled on this deployment." |
+| `POST /api/rwa/metadata` | `200 not-configured` — "No metadata host is allowlisted, so no URI is fetched." |
+| `GET /api/rwa/reports` | `503 feature-disabled` — "JSON and CSV export work without an account." |
+
+With `RWA_METADATA_ALLOWED_HOSTS=metadata.example.com` configured, SSRF targets
+are still refused **before any request is made**:
+
+| URI | Result |
+| --- | --- |
+| `https://169.254.169.254/latest/meta-data/` | `400 blocked` |
+| `https://127.0.0.1/a.json` | `400 blocked` |
+| `http://metadata.example.com/a.json` (plain http) | `400 blocked` |
+
+With `RWA_SESSION_SECRET` set, a real keypair completes sign-in:
+
+| Step | Result |
+| --- | --- |
+| Challenge | Message contains "not a transaction" and "moves no funds" |
+| Verify with the correct key | `200 signed-in`, `HttpOnly` cookie set |
+| Replay the same nonce | `400 invalid` |
+| Verify with a different keypair | `401 invalid` |
 
 ## Two-minute demo script
 

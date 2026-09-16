@@ -53,6 +53,26 @@ or a regulated service remains responsible for every legal decision.
 - **Errors are structured.** Provider URLs, keys and stack traces are never
   returned to the client.
 
+## Optional surfaces and their limits
+
+- **Wallet sign-in requests a message signature only.** It never requests a
+  transaction and never touches a private key. Nonces are single-use with a
+  five-minute expiry; a replay finds nothing. Sessions are HMAC-signed and
+  verified in constant time, and a failed signature never degrades into a
+  session. Nonce state is **per-instance and in memory**, so a multi-instance
+  deployment needs a shared store before this is relied on.
+- **Saved reports are owner-scoped twice** — the query filters by owner and
+  row-level security enforces it again. Another owner's id returns 404 rather
+  than 403 so an id cannot be probed for existence. Ownership always comes from
+  the session, never from the request body, and the content hash is computed
+  server-side.
+- **Metadata fetching follows no redirects.** A redirect is an error rather than
+  a hop, because a redirect is the ordinary way to escape a host allowlist.
+  Errors never include the URI, host or underlying message.
+- **The registry adapter is not proof of anything.** Whatever it returns is
+  issuer-supplied description, carries a source and a stale flag, and can never
+  fail an inspection.
+
 ## Not integrated
 
 Pyth, Switchboard, Jupiter, Meteora, MagicBlock and issuer NAV feeds are **not**
