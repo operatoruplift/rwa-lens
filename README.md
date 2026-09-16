@@ -8,7 +8,7 @@ to it?*
 Read-only. RWA Lens never signs, sends, mints, burns, freezes or transfers
 anything, and there is no signer anywhere in the codebase.
 
-- Live app: `/rwa`
+- Live app: https://rwa-lens-operatoruplift.vercel.app/rwa
 - Source: https://github.com/operatoruplift/rwa-lens
 - Limitations and boundaries: [docs/rwa-limitations.md](docs/rwa-limitations.md)
 - Reproducible evidence: [docs/rwa-demo-evidence.md](docs/rwa-demo-evidence.md)
