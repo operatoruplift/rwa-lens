@@ -128,7 +128,7 @@ export function BalanceCard({ balances }: { balances: Balances }) {
       ) : null}
 
       {balances.accounts.length > 0 ? (
-        <div className="mt-4 overflow-x-auto">
+        <div className="mt-4 overflow-x-auto" tabIndex={0} role="region" aria-label="Token accounts">
           <table className="w-full min-w-[34rem] border-collapse text-[13px]">
             <thead>
               <tr className="border-b border-line text-left text-[11px] uppercase tracking-[.07em] text-navy-faint">
@@ -276,7 +276,7 @@ export function EvidenceDrawer({ provenance }: { provenance: Provenance }) {
           </Callout>
         </div>
       ) : null}
-      <div className="mt-4 overflow-x-auto">
+      <div className="mt-4 overflow-x-auto" tabIndex={0} role="region" aria-label="RPC sources">
         <table className="w-full min-w-[30rem] border-collapse text-[13px]">
           <thead>
             <tr className="border-b border-line text-left text-[11px] uppercase tracking-[.07em] text-navy-faint">
