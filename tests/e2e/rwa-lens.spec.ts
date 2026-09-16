@@ -67,12 +67,35 @@ test.describe('RWA Lens guest inspection', () => {
     expect(file.suggestedFilename()).toMatch(/\.json$/);
   });
 
-  test('offers no signing, wallet or transaction affordance anywhere', async ({ page }) => {
+  test('offers no transaction affordance, and says so where it asks for a signature', async ({ page }) => {
     await page.goto('/rwa');
     const body = (await page.locator('body').innerText()).toLowerCase();
-    expect(body).not.toContain('connect wallet');
-    expect(body).not.toContain('sign transaction');
+    // Saving a report asks for a message signature. Nothing anywhere asks to
+    // sign, send, approve or submit a transaction.
+    for (const forbidden of ['sign transaction', 'approve transaction', 'send transaction', 'submit transaction', 'connect wallet']) {
+      expect(body, `"${forbidden}" must never appear`).not.toContain(forbidden);
+    }
     expect(body).toContain('read-only');
+    expect(body).toContain('never a transaction');
+  });
+
+  test('saving a report degrades honestly when the feature is switched off', async ({ page }) => {
+    await page.goto('/rwa');
+    await page.getByRole('button', { name: 'Save this report' }).click();
+    // The deployment under test has reports disabled; it must say so and point
+    // at the export that needs no account, not fail silently.
+    await expect(page.getByText(/not enabled on this deployment/i)).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Export JSON' })).toBeEnabled();
+  });
+
+  test('never fetches issuer metadata without being asked', async ({ page }) => {
+    const metadataCalls: string[] = [];
+    page.on('request', request => {
+      if (request.url().includes('/api/rwa/metadata')) metadataCalls.push(request.url());
+    });
+    await page.goto('/rwa');
+    await page.waitForTimeout(1500);
+    expect(metadataCalls).toEqual([]);
   });
 
   test('is usable at 360px with no horizontal overflow', async ({ page }) => {

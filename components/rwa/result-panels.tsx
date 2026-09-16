@@ -1,9 +1,10 @@
 'use client';
 
 import { Card, Callout, Field, VerdictPill, severityStyle } from './primitives';
+import { MetadataPanel } from './metadata-panel';
 import type { Balances, DecodedExtension, Identity, Provenance, TransferReadiness } from '@/lib/rwa/types';
 
-export function IdentityCard({ identity }: { identity: Identity }) {
+export function IdentityCard({ identity, metadataUri }: { identity: Identity; metadataUri?: string }) {
   const isToken2022 = identity.tokenProgram === 'token-2022';
   return (
     <Card
@@ -37,6 +38,7 @@ export function IdentityCard({ identity }: { identity: Identity }) {
           </Callout>
         </div>
       ) : null}
+      {metadataUri ? <MetadataPanel identity={identity} uri={metadataUri} /> : null}
     </Card>
   );
 }

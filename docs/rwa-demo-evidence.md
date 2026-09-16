@@ -108,7 +108,7 @@ No provider URL, key or stack trace appears in any error body.
 | `npm run typecheck` | clean |
 | `npm test` | **88 passed** |
 | `npm run build` | succeeds |
-| `npm run test:e2e` | **11 passed** (fixture-only, no RPC) |
+| `npm run test:e2e` | **13 passed** (fixture-only, no RPC) |
 
 Browser coverage includes: populated first paint, raw amount fixed while the
 displayed amount changes, permanent-delegate and default-state explanation,
@@ -147,6 +147,15 @@ are still refused **before any request is made**:
 | `https://169.254.169.254/latest/meta-data/` | `400 blocked` |
 | `https://127.0.0.1/a.json` | `400 blocked` |
 | `http://metadata.example.com/a.json` (plain http) | `400 blocked` |
+
+With `RWA_METADATA_ALLOWED_HOSTS` set to a real issuer host, the metadata panel
+fetches only on request and only from that host:
+
+| Request | Result |
+| --- | --- |
+| Allowlisted issuer URI for a live mint | `200 ok` — name, symbol, description and image returned, 195 bytes, labelled issuer-supplied |
+| Any other host | `400 blocked` — "not on the configured allowlist" |
+| Page load | **Zero** metadata requests; a browser test asserts none is made unasked |
 
 With `RWA_SESSION_SECRET` set, a real keypair completes sign-in:
 

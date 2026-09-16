@@ -11,6 +11,7 @@ import {
   IdentityCard,
   TransferReadinessCard,
 } from './result-panels';
+import { ReportActions } from './report-actions';
 
 type Phase = 'idle' | 'loading' | 'done' | 'error';
 
@@ -26,6 +27,13 @@ function download(filename: string, body: string, type: string) {
   anchor.click();
   anchor.remove();
   URL.revokeObjectURL(url);
+}
+
+/** The URI the mint itself declares, if any. Never fetched automatically. */
+function metadataUri(result: InspectResult): string | undefined {
+  const metadata = result.extensions.find(extension => extension.kind === 'TokenMetadata');
+  const uri = metadata?.fields.find(field => field.label === 'URI')?.value;
+  return uri && /^https:\/\//.test(uri) ? uri : undefined;
 }
 
 function toCsv(result: InspectResult): string {
@@ -247,7 +255,7 @@ export function RwaLensShell() {
           ) : null}
 
           <div className="mt-5 space-y-5">
-            {result.identity ? <IdentityCard identity={result.identity} /> : null}
+            {result.identity ? <IdentityCard identity={result.identity} metadataUri={metadataUri(result)} /> : null}
             {result.balances ? (
               <BalanceCard balances={result.balances} />
             ) : (
@@ -260,6 +268,8 @@ export function RwaLensShell() {
             {result.transferReadiness ? <TransferReadinessCard readiness={result.transferReadiness} /> : null}
             <EvidenceDrawer provenance={result.provenance} />
           </div>
+
+          <ReportActions result={result} />
 
           <section className="mt-5 rounded-xl border border-line bg-sunken px-5 py-4">
             <h2 className="text-[13px] font-semibold uppercase tracking-[.07em] text-navy-faint">Limitations</h2>
