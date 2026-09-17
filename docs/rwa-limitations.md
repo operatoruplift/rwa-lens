@@ -44,8 +44,13 @@ or a regulated service remains responsible for every legal decision.
 
 ## Security limitations
 
-- **Rate limiting is per-instance and in-memory.** It protects one process and
-  the RPC budget. It is not a distributed limiter and not a security boundary.
+- **Rate limiting is shared across instances when Supabase is configured.** The
+  count lives in Postgres behind a `SECURITY DEFINER` function guarded by a
+  server-held secret, keyed by a hash of the client IP (no address is stored).
+  Without that configuration it falls back to a per-instance window, which on a
+  serverless host is not a limit under concurrency. If the shared store is
+  unreachable it fails open to the local window: availability over strictness
+  for a read-only tool. It is still not a security boundary.
 - **Metadata fetching is deny-by-default.** No URI is fetched unless its host is
   explicitly allowlisted. https only; loopback, private, link-local and bare-IP
   hosts are rejected. Core inspection never requires fetching a URI.

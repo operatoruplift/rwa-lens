@@ -5,6 +5,8 @@ import './globals.css';
 const inter = Inter({ variable: '--font-inter', subsets: ['latin'], display: 'swap' });
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://rwalensonsolana.vercel.app'),
+  alternates: { canonical: '/rwa' },
   title: 'RWA Lens — know what your real-world token means',
   description:
     'Inspect a Solana Token-2022 mint: what the token is, what a holder balance really means right now, and which on-chain controls affect whether it can move. Read-only.',

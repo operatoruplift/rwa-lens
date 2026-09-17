@@ -20,7 +20,7 @@ const STATUS: Record<string, number> = {
 };
 
 export async function POST(request: Request) {
-  const limited = rateLimit(request, 'inspect');
+  const limited = await rateLimit(request, 'inspect');
   if (!limited.ok) {
     return NextResponse.json(
       { status: 'unavailable', message: 'Too many requests. Wait a moment and try again.' },

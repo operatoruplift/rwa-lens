@@ -16,7 +16,7 @@ const STATUS: Record<string, number> = {
 };
 
 export async function POST(request: Request) {
-  const limited = rateLimit(request, 'metadata');
+  const limited = await rateLimit(request, 'metadata');
   if (!limited.ok) {
     return NextResponse.json(
       { state: 'failed', reason: 'Too many requests. Wait a moment and try again.' },

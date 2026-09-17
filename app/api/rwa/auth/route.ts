@@ -30,7 +30,7 @@ const signOutSchema = z.object({ action: z.literal('sign-out') });
 const bodySchema = z.union([challengeSchema, verifySchema, signOutSchema]);
 
 export async function POST(request: Request) {
-  if (!rateLimit(request, 'reports').ok) {
+  if (!(await rateLimit(request, 'reports')).ok) {
     return NextResponse.json({ state: 'unavailable', message: 'Too many requests.' }, { status: 429 });
   }
   if (!sessionsConfigured()) {

@@ -22,7 +22,7 @@ async function currentOwner(): Promise<string | null> {
 export async function GET(request: Request) {
   const state = repositoryState();
   if (state !== 'ready') return NextResponse.json(DISABLED, { status: 503 });
-  if (!rateLimit(request, 'reports').ok) {
+  if (!(await rateLimit(request, 'reports')).ok) {
     return NextResponse.json({ state: 'unavailable', message: 'Too many requests.' }, { status: 429 });
   }
 
@@ -34,7 +34,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const state = repositoryState();
   if (state !== 'ready') return NextResponse.json(DISABLED, { status: 503 });
-  if (!rateLimit(request, 'reports').ok) {
+  if (!(await rateLimit(request, 'reports')).ok) {
     return NextResponse.json({ state: 'unavailable', message: 'Too many requests.' }, { status: 429 });
   }
 
