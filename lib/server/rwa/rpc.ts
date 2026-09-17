@@ -13,6 +13,7 @@ import type { Cluster, Commitment } from '@/lib/rwa/types';
 export type RpcFailureKind =
   | 'invalid-address'
   | 'not-found'
+  | 'not-a-mint'
   | 'rate-limited'
   | 'provider-failure'
   | 'decoder-failure'

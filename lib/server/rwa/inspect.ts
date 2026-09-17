@@ -135,7 +135,7 @@ export async function inspectOnChain(input: InspectInput): Promise<InspectResult
   sources.push({ label: 'Mint account', method: 'getAccountInfo', status: 'ok', detail: `owner ${programOwner}` });
 
   if (tokenProgram === 'unknown') {
-    throw new RpcError('decoder-failure', 'That address is not owned by a Solana token program.');
+    throw new RpcError('not-a-mint', 'That address is not owned by a Solana token program.');
   }
 
   let mint: DecodedMint;

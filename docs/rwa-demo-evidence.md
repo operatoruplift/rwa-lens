@@ -94,7 +94,7 @@ Fixture and live responses share one typed contract.
 
 | Case | Result |
 | --- | --- |
-| Invalid mint (`not-a-mint`) | `400` `{"status":"invalid"}` |
+| Invalid mint (`not-a-mint`) | `422` `{"status":"invalid","kind":"not-a-mint"}` |
 | Unknown cluster (`testnet`) | `400` — only `devnet` / `mainnet-beta` accepted |
 | Live read with no `RWA_RPC_URL` | `503` `{"kind":"not-configured"}`, fixtures still usable |
 

@@ -12,6 +12,7 @@ export const dynamic = 'force-dynamic';
 const STATUS: Record<string, number> = {
   'invalid-address': 400,
   'not-found': 404,
+  'not-a-mint': 422,
   'rate-limited': 429,
   'not-configured': 503,
   timeout: 504,
@@ -63,7 +64,7 @@ export async function POST(request: Request) {
     if (error instanceof RpcError) {
       return NextResponse.json(
         {
-          status: error.kind === 'invalid-address' ? 'invalid' : 'unavailable',
+          status: error.kind === 'invalid-address' || error.kind === 'not-a-mint' ? 'invalid' : 'unavailable',
           message: error.message,
           kind: error.kind,
         },
