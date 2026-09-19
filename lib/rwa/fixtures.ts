@@ -89,7 +89,7 @@ const treasury: Fixture = {
         scope: 'mint',
         severity: 'attention',
         impact:
-          'Your balance is a raw amount multiplied by an issuer-controlled number. Yield is applied by changing that multiplier, not by moving tokens.',
+          'An issuer-controlled multiplier changes the displayed balance while raw units stay unchanged. A multiplier change alone does not establish yield or investment performance.',
         authorities: [{ role: 'Multiplier authority', address: 'RWALensFixtureEmitter11111111111111111111' }],
         fields: [
           { label: 'Stored prior multiplier', value: '1.04235' },

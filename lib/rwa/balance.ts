@@ -7,8 +7,8 @@ import type { DisplayBalance, RawBalance } from './types';
  *
  * Token-2022 stores raw base units. A ScaledUiAmountConfig changes only how
  * those units are *displayed*, by an issuer-controlled multiplier that can be
- * scheduled to change at a timestamp. Yield therefore arrives without any
- * transfer, and a naive wallet shows the wrong number.
+ * scheduled to change at a timestamp. A display change does not imply a
+ * transfer, yield or investment performance.
  *
  * Two rules hold everywhere below:
  *   1. Raw amounts are summed as integers first, then converted exactly once.

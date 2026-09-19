@@ -17,7 +17,9 @@ Vercel built it in the existing `rwa-lens` project and reported **Ready** as
 `dpl_5dhCMrvc3RRWR83vDPYT6QP1FrCV`, at
 https://rwa-lens-79mz5m9zi-operatoruplift.vercel.app. Both production aliases,
 https://rwalensonsolana.vercel.app and https://rwa-lens-omega.vercel.app, were preserved.
-Subsequent evidence-only commits do not change application code.
+Subsequent evidence commits preserve these dated receipts. A final wording
+correction clarifies that the synthetic multiplier change alone does not prove
+yield or investment performance; accounting behavior is unchanged.
 
 | Release check | Actual completed result |
 | --- | --- |
