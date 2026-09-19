@@ -1,0 +1,120 @@
+{
+  "receiptType": "RWA Lens observation",
+  "inspectionRequest": {
+    "mode": "live",
+    "cluster": "mainnet-beta",
+    "mint": "A1KLoBrKBde8Ty9qtNQUtq3C2ortoC3u7twggz7sEto6",
+    "owner": "8n2uiRUd1A9NN78PKESkJe6k6zMqtKCZh3MrK1j9qkB1"
+  },
+  "exportedAt": "2026-09-19T18:25:28.191Z",
+  "hashAlgorithm": "SHA-256",
+  "hashEncoding": "UTF-8 JSON.stringify(observation)",
+  "contentHash": "ebc191f8162f448b6a4888d2b10f008399d8f5ffa110a22da56cc5b31e2cd034",
+  "note": "A point-in-time observation. The hash identifies this payload; it does not prove its truth or issuer endorsement.",
+  "observation": {
+    "status": "verified",
+    "mode": "live",
+    "balanceStatus": "observed",
+    "identity": {
+      "mint": "A1KLoBrKBde8Ty9qtNQUtq3C2ortoC3u7twggz7sEto6",
+      "tokenProgram": "spl-token",
+      "tokenProgramAddress": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+      "decimals": 6,
+      "supply": "157215235713925",
+      "mintAuthority": "8n2uiRUd1A9NN78PKESkJe6k6zMqtKCZh3MrK1j9qkB1",
+      "freezeAuthority": "51QVCuHfL1FeNjd8BDeffCKhCcAYoULnVB3yjNhShiuK",
+      "isInitialized": true
+    },
+    "balances": {
+      "owner": "8n2uiRUd1A9NN78PKESkJe6k6zMqtKCZh3MrK1j9qkB1",
+      "accounts": [],
+      "complete": true,
+      "accountLimit": 100,
+      "totalRawAmount": "0",
+      "display": {
+        "rawAmount": "0",
+        "standardUiAmount": "0",
+        "boundary": "none",
+        "rounding": "exact-decimal",
+        "note": "No Scaled UI Amount extension. The displayed amount is the raw amount divided by 10^decimals, computed exactly."
+      }
+    },
+    "extensions": [],
+    "transferReadiness": {
+      "verdict": "ready",
+      "knownBlock": false,
+      "unknownChecks": false,
+      "reasons": [
+        {
+          "verdict": "ready",
+          "check": "No restrictive controls observed",
+          "detail": "No extension or account state was found that would block a transfer. This describes observed state only and is not a counterparty or legal guarantee."
+        }
+      ],
+      "disclaimer": "Transfer readiness describes observed on-chain state only. It is not legal advice and not a guarantee that a transfer will succeed or be permitted."
+    },
+    "registry": {
+      "issuer": "Ondo Finance",
+      "assetClass": "Tokenized Treasury-linked note",
+      "documentationUrl": "https://docs.ondo.finance/addresses",
+      "source": "https://docs.ondo.finance/addresses",
+      "fetchedAt": "2026-09-19T17:56:59.352Z",
+      "stale": false
+    },
+    "provenance": {
+      "mode": "live",
+      "cluster": "mainnet-beta",
+      "rpcProvider": "api.mainnet-beta.solana.com",
+      "fetchedAt": "2026-09-19T18:25:30.544Z",
+      "slot": "448487881",
+      "commitment": "confirmed",
+      "decoderVersion": "@solana-program/token-2022@0.17.0+rwa-lens.2",
+      "timeSource": "chain",
+      "clockTimestamp": "2026-09-19T18:25:29.000Z",
+      "clockSlot": "448487881",
+      "observedTimestamp": "2026-09-19T18:25:29.000Z",
+      "slotSpread": "0",
+      "sources": [
+        {
+          "label": "Mint account",
+          "method": "getAccountInfo",
+          "status": "ok",
+          "detail": "owner TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+          "slot": "448487881",
+          "commitment": "confirmed"
+        },
+        {
+          "label": "Mint decoder",
+          "method": "getMintDecoder + getExtensionDecoder",
+          "status": "ok",
+          "slot": "448487881"
+        },
+        {
+          "label": "Clock sysvar",
+          "method": "getAccountInfo(Clock)",
+          "status": "ok",
+          "detail": "unixTimestamp 1789842329; Clock.slot 448487881",
+          "slot": "448487881",
+          "commitment": "confirmed"
+        },
+        {
+          "label": "Owner token accounts",
+          "method": "getTokenAccountsByOwner",
+          "status": "ok",
+          "detail": "0 validated unique account(s); mint filter; token program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+          "slot": "448487881",
+          "commitment": "confirmed"
+        }
+      ]
+    },
+    "warnings": [
+      "This is a legacy SPL mint. Token-2022 extensions do not apply."
+    ],
+    "limitations": [
+      "Public inspection performs no on-chain writes. Optional report sign-in uses a wallet message only.",
+      "Raw units use exact integer arithmetic. Scaled display uses the official floating-point helper.",
+      "Issuer metadata is descriptive only, not proof of reserves, compliance or legal transferability.",
+      "RPC reads are not atomic. minContextSlot bounds staleness; it does not create a snapshot. The standard owner RPC has no pagination or proof of provider completeness."
+    ]
+  }
+}

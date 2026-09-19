@@ -13,6 +13,16 @@
 The user's current task explicitly authorizes deployment. This project has no
 runtime dependency on Lotline and no Lotline tables or credentials are used.
 
+## Verified application release
+
+Application commit `a3e1b386fa762bb87ae894dab47cae7ca6c64b94` was automatically
+built by the existing GitHub-to-Vercel integration. Deployment
+`dpl_5dhCMrvc3RRWR83vDPYT6QP1FrCV` is Ready at
+https://rwa-lens-79mz5m9zi-operatoruplift.vercel.app. The canonical and secondary
+aliases both resolved to that release. CI and hosted read/browser checks passed;
+see `rwa-demo-evidence.md` for actual run links and receipts. Evidence-only
+follow-up commits may produce another deployment with identical application code.
+
 ## Release procedure
 
 1. Inspect `git status`, preserve unrelated work, run lint/typecheck/unit tests.

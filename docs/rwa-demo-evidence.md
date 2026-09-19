@@ -10,6 +10,44 @@ Read [setup and API contracts](../README.md), the
 [limitations](rwa-limitations.md), the [two-minute demo script](rwa-demo-script.md),
 and [deployment/rollback instructions](rwa-deployment.md) alongside this evidence.
 
+## Verified production release
+
+The application release is commit [`a3e1b386fa762bb87ae894dab47cae7ca6c64b94`](https://github.com/operatoruplift/rwa-lens/commit/a3e1b386fa762bb87ae894dab47cae7ca6c64b94).
+Vercel built it in the existing `rwa-lens` project and reported **Ready** as
+`dpl_5dhCMrvc3RRWR83vDPYT6QP1FrCV`, at
+https://rwa-lens-79mz5m9zi-operatoruplift.vercel.app. Both production aliases,
+https://rwalensonsolana.vercel.app and https://rwa-lens-omega.vercel.app, were preserved.
+Subsequent evidence-only commits do not change application code.
+
+| Release check | Actual completed result |
+| --- | --- |
+| Local full suite | Lint, TypeScript, **220 unit/integration tests**, production build passed |
+| Local production browser | **20 passed** in 52.2 seconds, including 360/390/768/1440px, keyboard, reduced motion, real fixture API, exports and error recovery |
+| [GitHub deterministic CI](https://github.com/operatoruplift/rwa-lens/actions/runs/35460995007) | **Success** on the application commit; clean install, lint, typecheck, 220 tests, build and 20 production browser cases |
+| [Explicit hosted read workflow](https://github.com/operatoruplift/rwa-lens/actions/runs/35461071585) | **Success** on the application commit; public USDY/owner reads and strict fixture-accounting assertions; hosted-read artifact retained |
+| Hosted browser suite | **20 passed** in 43.6 seconds against the canonical production URL |
+| Additional unmocked browser journey | Both routes HTTP 200; actual USDY button and public-owner inspection; guest JSON download and SHA-256 verified; no JavaScript errors |
+| Hosted API and headers | Landing, inspector and logo 200; invalid input 400; foreign Origin 403; private metadata URL blocked 400; CSP/frame/content-type protections present |
+| Optional auth/reports | Both endpoints 503 `feature-disabled`; guest export works |
+| External metadata URI | Existing HTTPS host policy blocks the tested xStocks issuer URI (400). No successful remote fetch is claimed; operator configuration was preserved |
+
+Machine-readable receipts: [hosted live observations](evidence/live-observations.json),
+[API/header/metadata checks](evidence/hosted-surface-checks.json),
+[unmocked browser journey](evidence/hosted-browser-verification.json),
+and the [actual downloaded live receipt](evidence/hosted-browser-export.json).
+Hosted screenshots: [landing](screenshots/hosted-landing-1440.png),
+[desktop live USDY](screenshots/hosted-desktop-usdy-1440.png),
+[mobile live USDY](screenshots/hosted-mobile-usdy-390.png).
+
+At `2026-09-19T18:24:03.289Z`, the hosted API verified USDY at mint/Clock slot
+`448487557`, with Clock time `2026-09-19T18:24:03.000Z`. Its declared public-owner
+read returned a validated empty list, raw/standard `0`, `balanceStatus=observed`
+and `complete=true` with matching contexts at `448487559`. Matching context slots
+do not make separate RPC calls an atomic snapshot. The browser independently
+read the mint at `448487879` and the owner at `448487881`. A secondary hosted
+Apple xStock read at `448487656` confirmed Token-2022 and its eight extensions.
+The earlier local receipts below remain historical, separately dated evidence.
+
 ## Source and build identity
 
 | Item | Measured value / scope |
@@ -21,7 +59,7 @@ and [deployment/rollback instructions](rwa-deployment.md) alongside this evidenc
 | Solana packages | `@solana/kit`, `@solana/rpc-spec-types`, `@solana/sysvars` `8.3.0`; `@solana-program/token-2022` `0.17.0` |
 | Decoder identifier | `@solana-program/token-2022@0.17.0+rwa-lens.2` |
 | RPC | `mainnet-beta`, `api.mainnet-beta.solana.com`, `confirmed` commitment |
-| Release provenance boundary | Local captures preceded the final review corrections. Final commit, deployment identity, hosted receipts and GitHub run must be recorded separately; local checks do not establish hosted verification. |
+| Release provenance boundary | Local captures preceded the final review corrections. The verified production release above supplies the final application commit, deployment identity, hosted receipts and successful GitHub runs; these earlier local captures do not substitute for them. |
 
 ## Official non-stock example: Ondo USDY
 
@@ -143,7 +181,7 @@ A multiplier change alone is not evidence of yield or investment performance.
 | `npm run build` | Passed after all source and SDK test-type corrections; production routes emitted successfully |
 | `npm run test:e2e` with a local production server | **20 passed in 52.2 seconds** against the production `next start` server at `http://127.0.0.1:3300`; includes registry attribution |
 | Production dependency review | `npm audit --omit=dev` reported zero vulnerabilities during implementation; installed manifest and lockfile remain aligned |
-| GitHub Actions | Workflow repaired with read-only permissions and pinned actions; no successful release run URL had yet been recorded here |
+| GitHub Actions | Both actual successful release runs are linked in the production release table above |
 
 Playwright launches `npm run start -- --port 3300`, so its managed server serves
 an existing **production build**, not `next dev`. `E2E_BASE_URL` uses an explicitly
@@ -159,9 +197,9 @@ The checked-in local browser captures are:
 - [768px tablet](screenshots/rwa-tablet-768.png), [1440px desktop](screenshots/rwa-desktop-1440.png)
 - [Keyboard focus](screenshots/rwa-keyboard.png), [Reduced motion](screenshots/rwa-reduced-motion.png)
 
-These captures were regenerated by the passing 20-case run and establish local rendered behavior. They do not establish the state
-of the production alias. Follow the [demo script](rwa-demo-script.md) for the actual
-route walkthrough and the [deployment guide](rwa-deployment.md) for hosted checks.
+These six capture cases were run locally and again on production. The separately
+labelled hosted live screenshots and unmocked receipt are linked above. Follow the
+[demo script](rwa-demo-script.md) and [deployment guide](rwa-deployment.md) to reproduce.
 
 ## Independent database and disabled optional surfaces
 
@@ -239,10 +277,7 @@ and use the visibly synthetic fixture if it does.
 
 ## Known limits and remaining verification
 
-- Final release commit/CI/deployment and post-deployment browser evidence must be
-  added before marking the new release `hosted-verified`.
-- The live owner samples were empty and mixed-slot; no complete nonzero holder
-  balance or executed transfer was demonstrated against mainnet.
+- The live owner samples were empty. Earlier local reads were mixed-slot; hosted reads include matching contexts. No nonzero live holding or executed transfer is claimed.
 - MetadataPointer and embedded TokenMetadata are decoded. A valid external
   pointer triggers at most one bounded account read with owner, byte length and
   context slot recorded. The official Token-2022 mint layout is decoded only
