@@ -1,109 +1,161 @@
 import 'server-only';
-import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
-
-/**
- * Wallet sign-in for saved reports.
- *
- * The wallet is asked for a **message signature only** — never a transaction,
- * never a key. The server issues a single-use nonce, verifies the signature
- * against it, and issues an HttpOnly cookie. Guest inspection never touches any
- * of this.
- */
+import { createHash, createHmac, randomBytes, timingSafeEqual, createPublicKey, verify } from 'node:crypto';
+import bs58 from 'bs58';
+import { z } from 'zod';
+import { addressSchema } from '@/lib/rwa/schema';
+import { requestOrigin } from '@/lib/server/rwa/http';
 
 export const SESSION_COOKIE = 'rwa_lens_session';
+export const CHALLENGE_COOKIE = 'rwa_lens_challenge';
 const NONCE_TTL_MS = 5 * 60 * 1000;
 const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
-const MAX_NONCES = 5000;
-
-type NonceEntry = { address: string; expiresAt: number };
-const nonces = new Map<string, NonceEntry>();
+const PURPOSE = 'save-rwa-observation';
 
 function secret(): string | null {
   const value = (process.env.RWA_SESSION_SECRET ?? '').trim();
   return value.length >= 32 ? value : null;
 }
 
+/** Dedicated RWA credentials only. Generic shared-project credentials are never used. */
+export function databaseConfig(): { url: string; key: string } | null {
+  const url = (process.env.RWA_SUPABASE_URL ?? '').trim();
+  const key = (process.env.RWA_SUPABASE_SERVICE_ROLE_KEY ?? '').trim();
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== 'https:' || parsed.username || parsed.password || parsed.pathname !== '/' || !key) return null;
+    return { url: parsed.origin, key };
+  } catch { return null; }
+}
+
+export function configuredOrigin(): string | null {
+  try {
+    const raw = (process.env.RWA_APP_ORIGIN ?? '').trim();
+    const url = new URL(raw);
+    if (url.origin !== raw || url.username || url.password) return null;
+    if (url.protocol !== 'https:' && !(process.env.NODE_ENV !== 'production' && url.protocol === 'http:' && ['localhost', '127.0.0.1'].includes(url.hostname))) return null;
+    return url.origin;
+  } catch { return null; }
+}
+
 export function sessionsConfigured(): boolean {
-  return secret() !== null;
+  return process.env.RWA_REPORTS_ENABLED === 'true' && !!secret() && !!databaseConfig() && !!configuredOrigin();
 }
 
-export function issueNonce(address: string): { nonce: string; message: string; expiresAt: string } {
-  if (nonces.size > MAX_NONCES) nonces.clear();
-  const nonce = randomBytes(24).toString('base64url');
-  const expiresAt = Date.now() + NONCE_TTL_MS;
-  nonces.set(nonce, { address, expiresAt });
-  return {
-    nonce,
-    message: signInMessage(address, nonce),
-    expiresAt: new Date(expiresAt).toISOString(),
-  };
+/** Cookie-authorized writes require the single configured exact origin. */
+export function hasExactOrigin(request: Request): boolean {
+  const origin = configuredOrigin();
+  return !!origin && request.headers.get('origin') === origin && requestOrigin(request) === origin;
 }
 
-/** The exact bytes the wallet is asked to sign. Deliberately unmistakable. */
-export function signInMessage(address: string, nonce: string): string {
+const challengeSchema = z.object({
+  nonce: z.string().regex(/^[A-Za-z0-9_-]{32}$/),
+  address: addressSchema,
+  browserHash: z.string().regex(/^[a-f0-9]{64}$/),
+  origin: z.string().url(),
+  uri: z.string().url(),
+  cluster: z.enum(['mainnet-beta', 'devnet']),
+  purpose: z.literal(PURPOSE),
+  issuedAt: z.string().datetime(),
+  expiresAt: z.string().datetime(),
+  message: z.string().max(2000),
+}).strict();
+export type Challenge = z.infer<typeof challengeSchema>;
+
+/** Fail closed: there is deliberately no process-memory nonce store. */
+async function authRpc(method: string, body: unknown): Promise<unknown> {
+  const config = databaseConfig();
+  if (!config) throw new Error('Sign-in storage is not configured.');
+  const response = await fetch(`${config.url}/rest/v1/rpc/${method}`, {
+    method: 'POST', signal: AbortSignal.timeout(3000), cache: 'no-store',
+    headers: { apikey: config.key, authorization: `Bearer ${config.key}`, 'content-type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!response.ok) throw new Error('Sign-in storage is unavailable.');
+  return response.json();
+}
+
+function browserHash(value: string): string {
+  return createHash('sha256').update(value).digest('hex');
+}
+
+export function signInMessage(challenge: Omit<Challenge, 'message'>): string {
   return [
-    'RWA Lens sign-in',
-    '',
-    'Signing this message proves you control this address so RWA Lens can save',
-    'reports to your account. It is not a transaction and moves no funds.',
-    '',
-    `Address: ${address}`,
-    `Nonce: ${nonce}`,
+    `${new URL(challenge.origin).host} requests an RWA Lens sign-in`, '',
+    'Sign this message to save observation reports to your account.',
+    'This is not a transaction and moves no funds.', '',
+    `Address: ${challenge.address}`, `URI: ${challenge.uri}`, `Domain: ${challenge.origin}`,
+    `Network: solana:${challenge.cluster}`, `Purpose: ${challenge.purpose}`,
+    `Nonce: ${challenge.nonce}`, `Browser challenge: ${challenge.browserHash}`,
+    `Issued at: ${challenge.issuedAt}`, `Expires at: ${challenge.expiresAt}`,
   ].join('\n');
 }
 
-/** Single use: a nonce is consumed on first check, so a replay finds nothing. */
-export function consumeNonce(nonce: string, address: string): boolean {
-  const entry = nonces.get(nonce);
-  if (!entry) return false;
-  nonces.delete(nonce);
-  if (entry.expiresAt < Date.now()) return false;
-  return entry.address === address;
+export async function issueNonce(address: string, browserToken: string): Promise<Pick<Challenge, 'nonce' | 'message' | 'expiresAt'>> {
+  if (!sessionsConfigured()) throw new Error('Sign-in is disabled.');
+  const origin = configuredOrigin()!;
+  const cluster = process.env.RWA_CLUSTER === 'mainnet-beta' ? 'mainnet-beta' : 'devnet';
+  const issuedAt = Date.now();
+  const fields: Omit<Challenge, 'message'> = {
+    nonce: randomBytes(24).toString('base64url'), address: addressSchema.parse(address),
+    browserHash: browserHash(browserToken), origin, uri: `${origin}/rwa`, cluster, purpose: PURPOSE,
+    issuedAt: new Date(issuedAt).toISOString(), expiresAt: new Date(issuedAt + NONCE_TTL_MS).toISOString(),
+  };
+  const challenge = { ...fields, message: signInMessage(fields) };
+  z.object({ stored: z.literal(true) }).strict().parse(await authRpc('rwa_issue_challenge', { p_challenge: challenge }));
+  return { nonce: challenge.nonce, message: challenge.message, expiresAt: challenge.expiresAt };
+}
+
+/** SQL DELETE ... RETURNING atomically consumes the stored exact message across instances. */
+export async function consumeNonce(nonce: string, address: string, browserToken: string): Promise<Challenge | null> {
+  if (!sessionsConfigured() || !browserToken) return null;
+  const value = await authRpc('rwa_consume_challenge', {
+    p_nonce: nonce, p_address: address, p_browser_hash: browserHash(browserToken), p_origin: configuredOrigin(),
+  });
+  const parsed = challengeSchema.safeParse(value);
+  if (!parsed.success) return null;
+  const challenge = parsed.data;
+  const origin = configuredOrigin();
+  const cluster = process.env.RWA_CLUSTER === 'mainnet-beta' ? 'mainnet-beta' : 'devnet';
+  if (challenge.address !== address || challenge.nonce !== nonce || challenge.browserHash !== browserHash(browserToken)
+    || challenge.origin !== origin || challenge.uri !== `${origin}/rwa` || challenge.cluster !== cluster
+    || Date.parse(challenge.expiresAt) <= Date.now() || Date.parse(challenge.issuedAt) > Date.now()
+    || Date.parse(challenge.expiresAt) - Date.parse(challenge.issuedAt) > NONCE_TTL_MS
+    || challenge.message !== signInMessage(challenge)) return null;
+  return challenge;
+}
+
+/** Node's maintained Ed25519 implementation verifies the exact stored message. */
+export function verifyChallenge(challenge: Challenge, signature: string): boolean {
+  try {
+    const publicKey = bs58.decode(challenge.address);
+    const signatureBytes = bs58.decode(signature);
+    if (publicKey.length !== 32 || signatureBytes.length !== 64) return false;
+    const key = createPublicKey({ key: Buffer.concat([Buffer.from('302a300506032b6570032100', 'hex'), Buffer.from(publicKey)]), format: 'der', type: 'spki' });
+    return verify(null, Buffer.from(challenge.message), key, signatureBytes);
+  } catch { return false; }
 }
 
 export function createSessionToken(address: string): string | null {
   const key = secret();
-  if (!key) return null;
-  const expiresAt = Date.now() + SESSION_TTL_MS;
-  const payload = `${address}.${expiresAt}`;
-  const signature = createHmac('sha256', key).update(payload).digest('base64url');
-  return `${Buffer.from(payload).toString('base64url')}.${signature}`;
+  if (!key || !sessionsConfigured() || !addressSchema.safeParse(address).success) return null;
+  const payload = Buffer.from(JSON.stringify({ address, expiresAt: Date.now() + SESSION_TTL_MS, origin: configuredOrigin(), purpose: PURPOSE })).toString('base64url');
+  return `${payload}.${createHmac('sha256', key).update(payload).digest('base64url')}`;
 }
 
 export function readSessionToken(token: string | undefined): { address: string } | null {
   const key = secret();
-  if (!key || !token) return null;
-  const [encodedPayload, signature] = token.split('.');
-  if (!encodedPayload || !signature) return null;
-
-  let payload: string;
-  try {
-    payload = Buffer.from(encodedPayload, 'base64url').toString('utf8');
-  } catch {
-    return null;
-  }
-
+  if (!key || !sessionsConfigured() || !token || token.length > 2000) return null;
+  const parts = token.split('.');
+  if (parts.length !== 2 || parts.some(part => !/^[A-Za-z0-9_-]+$/.test(part))) return null;
+  const [payload, signature] = parts;
   const expected = createHmac('sha256', key).update(payload).digest('base64url');
-  const given = Buffer.from(signature);
-  const want = Buffer.from(expected);
-  // Constant-time compare so a forged token cannot be tuned byte by byte.
-  if (given.length !== want.length || !timingSafeEqual(given, want)) return null;
-
-  const [address, expiresAt] = payload.split('.');
-  if (!address || !expiresAt) return null;
-  if (Number.parseInt(expiresAt, 10) < Date.now()) return null;
-  return { address };
+  if (signature.length !== expected.length || !timingSafeEqual(Buffer.from(signature), Buffer.from(expected))) return null;
+  try {
+    const data = z.object({ address: addressSchema, expiresAt: z.number().int().finite(), origin: z.literal(configuredOrigin()!), purpose: z.literal(PURPOSE) }).strict().parse(JSON.parse(Buffer.from(payload, 'base64url').toString('utf8')));
+    if (data.expiresAt <= Date.now() || data.expiresAt > Date.now() + SESSION_TTL_MS) return null;
+    return { address: data.address };
+  } catch { return null; }
 }
 
-export const SESSION_COOKIE_OPTIONS = {
-  httpOnly: true,
-  sameSite: 'lax' as const,
-  secure: process.env.NODE_ENV === 'production',
-  path: '/',
-  maxAge: SESSION_TTL_MS / 1000,
-};
-
-/** Test-only reset so nonce state never leaks between cases. */
-export function resetNonces(): void {
-  nonces.clear();
-}
+export const SESSION_COOKIE_OPTIONS = { httpOnly: true, sameSite: 'strict' as const, secure: process.env.NODE_ENV === 'production', path: '/', maxAge: SESSION_TTL_MS / 1000 };
+export const CHALLENGE_COOKIE_OPTIONS = { ...SESSION_COOKIE_OPTIONS, maxAge: NONCE_TTL_MS / 1000 };

@@ -1,0 +1,707 @@
+{
+  "capturedAt": "2026-09-19T18:04:49.163Z",
+  "base": "http://127.0.0.1:3300",
+  "attribution": {
+    "id": "ondo-usdy-solana",
+    "name": "Ondo US Dollar Yield",
+    "symbol": "USDY",
+    "mint": "A1KLoBrKBde8Ty9qtNQUtq3C2ortoC3u7twggz7sEto6",
+    "cluster": "mainnet-beta",
+    "category": "Tokenized Treasury-linked note",
+    "issuer": "Ondo Finance",
+    "addressSourceUrl": "https://docs.ondo.finance/addresses",
+    "categorySourceUrl": "https://docs.ondo.finance/general-access-products/usdy/basics",
+    "retrievedAt": "2026-09-20",
+    "attributionNote": "Official issuer documentation identifies this Solana address as USDY. The issuer describes a tokenized note with backing dependent on issuance date. This attribution is not proof of backing, legal eligibility, redemption rights or investment performance. USDY uses the legacy SPL Token program at the recorded observation; the synthetic treasury fixture demonstrates Token-2022 extensions separately.",
+    "observedProgramAddress": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+    "initialVerificationSlot": "448478604",
+    "initialVerificationProvider": "api.mainnet-beta.solana.com",
+    "retrievedAtUtc": "2026-09-19T17:56:59.352Z"
+  },
+  "observations": [
+    {
+      "label": "Officially attributed non-stock mint",
+      "request": {
+        "mode": "live",
+        "cluster": "mainnet-beta",
+        "mint": "A1KLoBrKBde8Ty9qtNQUtq3C2ortoC3u7twggz7sEto6"
+      },
+      "httpStatus": 200,
+      "result": {
+        "status": "verified",
+        "mode": "live",
+        "balanceStatus": "not-requested",
+        "identity": {
+          "mint": "A1KLoBrKBde8Ty9qtNQUtq3C2ortoC3u7twggz7sEto6",
+          "tokenProgram": "spl-token",
+          "tokenProgramAddress": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+          "decimals": 6,
+          "supply": "157215235713925",
+          "mintAuthority": "8n2uiRUd1A9NN78PKESkJe6k6zMqtKCZh3MrK1j9qkB1",
+          "freezeAuthority": "51QVCuHfL1FeNjd8BDeffCKhCcAYoULnVB3yjNhShiuK",
+          "isInitialized": true
+        },
+        "extensions": [],
+        "transferReadiness": {
+          "verdict": "ready",
+          "knownBlock": false,
+          "unknownChecks": false,
+          "reasons": [
+            {
+              "verdict": "ready",
+              "check": "No restrictive controls observed",
+              "detail": "No extension or account state was found that would block a transfer. This describes observed state only and is not a counterparty or legal guarantee."
+            }
+          ],
+          "disclaimer": "Transfer readiness describes observed on-chain state only. It is not legal advice and not a guarantee that a transfer will succeed or be permitted."
+        },
+        "registry": {
+          "issuer": "Ondo Finance",
+          "assetClass": "Tokenized Treasury-linked note",
+          "documentationUrl": "https://docs.ondo.finance/addresses",
+          "source": "https://docs.ondo.finance/addresses",
+          "fetchedAt": "2026-09-19T17:56:59.352Z",
+          "stale": false
+        },
+        "provenance": {
+          "mode": "live",
+          "cluster": "mainnet-beta",
+          "rpcProvider": "api.mainnet-beta.solana.com",
+          "fetchedAt": "2026-09-19T18:04:47.271Z",
+          "slot": "448483260",
+          "commitment": "confirmed",
+          "decoderVersion": "@solana-program/token-2022@0.17.0+rwa-lens.2",
+          "timeSource": "chain",
+          "clockTimestamp": "2026-09-19T18:04:49.000Z",
+          "clockSlot": "448483261",
+          "observedTimestamp": "2026-09-19T18:04:49.000Z",
+          "slotSpread": "1",
+          "sources": [
+            {
+              "label": "Mint account",
+              "method": "getAccountInfo",
+              "status": "ok",
+              "detail": "owner TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+              "slot": "448483260",
+              "commitment": "confirmed"
+            },
+            {
+              "label": "Mint decoder",
+              "method": "getMintDecoder + getExtensionDecoder",
+              "status": "ok",
+              "slot": "448483260"
+            },
+            {
+              "label": "Clock sysvar",
+              "method": "getAccountInfo(Clock)",
+              "status": "ok",
+              "detail": "unixTimestamp 1789841089; Clock.slot 448483261",
+              "slot": "448483261",
+              "commitment": "confirmed"
+            }
+          ]
+        },
+        "warnings": [
+          "This is a legacy SPL mint. Token-2022 extensions do not apply."
+        ],
+        "limitations": [
+          "Public inspection performs no on-chain writes. Optional report sign-in uses a wallet message only.",
+          "Raw units use exact integer arithmetic. Scaled display uses the official floating-point helper.",
+          "Issuer metadata is descriptive only, not proof of reserves, compliance or legal transferability.",
+          "RPC reads are not atomic. minContextSlot bounds staleness; it does not create a snapshot. The standard owner RPC has no pagination or proof of provider completeness."
+        ]
+      }
+    },
+    {
+      "label": "Declared public owner (observed mint authority)",
+      "request": {
+        "mode": "live",
+        "cluster": "mainnet-beta",
+        "mint": "A1KLoBrKBde8Ty9qtNQUtq3C2ortoC3u7twggz7sEto6",
+        "owner": "8n2uiRUd1A9NN78PKESkJe6k6zMqtKCZh3MrK1j9qkB1"
+      },
+      "httpStatus": 200,
+      "result": {
+        "status": "partial",
+        "mode": "live",
+        "balanceStatus": "partial",
+        "identity": {
+          "mint": "A1KLoBrKBde8Ty9qtNQUtq3C2ortoC3u7twggz7sEto6",
+          "tokenProgram": "spl-token",
+          "tokenProgramAddress": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+          "decimals": 6,
+          "supply": "157215235713925",
+          "mintAuthority": "8n2uiRUd1A9NN78PKESkJe6k6zMqtKCZh3MrK1j9qkB1",
+          "freezeAuthority": "51QVCuHfL1FeNjd8BDeffCKhCcAYoULnVB3yjNhShiuK",
+          "isInitialized": true
+        },
+        "balances": {
+          "owner": "8n2uiRUd1A9NN78PKESkJe6k6zMqtKCZh3MrK1j9qkB1",
+          "accounts": [],
+          "complete": false,
+          "accountLimit": 100,
+          "totalRawAmount": "0",
+          "display": {
+            "rawAmount": "0",
+            "standardUiAmount": "0",
+            "boundary": "none",
+            "rounding": "exact-decimal",
+            "note": "No Scaled UI Amount extension. The displayed amount is the raw amount divided by 10^decimals, computed exactly."
+          }
+        },
+        "extensions": [],
+        "transferReadiness": {
+          "verdict": "unknown",
+          "knownBlock": false,
+          "unknownChecks": true,
+          "reasons": [
+            {
+              "verdict": "unknown",
+              "check": "Incomplete owner observation",
+              "detail": "Some owner accounts or their state could not be validated. Readiness is not established for the omitted accounts."
+            }
+          ],
+          "disclaimer": "Transfer readiness describes observed on-chain state only. It is not legal advice and not a guarantee that a transfer will succeed or be permitted."
+        },
+        "registry": {
+          "issuer": "Ondo Finance",
+          "assetClass": "Tokenized Treasury-linked note",
+          "documentationUrl": "https://docs.ondo.finance/addresses",
+          "source": "https://docs.ondo.finance/addresses",
+          "fetchedAt": "2026-09-19T17:56:59.352Z",
+          "stale": false
+        },
+        "provenance": {
+          "mode": "live",
+          "cluster": "mainnet-beta",
+          "rpcProvider": "api.mainnet-beta.solana.com",
+          "fetchedAt": "2026-09-19T18:04:48.065Z",
+          "slot": "448483262",
+          "commitment": "confirmed",
+          "decoderVersion": "@solana-program/token-2022@0.17.0+rwa-lens.2",
+          "timeSource": "chain",
+          "clockTimestamp": "2026-09-19T18:04:49.000Z",
+          "clockSlot": "448483263",
+          "observedTimestamp": "2026-09-19T18:04:49.000Z",
+          "slotSpread": "4",
+          "sources": [
+            {
+              "label": "Mint account",
+              "method": "getAccountInfo",
+              "status": "ok",
+              "detail": "owner TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+              "slot": "448483262",
+              "commitment": "confirmed"
+            },
+            {
+              "label": "Mint decoder",
+              "method": "getMintDecoder + getExtensionDecoder",
+              "status": "ok",
+              "slot": "448483262"
+            },
+            {
+              "label": "Clock sysvar",
+              "method": "getAccountInfo(Clock)",
+              "status": "ok",
+              "detail": "unixTimestamp 1789841089; Clock.slot 448483263",
+              "slot": "448483263",
+              "commitment": "confirmed"
+            },
+            {
+              "label": "Owner token accounts",
+              "method": "getTokenAccountsByOwner",
+              "status": "ok",
+              "detail": "0 validated unique account(s); mint filter; token program TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+              "slot": "448483266",
+              "commitment": "confirmed"
+            }
+          ]
+        },
+        "warnings": [
+          "This is a legacy SPL mint. Token-2022 extensions do not apply.",
+          "Mint and owner accounts were read at different slots. The aggregate is a mixed-slot observation, not an atomic snapshot."
+        ],
+        "limitations": [
+          "Public inspection performs no on-chain writes. Optional report sign-in uses a wallet message only.",
+          "Raw units use exact integer arithmetic. Scaled display uses the official floating-point helper.",
+          "Issuer metadata is descriptive only, not proof of reserves, compliance or legal transferability.",
+          "RPC reads are not atomic. minContextSlot bounds staleness; it does not create a snapshot. The standard owner RPC has no pagination or proof of provider completeness."
+        ]
+      }
+    },
+    {
+      "label": "Synthetic treasury: before",
+      "request": {
+        "mode": "fixture",
+        "fixtureId": "treasury-scaled",
+        "scenario": "before"
+      },
+      "httpStatus": 200,
+      "result": {
+        "status": "verified",
+        "mode": "fixture",
+        "balanceStatus": "observed",
+        "identity": {
+          "mint": "RWALensFixtureTreasury1111111111111111111",
+          "tokenProgram": "token-2022",
+          "tokenProgramAddress": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+          "decimals": 6,
+          "supply": "5000000000000",
+          "mintAuthority": "RWALensFixtureEmitter11111111111111111111",
+          "freezeAuthority": "RWALensFixtureEmitter11111111111111111111",
+          "isInitialized": true,
+          "metadata": {
+            "name": "Fixture Treasury Receipt",
+            "symbol": "fTRSY",
+            "uriFetch": "skipped"
+          }
+        },
+        "balances": {
+          "owner": "RWALensFixtureBearer111111111111111111111",
+          "accounts": [
+            {
+              "tokenAccount": "RWALensFixtureAta11111111111111111111111",
+              "owner": "RWALensFixtureBearer111111111111111111111",
+              "rawAmount": "1000000000",
+              "decimals": 6,
+              "state": "initialized",
+              "extensions": []
+            }
+          ],
+          "complete": true,
+          "totalRawAmount": "1000000000",
+          "display": {
+            "rawAmount": "1000000000",
+            "standardUiAmount": "1000",
+            "extensionUiAmount": "1042.35",
+            "multiplier": "1.04235",
+            "pendingMultiplier": "1.05114",
+            "effectiveAt": "2026-10-01T00:00:00.000Z",
+            "boundary": "before",
+            "rounding": "official-helper",
+            "note": "Converted with the official Token-2022 display helper, which uses floating-point arithmetic. Treat the displayed value as a display amount, not an exact accounting figure. The raw base units above are exact."
+          }
+        },
+        "extensions": [
+          {
+            "kind": "ScaledUiAmountConfig",
+            "scope": "mint",
+            "severity": "attention",
+            "impact": "Your balance is a raw amount multiplied by an issuer-controlled number. Yield is applied by changing that multiplier, not by moving tokens.",
+            "authorities": [
+              {
+                "role": "Multiplier authority",
+                "address": "RWALensFixtureEmitter11111111111111111111"
+              }
+            ],
+            "fields": [
+              {
+                "label": "Current multiplier",
+                "value": "1.04235"
+              },
+              {
+                "label": "Pending multiplier",
+                "value": "1.05114"
+              },
+              {
+                "label": "Effective at",
+                "value": "2026-10-01T00:00:00.000Z"
+              }
+            ],
+            "calculationUnavailable": false
+          },
+          {
+            "kind": "PermanentDelegate",
+            "scope": "mint",
+            "severity": "attention",
+            "impact": "This address can transfer or burn your tokens without your signature, and you cannot revoke it.",
+            "authorities": [
+              {
+                "role": "Permanent delegate",
+                "address": "RWALensFixtureEmitter11111111111111111111"
+              }
+            ],
+            "fields": [],
+            "calculationUnavailable": false
+          },
+          {
+            "kind": "DefaultAccountState",
+            "scope": "mint",
+            "severity": "attention",
+            "impact": "New token accounts arrive frozen until an authority thaws them.",
+            "authorities": [],
+            "fields": [
+              {
+                "label": "Default state",
+                "value": "Frozen"
+              }
+            ],
+            "calculationUnavailable": false
+          }
+        ],
+        "transferReadiness": {
+          "verdict": "attention",
+          "reasons": [
+            {
+              "verdict": "attention",
+              "check": "Default account state",
+              "detail": "New holders receive a frozen account and cannot move the token until an authority thaws it.",
+              "evidence": "DefaultAccountState = Frozen"
+            },
+            {
+              "verdict": "attention",
+              "check": "Permanent delegate",
+              "detail": "The issuer can move or burn the token without the holder’s signature.",
+              "evidence": "Permanent delegate: RWALensFixtureEmitter11111111111111111111"
+            }
+          ],
+          "disclaimer": "Transfer readiness describes observed on-chain state only. It is not legal advice and not a guarantee that a transfer will succeed or be permitted."
+        },
+        "registry": null,
+        "provenance": {
+          "mode": "fixture",
+          "cluster": "devnet",
+          "rpcProvider": "fixture",
+          "fetchedAt": "2026-09-16T00:00:00.000Z",
+          "slot": "300000000",
+          "blockTime": "2026-09-16T00:00:00.000Z",
+          "commitment": "finalized",
+          "decoderVersion": "@solana-program/token-2022@0.17.0+rwa-lens.2",
+          "timeSource": "fixture",
+          "observedTimestamp": "2026-09-16T00:00:00.000Z",
+          "sources": [
+            {
+              "label": "Fixture",
+              "method": "fixture",
+              "status": "ok",
+              "detail": "Illustrative fixture. Not a real issuer, mint or balance."
+            }
+          ]
+        },
+        "warnings": [
+          "Illustrative fixture. Not a real issuer, mint or balance."
+        ],
+        "limitations": [
+          "Fixture data. No RPC call was made.",
+          "Scaled amounts use the official floating-point helper and are display values."
+        ]
+      }
+    },
+    {
+      "label": "Synthetic treasury: at",
+      "request": {
+        "mode": "fixture",
+        "fixtureId": "treasury-scaled",
+        "scenario": "at"
+      },
+      "httpStatus": 200,
+      "result": {
+        "status": "verified",
+        "mode": "fixture",
+        "balanceStatus": "observed",
+        "identity": {
+          "mint": "RWALensFixtureTreasury1111111111111111111",
+          "tokenProgram": "token-2022",
+          "tokenProgramAddress": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+          "decimals": 6,
+          "supply": "5000000000000",
+          "mintAuthority": "RWALensFixtureEmitter11111111111111111111",
+          "freezeAuthority": "RWALensFixtureEmitter11111111111111111111",
+          "isInitialized": true,
+          "metadata": {
+            "name": "Fixture Treasury Receipt",
+            "symbol": "fTRSY",
+            "uriFetch": "skipped"
+          }
+        },
+        "balances": {
+          "owner": "RWALensFixtureBearer111111111111111111111",
+          "accounts": [
+            {
+              "tokenAccount": "RWALensFixtureAta11111111111111111111111",
+              "owner": "RWALensFixtureBearer111111111111111111111",
+              "rawAmount": "1000000000",
+              "decimals": 6,
+              "state": "initialized",
+              "extensions": []
+            }
+          ],
+          "complete": true,
+          "totalRawAmount": "1000000000",
+          "display": {
+            "rawAmount": "1000000000",
+            "standardUiAmount": "1000",
+            "extensionUiAmount": "1051.14",
+            "multiplier": "1.05114",
+            "pendingMultiplier": "1.05114",
+            "effectiveAt": "2026-10-01T00:00:00.000Z",
+            "boundary": "at",
+            "rounding": "official-helper",
+            "note": "Converted with the official Token-2022 display helper, which uses floating-point arithmetic. Treat the displayed value as a display amount, not an exact accounting figure. The raw base units above are exact."
+          }
+        },
+        "extensions": [
+          {
+            "kind": "ScaledUiAmountConfig",
+            "scope": "mint",
+            "severity": "attention",
+            "impact": "Your balance is a raw amount multiplied by an issuer-controlled number. Yield is applied by changing that multiplier, not by moving tokens.",
+            "authorities": [
+              {
+                "role": "Multiplier authority",
+                "address": "RWALensFixtureEmitter11111111111111111111"
+              }
+            ],
+            "fields": [
+              {
+                "label": "Current multiplier",
+                "value": "1.04235"
+              },
+              {
+                "label": "Pending multiplier",
+                "value": "1.05114"
+              },
+              {
+                "label": "Effective at",
+                "value": "2026-10-01T00:00:00.000Z"
+              }
+            ],
+            "calculationUnavailable": false
+          },
+          {
+            "kind": "PermanentDelegate",
+            "scope": "mint",
+            "severity": "attention",
+            "impact": "This address can transfer or burn your tokens without your signature, and you cannot revoke it.",
+            "authorities": [
+              {
+                "role": "Permanent delegate",
+                "address": "RWALensFixtureEmitter11111111111111111111"
+              }
+            ],
+            "fields": [],
+            "calculationUnavailable": false
+          },
+          {
+            "kind": "DefaultAccountState",
+            "scope": "mint",
+            "severity": "attention",
+            "impact": "New token accounts arrive frozen until an authority thaws them.",
+            "authorities": [],
+            "fields": [
+              {
+                "label": "Default state",
+                "value": "Frozen"
+              }
+            ],
+            "calculationUnavailable": false
+          }
+        ],
+        "transferReadiness": {
+          "verdict": "attention",
+          "reasons": [
+            {
+              "verdict": "attention",
+              "check": "Default account state",
+              "detail": "New holders receive a frozen account and cannot move the token until an authority thaws it.",
+              "evidence": "DefaultAccountState = Frozen"
+            },
+            {
+              "verdict": "attention",
+              "check": "Permanent delegate",
+              "detail": "The issuer can move or burn the token without the holder’s signature.",
+              "evidence": "Permanent delegate: RWALensFixtureEmitter11111111111111111111"
+            }
+          ],
+          "disclaimer": "Transfer readiness describes observed on-chain state only. It is not legal advice and not a guarantee that a transfer will succeed or be permitted."
+        },
+        "registry": null,
+        "provenance": {
+          "mode": "fixture",
+          "cluster": "devnet",
+          "rpcProvider": "fixture",
+          "fetchedAt": "2026-09-16T00:00:00.000Z",
+          "slot": "300000000",
+          "blockTime": "2026-10-01T00:00:00.000Z",
+          "commitment": "finalized",
+          "decoderVersion": "@solana-program/token-2022@0.17.0+rwa-lens.2",
+          "timeSource": "fixture",
+          "observedTimestamp": "2026-10-01T00:00:00.000Z",
+          "sources": [
+            {
+              "label": "Fixture",
+              "method": "fixture",
+              "status": "ok",
+              "detail": "Illustrative fixture. Not a real issuer, mint or balance."
+            }
+          ]
+        },
+        "warnings": [
+          "Illustrative fixture. Not a real issuer, mint or balance."
+        ],
+        "limitations": [
+          "Fixture data. No RPC call was made.",
+          "Scaled amounts use the official floating-point helper and are display values."
+        ]
+      }
+    },
+    {
+      "label": "Synthetic treasury: after",
+      "request": {
+        "mode": "fixture",
+        "fixtureId": "treasury-scaled",
+        "scenario": "after"
+      },
+      "httpStatus": 200,
+      "result": {
+        "status": "verified",
+        "mode": "fixture",
+        "balanceStatus": "observed",
+        "identity": {
+          "mint": "RWALensFixtureTreasury1111111111111111111",
+          "tokenProgram": "token-2022",
+          "tokenProgramAddress": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+          "decimals": 6,
+          "supply": "5000000000000",
+          "mintAuthority": "RWALensFixtureEmitter11111111111111111111",
+          "freezeAuthority": "RWALensFixtureEmitter11111111111111111111",
+          "isInitialized": true,
+          "metadata": {
+            "name": "Fixture Treasury Receipt",
+            "symbol": "fTRSY",
+            "uriFetch": "skipped"
+          }
+        },
+        "balances": {
+          "owner": "RWALensFixtureBearer111111111111111111111",
+          "accounts": [
+            {
+              "tokenAccount": "RWALensFixtureAta11111111111111111111111",
+              "owner": "RWALensFixtureBearer111111111111111111111",
+              "rawAmount": "1000000000",
+              "decimals": 6,
+              "state": "initialized",
+              "extensions": []
+            }
+          ],
+          "complete": true,
+          "totalRawAmount": "1000000000",
+          "display": {
+            "rawAmount": "1000000000",
+            "standardUiAmount": "1000",
+            "extensionUiAmount": "1051.14",
+            "multiplier": "1.05114",
+            "pendingMultiplier": "1.05114",
+            "effectiveAt": "2026-10-01T00:00:00.000Z",
+            "boundary": "after",
+            "rounding": "official-helper",
+            "note": "Converted with the official Token-2022 display helper, which uses floating-point arithmetic. Treat the displayed value as a display amount, not an exact accounting figure. The raw base units above are exact."
+          }
+        },
+        "extensions": [
+          {
+            "kind": "ScaledUiAmountConfig",
+            "scope": "mint",
+            "severity": "attention",
+            "impact": "Your balance is a raw amount multiplied by an issuer-controlled number. Yield is applied by changing that multiplier, not by moving tokens.",
+            "authorities": [
+              {
+                "role": "Multiplier authority",
+                "address": "RWALensFixtureEmitter11111111111111111111"
+              }
+            ],
+            "fields": [
+              {
+                "label": "Current multiplier",
+                "value": "1.04235"
+              },
+              {
+                "label": "Pending multiplier",
+                "value": "1.05114"
+              },
+              {
+                "label": "Effective at",
+                "value": "2026-10-01T00:00:00.000Z"
+              }
+            ],
+            "calculationUnavailable": false
+          },
+          {
+            "kind": "PermanentDelegate",
+            "scope": "mint",
+            "severity": "attention",
+            "impact": "This address can transfer or burn your tokens without your signature, and you cannot revoke it.",
+            "authorities": [
+              {
+                "role": "Permanent delegate",
+                "address": "RWALensFixtureEmitter11111111111111111111"
+              }
+            ],
+            "fields": [],
+            "calculationUnavailable": false
+          },
+          {
+            "kind": "DefaultAccountState",
+            "scope": "mint",
+            "severity": "attention",
+            "impact": "New token accounts arrive frozen until an authority thaws them.",
+            "authorities": [],
+            "fields": [
+              {
+                "label": "Default state",
+                "value": "Frozen"
+              }
+            ],
+            "calculationUnavailable": false
+          }
+        ],
+        "transferReadiness": {
+          "verdict": "attention",
+          "reasons": [
+            {
+              "verdict": "attention",
+              "check": "Default account state",
+              "detail": "New holders receive a frozen account and cannot move the token until an authority thaws it.",
+              "evidence": "DefaultAccountState = Frozen"
+            },
+            {
+              "verdict": "attention",
+              "check": "Permanent delegate",
+              "detail": "The issuer can move or burn the token without the holder’s signature.",
+              "evidence": "Permanent delegate: RWALensFixtureEmitter11111111111111111111"
+            }
+          ],
+          "disclaimer": "Transfer readiness describes observed on-chain state only. It is not legal advice and not a guarantee that a transfer will succeed or be permitted."
+        },
+        "registry": null,
+        "provenance": {
+          "mode": "fixture",
+          "cluster": "devnet",
+          "rpcProvider": "fixture",
+          "fetchedAt": "2026-09-16T00:00:00.000Z",
+          "slot": "300000000",
+          "blockTime": "2026-10-01T00:00:01.000Z",
+          "commitment": "finalized",
+          "decoderVersion": "@solana-program/token-2022@0.17.0+rwa-lens.2",
+          "timeSource": "fixture",
+          "observedTimestamp": "2026-10-01T00:00:01.000Z",
+          "sources": [
+            {
+              "label": "Fixture",
+              "method": "fixture",
+              "status": "ok",
+              "detail": "Illustrative fixture. Not a real issuer, mint or balance."
+            }
+          ]
+        },
+        "warnings": [
+          "Illustrative fixture. Not a real issuer, mint or balance."
+        ],
+        "limitations": [
+          "Fixture data. No RPC call was made.",
+          "Scaled amounts use the official floating-point helper and are display values."
+        ]
+      }
+    }
+  ]
+}

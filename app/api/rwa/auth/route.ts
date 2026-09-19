@@ -1,96 +1,56 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
+import { randomBytes } from 'node:crypto';
 import { z } from 'zod';
-import bs58 from 'bs58';
-import nacl from 'tweetnacl';
 import { addressSchema } from '@/lib/rwa/schema';
 import { rateLimit } from '@/lib/server/rwa/rate-limit';
+import { readBoundedJson } from '@/lib/server/rwa/http';
 import {
-  SESSION_COOKIE,
-  SESSION_COOKIE_OPTIONS,
-  consumeNonce,
-  createSessionToken,
-  issueNonce,
-  sessionsConfigured,
-  signInMessage,
+  SESSION_COOKIE, SESSION_COOKIE_OPTIONS, CHALLENGE_COOKIE, CHALLENGE_COOKIE_OPTIONS,
+  consumeNonce, createSessionToken, issueNonce, sessionsConfigured, hasExactOrigin, verifyChallenge,
 } from '@/lib/server/rwa/session';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const challengeSchema = z.object({ action: z.literal('challenge'), address: addressSchema });
-const verifySchema = z.object({
-  action: z.literal('verify'),
-  address: addressSchema,
-  nonce: z.string().trim().max(128),
-  signature: z.string().trim().max(200),
-});
-const signOutSchema = z.object({ action: z.literal('sign-out') });
-
-const bodySchema = z.union([challengeSchema, verifySchema, signOutSchema]);
+const bodySchema = z.discriminatedUnion('action', [
+  z.object({ action: z.literal('challenge'), address: addressSchema }).strict(),
+  z.object({ action: z.literal('verify'), address: addressSchema, nonce: z.string().regex(/^[A-Za-z0-9_-]{32}$/), signature: z.string().min(64).max(100) }).strict(),
+  z.object({ action: z.literal('sign-out') }).strict(),
+]);
 
 export async function POST(request: Request) {
-  if (!(await rateLimit(request, 'reports')).ok) {
-    return NextResponse.json({ state: 'unavailable', message: 'Too many requests.' }, { status: 429 });
-  }
-  if (!sessionsConfigured()) {
-    return NextResponse.json(
-      {
-        state: 'feature-disabled',
-        message: 'Wallet sign-in is not enabled on this deployment. Inspection and export need no account.',
-      },
-      { status: 503 },
-    );
-  }
-
+  if (!sessionsConfigured()) return NextResponse.json({ state: 'feature-disabled', message: 'Wallet sign-in is not enabled. Inspection and export need no account.' }, { status: 503 });
+  if (!hasExactOrigin(request)) return NextResponse.json({ state: 'invalid', message: 'Sign-in requires this site’s exact origin.' }, { status: 403 });
+  const limited = await rateLimit(request, 'auth');
+  if (!limited.ok) return NextResponse.json({ state: 'unavailable', message: limited.source === 'unavailable' ? 'Sign-in storage is unavailable. Try again later.' : 'Too many requests.' }, { status: limited.source === 'unavailable' ? 503 : 429, headers: { 'retry-after': String(limited.retryAfterSeconds) } });
   let raw: unknown;
-  try {
-    raw = await request.json();
-  } catch {
-    return NextResponse.json({ state: 'invalid', message: 'Send a JSON body.' }, { status: 400 });
-  }
-
+  try { raw = await readBoundedJson(request); }
+  catch { return NextResponse.json({ state: 'invalid', message: 'Send a small JSON body.' }, { status: 400 }); }
   const parsed = bodySchema.safeParse(raw);
   if (!parsed.success) return NextResponse.json({ state: 'invalid', message: 'Unsupported request.' }, { status: 400 });
-
+  const store = await cookies();
   if (parsed.data.action === 'sign-out') {
-    const store = await cookies();
-    store.delete(SESSION_COOKIE);
+    store.delete(SESSION_COOKIE); store.delete(CHALLENGE_COOKIE);
     return NextResponse.json({ state: 'signed-out' });
   }
-
-  if (parsed.data.action === 'challenge') {
-    return NextResponse.json({ state: 'challenge', ...issueNonce(parsed.data.address) });
-  }
-
-  const { address, nonce, signature } = parsed.data;
-  // Single use: a replayed nonce finds nothing, so a captured signature is dead.
-  if (!consumeNonce(nonce, address)) {
-    return NextResponse.json({ state: 'invalid', message: 'That sign-in challenge has expired. Try again.' }, { status: 400 });
-  }
-
-  let verified = false;
   try {
-    verified = nacl.sign.detached.verify(
-      new TextEncoder().encode(signInMessage(address, nonce)),
-      bs58.decode(signature),
-      bs58.decode(address),
-    );
+    if (parsed.data.action === 'challenge') {
+      const browserToken = randomBytes(32).toString('base64url');
+      const challenge = await issueNonce(parsed.data.address, browserToken);
+      store.set(CHALLENGE_COOKIE, browserToken, CHALLENGE_COOKIE_OPTIONS);
+      return NextResponse.json({ state: 'challenge', ...challenge }, { headers: { 'cache-control': 'no-store' } });
+    }
+    const { address, nonce, signature } = parsed.data;
+    const challenge = await consumeNonce(nonce, address, store.get(CHALLENGE_COOKIE)?.value ?? '');
+    store.delete(CHALLENGE_COOKIE);
+    if (!challenge) return NextResponse.json({ state: 'invalid', message: 'That sign-in challenge expired or did not match this browser. Try again.' }, { status: 400 });
+    if (!verifyChallenge(challenge, signature)) return NextResponse.json({ state: 'invalid', message: 'That signature did not match the address.' }, { status: 401 });
+    const token = createSessionToken(address);
+    if (!token) return NextResponse.json({ state: 'feature-disabled' }, { status: 503 });
+    store.set(SESSION_COOKIE, token, SESSION_COOKIE_OPTIONS);
+    return NextResponse.json({ state: 'signed-in', address }, { headers: { 'cache-control': 'no-store' } });
   } catch {
-    verified = false;
+    return NextResponse.json({ state: 'unavailable', message: 'Sign-in storage is unavailable. No session was created. Try again later.' }, { status: 503 });
   }
-
-  // A failed signature never degrades into a session.
-  if (!verified) {
-    return NextResponse.json({ state: 'invalid', message: 'That signature did not match the address.' }, { status: 401 });
-  }
-
-  const token = createSessionToken(address);
-  if (!token) {
-    return NextResponse.json({ state: 'feature-disabled' }, { status: 503 });
-  }
-
-  const store = await cookies();
-  store.set(SESSION_COOKIE, token, SESSION_COOKIE_OPTIONS);
-  return NextResponse.json({ state: 'signed-in', address });
 }

@@ -25,11 +25,11 @@ type Definition = {
 };
 
 const address = (value: unknown): string | undefined => {
-  if (typeof value === 'string') return value;
+  if (typeof value === 'string') return value === NONE_ADDRESS ? undefined : value;
   // @solana/kit represents Option<Address> as { __option, value }.
   if (value && typeof value === 'object') {
     const option = value as { __option?: string; value?: unknown };
-    if (option.__option === 'Some' && typeof option.value === 'string') return option.value;
+    if (option.__option === 'Some' && typeof option.value === 'string') return option.value === NONE_ADDRESS ? undefined : option.value;
   }
   return undefined;
 };
@@ -68,10 +68,11 @@ const text = (value: unknown): string => {
 };
 
 const timestamp = (value: unknown): string => {
-  const seconds = typeof value === 'bigint' ? value : typeof value === 'number' ? BigInt(Math.trunc(value)) : null;
+  const seconds = typeof value === 'bigint' ? value : typeof value === 'number' && Number.isFinite(value) ? BigInt(Math.trunc(value)) : null;
   if (seconds === null) return 'unavailable';
-  if (seconds === 0n) return 'not scheduled';
-  return new Date(Number(seconds) * 1000).toISOString();
+  if (seconds === 0n) return 'Immediately effective (Unix timestamp 0)';
+  const date = new Date(Number(seconds) * 1000);
+  return Number.isFinite(date.getTime()) ? date.toISOString() : 'unavailable';
 };
 
 export const EXTENSION_DEFINITIONS: Record<string, Definition> = {
@@ -79,14 +80,14 @@ export const EXTENSION_DEFINITIONS: Record<string, Definition> = {
     scope: 'mint',
     severity: 'attention',
     impact:
-      'Your balance is a raw amount multiplied by an issuer-controlled number. Yield or losses are applied by changing that multiplier, not by moving tokens, so the displayed amount changes without any transfer appearing in your history.',
+      'Your balance is a raw amount multiplied by an issuer-controlled number. A multiplier update changes display conversion without moving raw tokens; it does not prove yield or investment performance.',
     authorities: ext => {
       const authority = address(ext.authority);
       return authority ? [{ role: 'Multiplier authority', address: authority }] : [];
     },
     fields: ext => [
-      { label: 'Current multiplier', value: text(ext.multiplier) },
-      { label: 'Pending multiplier', value: text(ext.newMultiplier) },
+      { label: 'Stored prior multiplier', value: text(ext.multiplier) },
+      { label: 'Scheduled multiplier', value: text(ext.newMultiplier) },
       { label: 'Effective at', value: timestamp(ext.newMultiplierEffectiveTimestamp) },
     ],
   },
@@ -109,7 +110,7 @@ export const EXTENSION_DEFINITIONS: Record<string, Definition> = {
     scope: 'mint',
     severity: 'attention',
     impact:
-      'A program runs on every transfer and can reject it. This is how issuers gate transfers to approved holders. Whether any particular transfer succeeds depends on that program, which this tool does not execute.',
+      'A program runs on every transfer and can reject it. Its conditions are program-specific and are not evaluated here. Whether any particular transfer succeeds depends on that program, which this tool does not execute.',
     inactive: ext => address(ext.programId) === undefined || address(ext.programId) === NONE_ADDRESS,
     inactiveImpact:
       'The transfer-hook extension is present but no hook program is set, so no extra program runs on transfer today. The authority below can set one later.',
@@ -131,6 +132,8 @@ export const EXTENSION_DEFINITIONS: Record<string, Definition> = {
   PermanentDelegate: {
     scope: 'mint',
     severity: 'attention',
+    inactive: ext => address(ext.delegate) === undefined,
+    inactiveImpact: 'No permanent delegate is configured. This extension does not currently grant a mint-level transfer or burn delegate.',
     impact:
       'This address can transfer or burn your tokens without your signature, and you cannot revoke it. Issuers use it for clawback and forced redemption. Treat it as a custodial control.',
     authorities: ext => {
@@ -172,12 +175,15 @@ export const EXTENSION_DEFINITIONS: Record<string, Definition> = {
       { label: 'Withheld amount', value: text(ext.withheldAmount) },
       { label: 'Older fee (bps)', value: text((ext.olderTransferFee as ExtensionLike)?.transferFeeBasisPoints) },
       { label: 'Newer fee (bps)', value: text((ext.newerTransferFee as ExtensionLike)?.transferFeeBasisPoints) },
+      { label: 'Older fee epoch', value: text((ext.olderTransferFee as ExtensionLike)?.epoch) },
+      { label: 'Newer fee epoch', value: text((ext.newerTransferFee as ExtensionLike)?.epoch) },
+      { label: 'Newer maximum fee', value: text((ext.newerTransferFee as ExtensionLike)?.maximumFee) },
     ],
   },
   TransferFeeAmount: {
     scope: 'account',
     severity: 'info',
-    impact: 'Fees withheld on this account, waiting to be harvested to the mint.',
+    impact: 'Previously withheld fees, reported separately from spendable public units. No new fee is applied for holding and these units are not subtracted again.',
     fields: ext => [{ label: 'Withheld amount', value: text(ext.withheldAmount) }],
   },
   MintCloseAuthority: {
@@ -270,14 +276,14 @@ export const EXTENSION_DEFINITIONS: Record<string, Definition> = {
     severity: 'opaque',
     calculationUnavailable: true,
     impact:
-      'Balances and amounts can be encrypted. Any confidential portion is unknown to this tool — unknown, never zero.',
+      'The mint supports confidential transfers. This capability alone does not prove any holder has an encrypted balance. Account-level encrypted amounts, if present, remain unknown.',
   },
   ConfidentialTransferAccount: {
     scope: 'account',
     severity: 'opaque',
     calculationUnavailable: true,
     impact:
-      'This account holds an encrypted balance. The amount shown here covers only the public portion; the confidential portion is unknown.',
+      'This account supports encrypted balances; this does not prove a nonzero encrypted amount. The amount shown here covers only the public portion; the confidential portion is unknown.',
   },
   ConfidentialTransferFee: {
     scope: 'mint',
@@ -316,7 +322,8 @@ export function describeExtension(raw: unknown, fallbackScope: ExtensionScope): 
       severity: 'opaque',
       impact: UNKNOWN_IMPACT,
       authorities: [],
-      fields: [{ label: 'Variant', value: kind }],
+      fields: [{ label: 'Variant', value: kind }, ...(typeof ext.byteLength === 'number' ? [{ label: 'Byte length', value: String(ext.byteLength) }] : [])],
+      byteLength: typeof ext.byteLength === 'number' ? ext.byteLength : undefined,
       calculationUnavailable: true,
     };
   }

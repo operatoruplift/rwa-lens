@@ -6,16 +6,14 @@ const inter = Inter({ variable: '--font-inter', subsets: ['latin'], display: 'sw
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://rwalensonsolana.vercel.app'),
-  alternates: { canonical: '/rwa' },
+  alternates: { canonical: '/' },
   title: 'RWA Lens — know what your real-world token means',
-  description:
-    'Inspect a Solana Token-2022 mint: what the token is, what a holder balance really means right now, and which on-chain controls affect whether it can move. Read-only.',
+  description: 'Inspect Solana tokens, reconcile raw and displayed balances, and understand on-chain controls. Public, read-only inspection for real-world assets.',
+  openGraph: { title: 'RWA Lens — the token behind the asset', description: 'Identity. Balance. Controls. One clear view of a Solana token.', type: 'website', siteName: 'RWA Lens', images: [{ url: '/brand/social-card.png', width: 1200, height: 630 }] },
+  twitter: { card: 'summary_large_image', title: 'RWA Lens — the token behind the asset', images: ['/brand/social-card.png'] },
+  icons: { icon: '/icon.svg', apple: '/apple-icon.png' },
 };
 
 export default function RootLayout({ children }: LayoutProps<'/'>) {
-  return (
-    <html lang="en" className={`${inter.variable} h-full antialiased`}>
-      <body className="min-h-full flex flex-col bg-canvas text-navy">{children}</body>
-    </html>
-  );
+  return <html lang="en" className={`${inter.variable} h-full antialiased`}><body>{children}</body></html>;
 }

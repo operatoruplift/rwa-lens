@@ -27,9 +27,13 @@ export type ProvenanceSource = {
   method: string;
   status: SourceStatus;
   detail?: string;
+  slot?: string;
+  blockTime?: string;
+  commitment?: Commitment;
 };
 
 export type Provenance = {
+  mode: 'live' | 'fixture' | 'recorded';
   cluster: Cluster;
   rpcProvider: string;
   fetchedAt: string;
@@ -38,8 +42,12 @@ export type Provenance = {
   commitment: Commitment;
   decoderVersion: string;
   cacheAgeMs?: number;
-  /** 'chain' when block time was observed; 'local-estimate' is a warning state. */
-  timeSource: 'chain' | 'local-estimate' | 'fixture';
+  /** 'chain' means the Clock sysvar was decoded at clockSlot. */
+  timeSource: 'chain' | 'block-time-estimate' | 'local-estimate' | 'fixture';
+  clockTimestamp?: string;
+  clockSlot?: string;
+  observedTimestamp?: string;
+  slotSpread?: string;
   sources: ProvenanceSource[];
 };
 
@@ -84,7 +92,7 @@ export type DisplayBalance = {
   pendingMultiplier?: string;
   effectiveAt?: string;
   /** Where the observation sits relative to a scheduled multiplier change. */
-  boundary?: 'before' | 'at' | 'after' | 'none';
+  boundary?: 'before' | 'at' | 'after' | 'none' | 'unknown';
   rounding: Rounding;
   note?: string;
 };
@@ -130,6 +138,8 @@ export type ReadinessReason = {
 
 export type TransferReadiness = {
   verdict: ReadinessVerdict;
+  knownBlock?: boolean;
+  unknownChecks?: boolean;
   reasons: ReadinessReason[];
   /** Always present. Readiness is an explanation, not an authorisation. */
   disclaimer: string;
@@ -147,15 +157,14 @@ export type RegistryAsset = {
   stale?: boolean;
 };
 
-export type InspectRequest = {
-  cluster: Cluster;
-  mint: string;
-  owner?: string;
-  fixtureId?: string;
-};
+export type InspectRequest =
+  | { mode: 'live'; cluster: Cluster; mint: string; owner?: string }
+  | { mode: 'fixture'; fixtureId: 'treasury-scaled' | 'credit-hooked' | 'plain-spl'; scenario: 'before' | 'at' | 'after' };
 
 export type InspectResult = {
   status: ObservationStatus;
+  mode: 'live' | 'fixture' | 'recorded';
+  balanceStatus: 'not-requested' | 'observed' | 'partial' | 'unavailable';
   identity?: Identity;
   balances?: Balances;
   extensions: DecodedExtension[];
@@ -167,7 +176,7 @@ export type InspectResult = {
   message?: string;
 };
 
-export const DECODER_VERSION = '@solana-program/token-2022@0.17.0+rwa-lens.1';
+export const DECODER_VERSION = '@solana-program/token-2022@0.17.0+rwa-lens.2';
 
 export const READINESS_DISCLAIMER =
   'Transfer readiness describes observed on-chain state only. It is not legal advice and not a guarantee that a transfer will succeed or be permitted.';

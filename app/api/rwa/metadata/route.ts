@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { metadataRequestSchema } from '@/lib/rwa/schema';
 import { fetchMetadata } from '@/lib/server/rwa/metadata-fetch';
 import { rateLimit } from '@/lib/server/rwa/rate-limit';
+import { readBoundedJson, requestOrigin } from '@/lib/server/rwa/http';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -16,6 +17,8 @@ const STATUS: Record<string, number> = {
 };
 
 export async function POST(request: Request) {
+  const origin = request.headers.get('origin');
+  if (origin && origin !== requestOrigin(request)) return NextResponse.json({ state: 'blocked', reason: 'Cross-origin requests are not permitted.' }, { status: 403 });
   const limited = await rateLimit(request, 'metadata');
   if (!limited.ok) {
     return NextResponse.json(
@@ -26,7 +29,7 @@ export async function POST(request: Request) {
 
   let body: unknown;
   try {
-    body = await request.json();
+    body = await readBoundedJson(request);
   } catch {
     return NextResponse.json({ state: 'blocked', reason: 'Send a JSON body.' }, { status: 400 });
   }

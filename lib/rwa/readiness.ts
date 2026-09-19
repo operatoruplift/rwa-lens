@@ -26,6 +26,7 @@ function worst(verdicts: ReadinessVerdict[]): ReadinessVerdict {
 export function evaluateReadiness(
   extensions: DecodedExtension[],
   accounts: RawBalance[],
+  complete = true,
 ): TransferReadiness {
   const reasons: ReadinessReason[] = [];
 
@@ -44,11 +45,11 @@ export function evaluateReadiness(
   if (pausable) {
     const paused = pausable.fields.find(field => field.label === 'Paused')?.value === 'yes';
     reasons.push({
-      verdict: paused ? 'blocked' : 'attention',
+      verdict: paused ? 'blocked' : pausable.authorities.length > 0 ? 'attention' : 'ready',
       check: 'Pausable',
       detail: paused
         ? 'Transfers are currently paused by the mint authority. Nobody can move this token right now.'
-        : 'An authority can pause all transfers of this token at any time.',
+        : pausable.authorities.length > 0 ? 'An authority can pause all transfers of this token at any time.' : 'The mint is unpaused and no pause authority is configured.',
       evidence: pausable.authorities.map(a => `${a.role}: ${a.address}`).join(', ') || 'PausableConfig present.',
     });
   }
@@ -90,7 +91,7 @@ export function evaluateReadiness(
   }
 
   const delegate = has('PermanentDelegate');
-  if (delegate) {
+  if (delegate && !delegate.inactive) {
     reasons.push({
       verdict: 'attention',
       check: 'Permanent delegate',
@@ -105,7 +106,7 @@ export function evaluateReadiness(
     reasons.push({
       verdict: 'attention',
       check: 'Transfer fee',
-      detail: 'A fee is withheld on every transfer, so the recipient receives less than the amount sent.',
+      detail: 'Configured fees may reduce transfer proceeds, depending on the active epoch, rate and cap. Holding alone incurs no fresh transfer fee; already withheld units are reported separately.',
       evidence: fee.fields.map(field => `${field.label}: ${field.value}`).join(', '),
     });
   }
@@ -116,7 +117,7 @@ export function evaluateReadiness(
       verdict: 'unknown',
       check: 'Opaque or unrecognised state',
       detail:
-        'Part of this token’s state is encrypted or not recognised by this release. Any amount involved is unknown — it is not zero.',
+        'Confidential capability or an unsupported extension was detected. Mint capability does not prove an encrypted holding; any encrypted or omitted portion remains unknown.',
       evidence: confidential.map(extension => extension.kind).join(', '),
     });
   }
@@ -131,7 +132,7 @@ export function evaluateReadiness(
     });
   }
 
-  const unknownState = accounts.filter(account => account.state === 'unknown');
+  const unknownState = accounts.filter(account => account.state === 'unknown' || account.state === 'uninitialized');
   if (unknownState.length > 0) {
     reasons.push({
       verdict: 'unknown',
@@ -140,6 +141,10 @@ export function evaluateReadiness(
       evidence: unknownState.map(account => account.tokenAccount).join(', '),
     });
   }
+
+  if (!complete) reasons.push({ verdict: 'unknown', check: 'Incomplete owner observation', detail: 'Some owner accounts or their state could not be validated. Readiness is not established for the omitted accounts.' });
+
+  if (has('CpiGuard')) reasons.push({ verdict: 'attention', check: 'CPI guard', detail: 'CPI-specific restrictions may apply. Ordinary owner transfers are not necessarily blocked.', evidence: 'CpiGuard account extension' });
 
   if (reasons.length === 0) {
     reasons.push({
@@ -152,6 +157,8 @@ export function evaluateReadiness(
 
   return {
     verdict: worst(reasons.map(reason => reason.verdict)),
+    knownBlock: reasons.some(reason => reason.verdict === 'blocked'),
+    unknownChecks: reasons.some(reason => reason.verdict === 'unknown'),
     reasons,
     disclaimer: READINESS_DISCLAIMER,
   };

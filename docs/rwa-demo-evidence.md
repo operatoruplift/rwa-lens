@@ -1,178 +1,279 @@
-# RWA Lens — demo evidence
+# RWA Lens — verification evidence
 
-Everything below was produced by running this repository. Values that come from
-a live chain read are marked as such and will change; the method for reproducing
-them does not.
+This record separates real Solana reads, deterministic examples, local production
+browser checks, and optional integrations. Capture dates are **19 September 2026
+UTC / 20 September 2026 Asia/Ho_Chi_Minh**. These are point-in-time observations,
+not current balances, issuer attestations, or investment verification.
 
-## Build identity
+Read [setup and API contracts](../README.md), the
+[capability matrix](rwa-capability-matrix.md),
+[limitations](rwa-limitations.md), the [two-minute demo script](rwa-demo-script.md),
+and [deployment/rollback instructions](rwa-deployment.md) alongside this evidence.
 
-| Item | Value |
+## Source and build identity
+
+| Item | Measured value / scope |
 | --- | --- |
-| Runtime | Next.js 16.3.5, React 19.2.8, TypeScript 5.9, Node 22/24 |
-| Solana client | `@solana/kit` 8.3.0 |
-| Token decoder | `@solana-program/token-2022` 0.17.0 |
-| Decoder version string | `@solana-program/token-2022@0.17.0+rwa-lens.1` |
-| Capture date | 16 September 2026 |
+| Repository | [operatoruplift/rwa-lens](https://github.com/operatoruplift/rwa-lens) |
+| Checkout base during local capture | `c5fa4dda96d890025815d6a6ef8f3d4c402b9cb5` plus the working-tree implementation changes; this base hash alone does **not** identify the new release |
+| Local production capture | `http://127.0.0.1:3300`; live receipts captured at `2026-09-19T18:04:49.163Z` and `2026-09-19T18:05:22.972Z` |
+| Runtime inspected | Next.js `16.3.5`, React `19.2.8`, TypeScript `5.9.3`, Node `22.19.0` |
+| Solana packages | `@solana/kit`, `@solana/rpc-spec-types`, `@solana/sysvars` `8.3.0`; `@solana-program/token-2022` `0.17.0` |
+| Decoder identifier | `@solana-program/token-2022@0.17.0+rwa-lens.2` |
+| RPC | `mainnet-beta`, `api.mainnet-beta.solana.com`, `confirmed` commitment |
+| Release provenance boundary | Local captures preceded the final review corrections. Final commit, deployment identity, hosted receipts and GitHub run must be recorded separately; local checks do not establish hosted verification. |
 
-## Verified: live mainnet read
+## Official non-stock example: Ondo USDY
 
-Reproduce with:
+The checked-in [source manifest](../lib/rwa/live-assets.json) records the exact
+Solana address from [Ondo's official address list](https://docs.ondo.finance/addresses)
+and the asset category from [Ondo's USDY documentation](https://docs.ondo.finance/general-access-products/usdy/basics).
+The source was retrieved at `2026-09-19T17:56:59.352Z`. It identifies USDY as a
+Treasury-linked tokenized note; the app treats that description as attribution,
+separate from the RPC evidence. This read establishes the required non-stock
+example. USDY uses legacy SPL Token here; it does not demonstrate Token-2022
+extension behavior.
+
+The full request and response are in
+[local-live-observations.json](evidence/local-live-observations.json).
+
+| Observation | Actual result |
+| --- | --- |
+| Mint | `A1KLoBrKBde8Ty9qtNQUtq3C2ortoC3u7twggz7sEto6` |
+| HTTP / observation status | `200` / `verified`, mode `live` |
+| Program | `spl-token`, `TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA` |
+| Decimals / raw supply | `6` / `157215235713925` |
+| Mint authority | `8n2uiRUd1A9NN78PKESkJe6k6zMqtKCZh3MrK1j9qkB1` |
+| Freeze authority | `51QVCuHfL1FeNjd8BDeffCKhCcAYoULnVB3yjNhShiuK` |
+| Mint account / decoder context | `448483260` |
+| Clock account context / Unix timestamp | `448483261` / `1789841089` |
+| Observed Clock UTC time | `2026-09-19T18:04:49.000Z` |
+| Slot spread | `1`; these are separate reads, not an atomic snapshot |
+| Block time | Not fetched; observed Clock sysvar time is available instead |
+| Cache | Fresh observation; no `cacheAgeMs` in the receipt |
+| Balance | `not-requested`; mint-only inspection does not fabricate a holder balance |
+| Extensions / multiplier | None / not applicable to this SPL mint |
+| Readiness | `ready`: no block in the inspected data; no recipient, amount, hook evaluation or transfer simulation was performed |
+| Registry / NAV | Checked-in official-source attribution / NAV not configured |
+
+### Public owner read
+
+The owner is the **observed public mint-authority address** above. It is a declared
+read-only example, not a claim about the operator's wallet or who controls it.
+The owner RPC returned an empty list. The response distinguished that result from
+a failed lookup, while retaining `complete=false` because its slot differed from
+the mint slot.
+
+| Evidence | Actual result |
+| --- | --- |
+| Mint context | `448483262` |
+| Clock context / timestamp | `448483263` / `2026-09-19T18:04:49.000Z` |
+| `getTokenAccountsByOwner` context | `448483266` |
+| Slot spread | `4` |
+| Returned accounts | `[]` |
+| Observed public raw / standard units | `0` / `0`, decimals `6` |
+| Completeness / status | `false` / `partial`; balance status `partial` |
+| Readiness | `unknown` because the owner observation is not an atomic complete result |
+
+This is live verification of a successful **empty** owner lookup. Nonzero and
+multi-account reconciliation are covered by official-encoder integration tests
+and synthetic browser examples; this receipt does not prove a live nonzero
+holding.
+
+## Secondary Token-2022 read
+
+[Token-2022 receipt](evidence/token-2022-live-observation.json) records Apple xStock
+as additional decoder evidence. It is not the non-stock example and is not
+presented as backing or issuer verification.
+
+| Observation | Actual result |
+| --- | --- |
+| Mint | `XsbEhLAtcf6HdfpFZ5xEMdqW8nfAvcsP5bdudRLJzJp` |
+| Declared public owner | `7pt9tkctJPK7PPNQJ77GKg8ZffSF6QxoMiCFYHxrtaCj`, its observed mint authority |
+| Program | `token-2022`, `TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb` |
+| Decimals / raw supply | `8` / `15376337527821` |
+| Mint context / Clock context / owner context | `448483390` / `448483390` / `448483391` |
+| Clock Unix timestamp / UTC | `1789841124` / `2026-09-19T18:05:24.000Z` |
+| Public owner accounts / raw amount | Empty / `0`; `complete=false` because owner and mint contexts differ |
+| Active multiplier | `1.0032690125398187`; observed after `2026-08-08T00:30:00.000Z` |
+| Standard / extension display | `0` / `0`, rounding `official-helper` |
+| Extensions | MetadataPointer, PermanentDelegate, DefaultAccountState, ScaledUiAmountConfig, PausableConfig, ConfidentialTransferMint, TransferHook, TokenMetadata |
+| Hook / pause | Hook program unset; mint unpaused with an observed pause authority |
+| Readiness / observation status | `unknown` / `partial` |
+| Metadata URI / registry / NAV | URI exposed, remote fetch skipped / no attribution configured / not configured |
+
+ConfidentialTransferMint establishes capability only. It does not prove a nonzero
+encrypted holding. The permanent delegate address is
+`5aMNNLQJwAEeoemTEMkv5NVjqKwvvefRYCQ5Z67HFvEq`; the freeze/pause authority is
+`JDq14BWvqCRFNu1krb12bcRpbGtJZ1FLEakMw6FdxJNs`.
+
+The saved receipt preserves its original field labels. Subsequent reviewed code
+labels stored and scheduled multipliers separately, hides unset optional
+authorities, rejects reserved multisig layouts, and withholds extension display
+when an extension cannot be interpreted. These fixes have deterministic tests;
+the earlier receipt is not silently rewritten as newer evidence.
+
+## Deterministic treasury accounting
+
+The `treasury-scaled` fixture uses the same server response schema and accounting
+engine as live inspections. Its identities, slots, and dates are synthetic.
+Only its fixed server-known ID and a scenario can be supplied; balances,
+provenance and identity cannot be overridden by the browser.
+
+| Scenario | Synthetic observed time (UTC) | Raw units | Decimals | Standard units | Active multiplier | Extension display |
+| --- | --- | --- | --- | --- | --- | --- |
+| Before | `2026-09-16T00:00:00Z` | `1000000000` | `6` | `1000` | `1.04235` | `1042.35` |
+| At | `2026-10-01T00:00:00Z` | `1000000000` | `6` | `1000` | `1.05114` | `1051.14` |
+| After | `2026-10-01T00:00:01Z` | `1000000000` | `6` | `1000` | `1.05114` | `1051.14` |
+
+Each scaled value is labelled `official-helper`. Even multiplier `1` uses the
+helper: with raw `18446744073709551615`, decimals `9`, exact standard units are
+`18446744073.709551615`, while the official scaled display is
+`18446744073.709552765`. The display value is never fed back into raw accounting.
+A multiplier change alone is not evidence of yield or investment performance.
+
+## Checks and browser evidence
+
+| Command / check | Completed result and scope |
+| --- | --- |
+| `npm test` | **220 passed** in the latest full deterministic run reported during this implementation |
+| Focused post-review accounting/decoder/readiness run | **98 passed** before the later full run; includes unknown TLV, multiplier-1 rounding, multisig rejection and unset-authority regressions |
+| Targeted ESLint on changed core files | Passed |
+| `npm run lint`, `npm run typecheck` | Passed in the final full release checks |
+| `npm run build` | Passed after all source and SDK test-type corrections; production routes emitted successfully |
+| `npm run test:e2e` with a local production server | **20 passed in 52.2 seconds** against the production `next start` server at `http://127.0.0.1:3300`; includes registry attribution |
+| Production dependency review | `npm audit --omit=dev` reported zero vulnerabilities during implementation; installed manifest and lockfile remain aligned |
+| GitHub Actions | Workflow repaired with read-only permissions and pinned actions; no successful release run URL had yet been recorded here |
+
+Playwright launches `npm run start -- --port 3300`, so its managed server serves
+an existing **production build**, not `next dev`. `E2E_BASE_URL` uses an explicitly
+supplied running server instead. Browser tests exercise real fixture API calls,
+invalid input, account/evidence disclosure, before/at/after controls, readiness,
+JSON/CSV downloads and hashes, keyboard focus, reduced motion and fixture recovery.
+The live-badge/form and provider-down browser cases intercept RPC API responses;
+they are UI contract tests, not additional live-chain evidence.
+
+The checked-in local browser captures are:
+
+- [360px mobile](screenshots/rwa-mobile-360.png), [390px mobile](screenshots/rwa-mobile-390.png)
+- [768px tablet](screenshots/rwa-tablet-768.png), [1440px desktop](screenshots/rwa-desktop-1440.png)
+- [Keyboard focus](screenshots/rwa-keyboard.png), [Reduced motion](screenshots/rwa-reduced-motion.png)
+
+These captures were regenerated by the passing 20-case run and establish local rendered behavior. They do not establish the state
+of the production alias. Follow the [demo script](rwa-demo-script.md) for the actual
+route walkthrough and the [deployment guide](rwa-deployment.md) for hosted checks.
+
+## Independent database and disabled optional surfaces
+
+The [database verification receipt](evidence/database-verification.json) identifies
+the independent `rwa-lens` Supabase project `skpzggvbnuipdqhtwmbw`. The additive
+`rwa_wallet_reports_durable_auth` migration was applied while preserving existing
+`public.rwa_reports` and `public.consume_rate_limit` resources.
+
+Actual database checks established:
+
+- Atomic challenge consumption: two independent concurrent consume queries
+  returned `[true, false]`; one-time consumption also passed rollback-scoped tests.
+- Shared rate limiting: first two requests allowed, third denied in the isolated
+  SQL check; its test writes were rolled back.
+- Anonymous and generic authenticated roles have no private report-select
+  privilege; anonymous callers cannot execute the challenge function.
+- A direct anonymous REST request to `rwa_wallet_reports` returned HTTP `401`,
+  PostgreSQL code `42501`.
+- The service role has no report-update privilege.
+
+**Wallet sign-in and cloud reports remain disabled optional.** There is no claim
+of a real production wallet session or service-role HTTP report-save journey.
+Two-owner repository tests use mocked PostgREST. Ownership comes from the verified
+server session and explicit owner-filtered queries; a custom HMAC cookie is not a
+Supabase JWT, and service-role access bypasses RLS. No automatic second RLS
+ownership enforcement is claimed.
+
+| Configuration surface | Verified presence / exposure |
+| --- | --- |
+| Mainnet RPC | Configured for the local live capture above; URL remains server-only |
+| Existing RWA database | Independent project and durable migration verified directly |
+| Shared public-read limiter | Existing independent RWA limiter preserved; a bounded per-instance fallback is not a cross-instance security guarantee |
+| Report/auth prerequisites | `RWA_REPORTS_ENABLED`, `RWA_APP_ORIGIN`, `RWA_SESSION_SECRET`, `RWA_SUPABASE_URL`, `RWA_SUPABASE_SERVICE_ROLE_KEY`; disabled until the complete configuration and wallet journey are verified |
+| Metadata URI retrieval | Deny-by-default unless `RWA_METADATA_ALLOWED_HOSTS` explicitly permits the host; DNS pinning/private-address/type/size/redirect checks tested locally |
+| Remote issuer registry | Optional `RWA_REGISTRY_URL` / `RWA_REGISTRY_ALLOWED_HOSTS`; no remote issuer endpoint claimed as integrated |
+| NAV / fiat price | Disabled; no value fabricated |
+
+No secret values, signatures, cookies or authorization headers are included in
+these receipts. Optional message signing authenticates report ownership only;
+public inspection and local export never request a transaction.
+
+## Reproduction
+
+After `npm ci`, run the deterministic checks, build once, then start the production
+server. Supply your provider only in the server environment; the browser never
+accepts an RPC URL.
 
 ```sh
-RWA_CLUSTER=mainnet-beta RWA_RPC_URL=https://api.mainnet-beta.solana.com npm run start
-curl -s -X POST http://127.0.0.1:3000/api/rwa/inspect \
+npm run lint
+npm run typecheck
+npm test
+npm run build
+RWA_CLUSTER=mainnet-beta RWA_RPC_URL=https://api.mainnet-beta.solana.com npm run start -- --port 3300
+```
+
+From a second shell:
+
+```sh
+RWA_VERIFY_BASE_URL=http://127.0.0.1:3300 \
+RWA_VERIFY_OUTPUT=docs/evidence/local-live-observations.json \
+node scripts/verify-live.mjs
+
+E2E_BASE_URL=http://127.0.0.1:3300 npm run test:e2e
+
+curl -sS http://127.0.0.1:3300/api/rwa/inspect \
   -H 'content-type: application/json' \
-  -d '{"cluster":"mainnet-beta","mint":"XsbEhLAtcf6HdfpFZ5xEMdqW8nfAvcsP5bdudRLJzJp"}'
+  -d '{"mode":"fixture","fixtureId":"treasury-scaled","scenario":"at"}'
 ```
 
-Observed result (`status: verified`):
+For an explicit hosted read, run `node scripts/verify-live.mjs`; its default target
+is the existing production alias and its output is
+`docs/evidence/live-observations.json`. External reads are deliberately separate
+from deterministic CI. Public RPC availability may change; retain the real error
+and use the visibly synthetic fixture if it does.
 
-| Field | Observed value |
+## Known limits and remaining verification
+
+- Final release commit/CI/deployment and post-deployment browser evidence must be
+  added before marking the new release `hosted-verified`.
+- The live owner samples were empty and mixed-slot; no complete nonzero holder
+  balance or executed transfer was demonstrated against mainnet.
+- MetadataPointer and embedded TokenMetadata are decoded. A valid external
+  pointer triggers at most one bounded account read with owner, byte length and
+  context slot recorded. The official Token-2022 mint layout is decoded only
+  when initialized, non-executable and bound to the inspected mint. Arbitrary
+  interface-program layouts remain unsupported, with explicit partial/opaque
+  evidence. Supported, unsupported, wrong-mint, malformed, missing and self/unset
+  cases have deterministic tests; no real external pointed-account receipt is
+  claimed. No pointer recursion or automatic URI fetch occurs.
+- Interest-bearing conversion is detected but unavailable. Unknown or malformed
+  extension display remains unavailable; standard public units remain separate.
+- Confidential amounts, recipient eligibility and hook outcomes are unknown.
+- No real wallet authentication/report-save or remote NAV/registry journey was
+  exercised. Optional reports/auth are disabled pending that verification.
+- All RPC reads are non-atomic; provider list completeness cannot be independently
+  proven. Transport and account caps preserve partial/unavailable states.
+
+## Primary references checked
+
+Accessed **19 September 2026 UTC / 20 September 2026 Asia/Ho_Chi_Minh**. These
+references guided implementation; reading documentation is not integration proof.
+
+| Reference | Implementation use |
 | --- | --- |
-| Token program | `token-2022` — `TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb` |
-| Decimals / supply | 8 / `15376345325750` base units |
-| Mint authority | `7pt9tkctJPK7PPNQJ77GKg8ZffSF6QxoMiCFYHxrtaCj` |
-| Freeze authority | `JDq14BWvqCRFNu1krb12bcRpbGtJZ1FLEakMw6FdxJNs` |
-| Slot / block time | `447482034` / `2026-09-16T08:54:31.000Z` |
-| Time source | `chain` (not a local estimate) |
-| Commitment | `confirmed` |
-
-Extensions decoded, with severity:
-
-| Extension | Severity | Decoded detail |
-| --- | --- | --- |
-| `MetadataPointer` | info | metadata authority and account |
-| `PermanentDelegate` | **attention** | delegate `5aMNNLQJwAEeoemTEMkv5NVjqKwvvefRYCQ5Z67HFvEq` |
-| `DefaultAccountState` | attention | `Initialized` |
-| `ScaledUiAmountConfig` | **attention** | multiplier `1.0026642075893797`, pending `1.0032690125398187`, effective `2026-08-08T00:30:00.000Z` |
-| `PausableConfig` | attention | `Paused: no` |
-| `ConfidentialTransferMint` | **opaque** | confidential portion unknown |
-| `TransferHook` | info | **inactive** — hook program unset |
-| `TokenMetadata` | info | Apple xStock / AAPLx |
-
-Transfer readiness: **`unknown`**, driven by `ConfidentialTransferMint`. The
-per-reason breakdown was:
-
-- `attention` — Pausable — an authority can pause all transfers
-- `ready` — Default account state — `Initialized`
-- `ready` — Transfer hook — hook program `11111111111111111111111111111111` (unset)
-- `attention` — Permanent delegate — issuer can move or burn without the holder's signature
-- `unknown` — Opaque state — `ConfidentialTransferMint`
-
-This single read is the product thesis on real data: a real tokenized asset with
-a **real permanent delegate**, a **real scheduled multiplier**, and a
-**confidential portion that is unknown rather than zero** — none of which a
-wallet balance tells the holder.
-
-### Two defects this live read exposed, and fixed
-
-1. **`DefaultAccountState` rendered as `1`.** The Token-2022 `AccountState` is a
-   C-style enum; the decoder returns the index. It was reaching the UI as a bare
-   number, and the frozen-by-default readiness rule matched on the *name*, so a
-   genuinely frozen-by-default mint would not have been flagged. Now mapped to
-   `Uninitialized` / `Initialized` / `Frozen`, with regression tests on both the
-   rendering and the readiness rule.
-2. **An unset `TransferHook` was reported as an active gate.** When the hook
-   program is the all-ones default address, no hook runs. The extension was still
-   being treated as `attention` and pushing readiness to `unknown`. It is now
-   downgraded to `info`/`inactive` with distinct copy, and a test asserts a *real*
-   hook program still yields `unknown`.
-
-## Verified: fixture mode, no configuration
-
-```sh
-npm run build && npm run start
-curl -s -X POST http://127.0.0.1:3000/api/rwa/inspect -H 'content-type: application/json' \
-  -d '{"cluster":"devnet","mint":"RWALensFixtureTreasury1111111111111111111","fixtureId":"treasury-scaled"}'
-```
-
-Returns `status: verified`, raw `1000000000`, standard `1000`, scaled `1042.35`
-at multiplier `1.04235`, `rounding: official-helper`, readiness `attention`.
-Fixture and live responses share one typed contract.
-
-## Verified: structured failure states
-
-| Case | Result |
-| --- | --- |
-| Invalid mint (`not-a-mint`) | `422` `{"status":"invalid","kind":"not-a-mint"}` |
-| Unknown cluster (`testnet`) | `400` — only `devnet` / `mainnet-beta` accepted |
-| Live read with no `RWA_RPC_URL` | `503` `{"kind":"not-configured"}`, fixtures still usable |
-
-No provider URL, key or stack trace appears in any error body.
-
-## Checks run
-
-| Check | Result |
-| --- | --- |
-| `npm run lint` | clean |
-| `npm run typecheck` | clean |
-| `npm test` | **88 passed** |
-| `npm run build` | succeeds |
-| `npm run test:e2e` | **13 passed** (fixture-only, no RPC) |
-
-Browser coverage includes: populated first paint, raw amount fixed while the
-displayed amount changes, permanent-delegate and default-state explanation,
-opaque state never shown as safe, plain SPL stated plainly, invalid mint
-rejected before a request, JSON export with no authentication, no wallet or
-signing affordance anywhere, 360px with no horizontal overflow, keyboard
-navigation, and fixtures still usable when the live provider is unavailable.
-
-## Deferred, and honestly so
-
-| Capability | State |
-| --- | --- |
-| Saved cloud reports | **Implemented**, owner-scoped, tested. Supabase table migrated. Ships off behind `RWA_REPORTS_ENABLED=false`; local JSON/CSV export works without it. |
-| Wallet sign-in for reports | **Implemented** and verified end to end with a real ed25519 keypair: challenge → signature → HttpOnly session; replayed nonce rejected (400), wrong key rejected (401). Ships off unless `RWA_SESSION_SECRET` is set. Message signature only — no transaction path exists. |
-| Issuer registry adapter | Implemented, disabled, **no issuer endpoint hard-coded**. |
-| NAV / price adapter | Interface defined, returns `null`. No USD value is ever fabricated. |
-| Metadata URI fetching | **Implemented** deny-by-default with SSRF protections; no host allowlisted by default, so nothing is fetched. |
-| `InterestBearingConfig` | Detected and reported as "calculation unavailable"; not computed. |
-
-## Verified: optional surfaces refuse safely
-
-With nothing configured, each optional endpoint states its own status rather
-than erroring vaguely:
-
-| Request | Result |
-| --- | --- |
-| `POST /api/rwa/auth` | `503 feature-disabled` — "Wallet sign-in is not enabled on this deployment." |
-| `POST /api/rwa/metadata` | `200 not-configured` — "No metadata host is allowlisted, so no URI is fetched." |
-| `GET /api/rwa/reports` | `503 feature-disabled` — "JSON and CSV export work without an account." |
-
-With `RWA_METADATA_ALLOWED_HOSTS=metadata.example.com` configured, SSRF targets
-are still refused **before any request is made**:
-
-| URI | Result |
-| --- | --- |
-| `https://169.254.169.254/latest/meta-data/` | `400 blocked` |
-| `https://127.0.0.1/a.json` | `400 blocked` |
-| `http://metadata.example.com/a.json` (plain http) | `400 blocked` |
-
-With `RWA_METADATA_ALLOWED_HOSTS` set to a real issuer host, the metadata panel
-fetches only on request and only from that host:
-
-| Request | Result |
-| --- | --- |
-| Allowlisted issuer URI for a live mint | `200 ok` — name, symbol, description and image returned, 195 bytes, labelled issuer-supplied |
-| Any other host | `400 blocked` — "not on the configured allowlist" |
-| Page load | **Zero** metadata requests; a browser test asserts none is made unasked |
-
-With `RWA_SESSION_SECRET` set, a real keypair completes sign-in:
-
-| Step | Result |
-| --- | --- |
-| Challenge | Message contains "not a transaction" and "moves no funds" |
-| Verify with the correct key | `200 signed-in`, `HttpOnly` cookie set |
-| Replay the same nonce | `400 invalid` |
-| Verify with a different keypair | `401 invalid` |
-
-## Two-minute demo script
-
-| Time | Action |
-| --- | --- |
-| 0:00–0:20 | Open `/rwa`. It is already showing a populated inspection — a tokenized treasury. Point at **raw base units** and the **scaled amount** side by side. |
-| 0:20–0:45 | "The raw number never moves. Yield arrives by changing a multiplier the issuer controls, so the displayed balance changes with no transaction in your history." Show the multiplier and the scheduled change. |
-| 0:45–1:05 | Scroll to Extensions. Open `PermanentDelegate`: "this address can move or burn your tokens without your signature, and you cannot revoke it." |
-| 1:05–1:25 | Switch to the private-credit fixture. Readiness is **unknown**, and the confidential portion is unknown — *not zero*. |
-| 1:25–1:50 | Paste a real mainnet mint with a live RPC configured. Show the Evidence panel: slot, block time, commitment, decoder version, per-call status. |
-| 1:50–2:00 | Export JSON. "No wallet, no signature, nothing is ever sent." |
+| [Token-2022 extensions](https://solana.com/docs/tokens/extensions) | Extension taxonomy and TLV framing |
+| [Scaled UI Amount](https://solana.com/docs/tokens/extensions/scaled-ui-amount) | Clock boundary, immediate timestamp, floating-point display, incompatible interest configuration |
+| [Metadata Pointer and TokenMetadata](https://solana.com/docs/tokens/extensions/metadata) | One bounded pointer observation; storage owned by an arbitrary interface program cannot be guessed from Token-2022 layout |
+| [Default account state](https://solana.com/docs/tokens/extensions/default-state) | New-account defaults distinguished from existing account state |
+| [Transfer hooks](https://solana.com/docs/tokens/extensions/transfer-hook) | Configured hook requires evaluation; no KYC inference |
+| [Confidential balances](https://solana.com/docs/tokens/extensions/confidential-transfer) | Capability distinguished from unobservable account holdings |
+| [Permanent delegate](https://solana.com/docs/tokens/extensions/permanent-delegate) | Mint-level delegate control and optional authority |
+| [Token accounts by owner RPC](https://solana.com/docs/rpc/http/gettokenaccountsbyowner) | Mint filter, returned account program/owner validation, context slots |
+| [Token-2022 extension interface](https://github.com/solana-program/token-2022/blob/main/interface/src/extension/mod.rs) | Reserved multisig length must not decode as mint/token state |
+| Installed SDK `src/generated/accounts`, `src/generated/types/extension.ts`, `src/hooked/extensions.ts`, `src/amountToUiAmount.ts` | Official mint/token/extension codecs and display helper; unknown framing retains numeric identifier and length |
+| Installed Next.js `node_modules/next/dist/docs/01-app/03-api-reference/03-file-conventions/route.md` | Current route-handler behavior required by this repository's `AGENTS.md` |

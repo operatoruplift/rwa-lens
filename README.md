@@ -1,161 +1,181 @@
 # RWA Lens
 
-**Know what your real-world token means.** Paste a Solana mint and get a straight
-answer to three questions a wallet will not answer for you: *what is this token,
-what does a holder's balance actually mean right now, and what can the issuer do
-to it?*
+**Know what your real-world token means.** RWA Lens helps wallet builders, issuers,
+fund administrators, custodians and treasury operators inspect a Solana mint,
+reconcile public raw balances with displayed amounts, and understand observable
+transfer controls.
 
-Read-only. RWA Lens never signs, sends, mints, burns, freezes or transfers
-anything, and there is no signer anywhere in the codebase.
+[Open the app](https://rwalensonsolana.vercel.app) ·
+[Inspector](https://rwalensonsolana.vercel.app/rwa) ·
+[Verification evidence](docs/rwa-demo-evidence.md) ·
+[Capability matrix](docs/rwa-capability-matrix.md) ·
+[Two-minute demo](docs/rwa-demo-script.md)
 
-- Live app: https://rwalensonsolana.vercel.app/rwa
-- Source: https://github.com/operatoruplift/rwa-lens
-- Limitations and boundaries: [docs/rwa-limitations.md](docs/rwa-limitations.md)
-- Reproducible evidence: [docs/rwa-demo-evidence.md](docs/rwa-demo-evidence.md)
+The app reads public chain state. It does **not** sign or submit transactions,
+move assets, mint, settle, lend or take custody. Optional wallet **message**
+signing authenticates saved-report ownership only. Saving a report is a database
+write; guest inspection and JSON/CSV export require no wallet.
 
-## The problem
+## What makes it useful
 
-Tokenized treasuries, funds, private credit and commodities on Solana are
-**Token-2022** mints, and Token-2022 extensions silently change what a token
-*is*:
+A wallet balance alone does not explain a token's authorities, extension controls
+or display conversion. RWA Lens puts raw units, decimals, the current display
+multiplier, account states and source evidence together. Its Solana contribution
+is Token-2022-aware accounting using the official decoders. Plain SPL Token is
+also supported; neither program ownership nor metadata proves an asset is an RWA.
 
-| Extension | What it means to whoever holds the token |
+The curated live example is **Ondo USDY**, an officially attributed non-stock
+Treasury-linked note on Solana. The checked-in [source manifest](lib/rwa/live-assets.json)
+records the exact mint, network, issuer sources and retrieval date. USDY's observed
+mint uses **legacy SPL Token**. A clearly labelled synthetic treasury receipt
+separately demonstrates Token-2022 scheduled display multipliers. Issuer descriptions
+are attribution, not independent verification of backing or legal rights.
+
+## Accounting and controls
+
+Raw amounts and supply stay as decimal strings / `BigInt`. Public accounts are
+validated for program, mint and owner and deduplicated before summing. The
+standard decimal amount is exact. The official Scaled UI Amount conversion is
+an isolated floating-point display calculation, labelled `official-helper`;
+its output is never fed back into raw accounting.
+
+The active multiplier is selected using the observed Clock sysvar timestamp.
+The mint, Clock and owner reads expose their own context slots. They are separate
+reads, not an atomic snapshot. Block time or local-clock fallback is explicitly
+an estimate; incomplete accounts and unsupported data remain partial or unknown.
+
+| Extension | Explanation |
 | --- | --- |
-| `ScaledUiAmountConfig` | The balance is raw units × an issuer-controlled multiplier. **Yield arrives by changing the multiplier, not by a transfer** — so the number moves with no transaction in your history. |
-| `PermanentDelegate` | An address can move or burn your tokens **without your signature**, and you cannot revoke it. |
-| `TransferHook` | A program runs on every transfer and can reject it. This is the KYC gate. |
-| `DefaultAccountState` | New accounts arrive **frozen** until an authority thaws them. |
-| `TransferFeeConfig` | A cut is withheld on every transfer. |
-| `PausableConfig` | An authority can pause all transfers. |
-| Confidential transfer | Part of the balance is encrypted, and therefore **unknown — not zero**. |
+| Scaled UI Amount | Changes display conversion without changing raw units; scheduled boundaries and rounding are shown. |
+| Interest Bearing | Detected; calculation unavailable. Incompatible with Scaled UI Amount. |
+| Transfer Hook | An active hook requires evaluation beyond this inspector; an unset hook is inactive. Its address does not establish KYC status. |
+| Default Account State | Describes newly created accounts; existing account states are checked separately. |
+| Permanent Delegate | Discloses the mint-level authority that holders cannot revoke. |
+| Transfer Fee Config / Amount | Shows fee configuration and withheld units separately; holding alone does not charge a fresh fee. |
+| Pausable / Non-transferable | Shows observed blocking state and applicable authority. |
+| CPI Guard | Explains CPI-specific restrictions without declaring every owner transfer blocked. |
+| Metadata / group pointers | Shows decoded pointers and safely bounded retrieval evidence. |
+| Confidential / unknown variants | Distinguishes observable public units from unobservable data; never invents an encrypted balance. |
 
-A holder looking at their wallet sees a number. They do not see that the issuer
-holds clawback authority over it. RWA Lens shows both, names the authority
-addresses, and cites the slot it read them at.
+Readiness keeps known blocks and unknown checks independently visible. It is an
+explanation of inspected data, not a transaction simulation or legal authorization.
 
-## Why this has to be on Solana
+## Run locally
 
-Token-2022 extensions are a Solana mechanism. The product cannot exist anywhere
-else — there is no chain-agnostic version of this question. Everything shown is
-decoded from the mint and token accounts with the official
-`@solana-program/token-2022` decoders; no byte offsets are hand-written.
-
-## Accounting: the part most tools get wrong
-
-Token-2022 stores **raw base units**. `ScaledUiAmount` changes only the display
-conversion. RWA Lens therefore:
-
-1. sums raw integer amounts across every token account **first**, as `BigInt`;
-2. converts **once**, at the end;
-3. computes the standard decimal amount exactly (`raw ÷ 10^decimals`, no float);
-4. computes the scaled amount with the **official** Token-2022 helper and labels
-   it `official-helper`, because that helper multiplies through a JS `number`
-   and cannot be called exact;
-5. selects the active multiplier using the **observed chain block time**, so a
-   scheduled change is evaluated against chain state, not the server clock. If
-   block time is unavailable, `timeSource` becomes `local-estimate` and the UI
-   shows an amber warning rather than pretending.
-
-No u64, supply, multiplier or balance is ever parsed into a JS `number` for
-accounting.
-
-## Transfer readiness is an explanation, not a permission
-
-The verdict is `ready`, `attention`, `blocked` or `unknown`, and **an unknown is
-never softened into a ready**. Every reason names the specific extension,
-authority address or account state it came from. RWA Lens makes no claim about
-KYC, AML, accreditation, sanctions, securities law, proof of reserves or
-redemption rights.
-
-## Run it
-
-Node 22.19+ and npm.
+Use Node 22.19+ and the checked-in npm lockfile. Next.js remains 16.3.5.
 
 ```sh
 npm ci
-npm run dev          # http://127.0.0.1:3000/rwa
+npm run dev
+# http://127.0.0.1:3000 — /rwa remains a supported deep link
 ```
 
-It works immediately with no configuration: three deterministic fixtures cover a
-tokenized treasury with a scheduled multiplier, a private-credit receipt behind a
-transfer hook with a confidential portion, and a plain SPL mint.
+Fixtures work without any credentials. To enable live reads, copy `.env.example`
+to `.env.local` and configure the server:
 
-For live reads, copy `.env.example` to `.env.local` and set a server-side RPC URL:
-
-```sh
+```dotenv
 RWA_CLUSTER=mainnet-beta
-RWA_RPC_URL=https://your-provider.example/…
+RWA_RPC_URL=https://api.mainnet-beta.solana.com
 ```
 
-A browser can never supply a cluster or an RPC URL. A cluster the operator has
-not configured returns a structured `not-configured` state rather than silently
-falling back to a different one.
+The public RPC can rate-limit; use an operator-managed provider for sustained
+traffic. A browser cannot supply an RPC URL. Only the operator's configured
+network is supported and no silent network fallback occurs.
 
-## Checks
+## Verify
 
 ```sh
 npm run lint
 npm run typecheck
-npm test             # 56 unit tests
+npm test
 npm run build
-npm run test:e2e     # 11 browser tests, fixture-only, no RPC needed
+npm run test:e2e
 ```
+
+Playwright launches `next start` against the production build on port 3300.
+The deterministic suite uses fixtures/mocked failures and requires no secrets.
+Run `npm run build` before it; never run two builds against the same `.next`.
+
+Explicit read-only hosted verification is separate:
+
+```sh
+node scripts/verify-live.mjs
+# Optional local production target:
+RWA_VERIFY_BASE_URL=http://127.0.0.1:3300 node scripts/verify-live.mjs
+```
+
+This reads the official non-stock mint, a declared public owner and the synthetic
+boundary examples, and writes `docs/evidence/live-observations.json`. It sends no
+transaction. GitHub's `Verify RWA Lens` workflow runs deterministic checks on
+pushes and pull requests. `Explicit hosted read verification` is manually invoked
+and uses no wallet/provider credentials. Current measured results are in the
+evidence document; historical counts are not current verification.
 
 ## Architecture
 
 ```mermaid
 flowchart LR
-  UI[/rwa client/] -->|POST /api/rwa/inspect| API[Route handler]
-  API -->|Zod| V{valid?}
-  V -->|no| E400[400 structured]
-  V -->|fixtureId| FIX[Deterministic fixtures]
-  V -->|live| RPC[Server-only RPC adapter]
-  RPC --> T[getSlot + getBlockTime]
-  RPC --> M[getAccountInfo mint]
-  RPC --> A[getTokenAccountsByOwner]
-  M --> D[decodeMint / decodeToken]
-  D --> X[Extension registry]
-  D --> B[Balance engine]
-  T --> B
-  X --> R[Transfer readiness]
-  B --> OUT[Typed result + provenance]
-  X --> OUT
-  R --> OUT
-  FIX --> OUT
-  OUT --> UI
+  UI[Landing + inspector] --> API[Validated inspect API]
+  API --> Fixture[Server-known synthetic scenarios]
+  API --> RPC[Bounded server-only Solana RPC]
+  RPC --> Mint[Mint + embedded metadata and pointer evidence]
+  RPC --> Clock[Clock sysvar / labelled estimate]
+  RPC --> Owner[Validated public owner accounts]
+  Mint --> Decode[Official Token-2022 decoders]
+  Decode --> Controls[Extension inventory + readiness]
+  Owner --> Raw[Deduplicated BigInt sum]
+  Clock --> Display[Timestamp-bound display adapter]
+  Raw --> Display
+  Controls --> Result[Validated observation + provenance]
+  Display --> Result
+  Fixture --> Result
+  Result --> UI
+  UI --> Export[Local JSON / CSV receipt]
+  UI -. optional message auth .-> Reports[Owner-scoped database report]
 ```
 
-Fixture mode and live mode return the **same typed contract**, so the UI has one
-code path and the demo cannot drift from the real thing.
+## Configuration and API
 
-## Security
+All configuration is documented in [.env.example](.env.example). RPC URLs,
+session secrets and database service-role keys remain server-only. Metadata
+hosts are deny-by-default. The static issuer manifest has no remote dependency;
+optional remote registry and NAV adapters cannot supply invented fiat values.
 
-Zod at every boundary; no secrets in the client bundle; no arbitrary RPC, URL or
-redirect from user input; per-instance rate limiting; bounded timeouts, retries
-and account caps; metadata fetching deny-by-default with SSRF protections;
-structured errors that never leak a provider URL or a stack. Details and the
-honest limits of each control are in
-[docs/rwa-limitations.md](docs/rwa-limitations.md).
+| Endpoint | Behavior |
+| --- | --- |
+| `POST /api/rwa/inspect` | Validated live request or fixed fixture ID/scenario; same response contract. |
+| `POST /api/rwa/metadata` | Explicit request, configured HTTPS allowlist, DNS/private-IP rejection, pinned connection, timeout and size caps. |
+| `POST /api/rwa/auth` | Optional exact-origin wallet message authentication and sign-out; durable single-use challenge required. |
+| `GET/POST /api/rwa/reports` | Optional session-owned reports; the server re-inspects instead of trusting uploaded observations. |
+| `GET /api/rwa/reports/[reportId]` | Session-owner lookup; another owner's opaque ID returns 404. |
 
-## Optional surfaces, all off by default
+```json
+{"mode":"live","cluster":"mainnet-beta","mint":"A1KLoBrKBde8Ty9qtNQUtq3C2ortoC3u7twggz7sEto6"}
+```
 
-The app is complete as a guest tool. Everything below is additive, disabled
-unless an operator configures it, and says so plainly when it is off.
+```json
+{"mode":"fixture","fixtureId":"treasury-scaled","scenario":"before"}
+```
 
-| Surface | Endpoint | Default |
-| --- | --- | --- |
-| Token metadata | `POST /api/rwa/metadata` | **No host allowlisted, so no URI is ever fetched.** https only; loopback, private, link-local and bare-IP hosts are rejected; redirects are not followed; 128 KB and 5 s caps; JSON content types only. |
-| Wallet sign-in | `POST /api/rwa/auth` | Off unless `RWA_SESSION_SECRET` is set. Asks for a **message signature only, never a transaction**. Server-issued single-use nonce with expiry, ed25519 verification, HMAC session in an HttpOnly SameSite cookie. |
-| Saved reports | `GET`/`POST /api/rwa/reports`, `GET /api/rwa/reports/[reportId]` | Off unless `RWA_REPORTS_ENABLED=true`. Owner-scoped in the query *and* by row-level security. Another owner's id returns 404, never 403, so an id cannot be probed. |
-| Issuer registry | adapter interface | Off. **No issuer endpoint is hard-coded.** Results are labelled issuer-supplied, with a stale flag. |
-| NAV / price | adapter interface | Off, and returns `null`. No fiat value is ever fabricated. |
+Fixture requests cannot override balances, identity, timestamps or provenance.
+Malformed input returns 400; missing accounts 404; a non-mint account 422;
+provider failures return structured unavailable responses with appropriate 5xx
+status. Error bodies contain neither credentials nor stack traces.
 
-## Status
+## Optional reports and security boundaries
 
-Read-only inspection is complete and verified against mainnet. The optional
-surfaces above are implemented and tested but ship disabled. See the evidence
-document for exactly which integrations are verified versus deferred.
+Production inspection and export are guest features. Cloud reports and wallet
+sign-in remain disabled unless their complete independent database, origin,
+secret and durable challenge configuration is supplied. An HMAC cookie is not a
+Supabase JWT. Service-role repository access relies on tested server-enforced
+ownership; it must not be described as automatic RLS identity mapping.
 
-## Licence
+The existing **rwa-lens** Supabase project is independent of Lotline. Its shared
+rate limiter is preserved. Read-only local fallback is bounded but is not a
+cross-instance security guarantee. Authentication fails closed when durable
+storage or required rate limiting is unavailable.
 
-MIT.
+See [limitations](docs/rwa-limitations.md), [deployment/rollback](docs/rwa-deployment.md)
+and [third-party notices](docs/third-party-notices.md). No backing, compliance,
+eligibility, redemption, investment-performance or transfer-success certification
+is made. The project uses the [MIT license](LICENSE).

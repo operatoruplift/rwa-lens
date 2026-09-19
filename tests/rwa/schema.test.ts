@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   addressSchema,
   inspectRequestSchema,
+  inspectResultSchema,
   isHostAllowed,
   metadataUriSchema,
   parseAllowedHosts,
@@ -66,9 +67,9 @@ describe('host allowlist', () => {
     expect(allowed).toEqual(['metadata.example.com', 'ipfs.io']);
   });
 
-  it('allows an exact host and its subdomains only', () => {
+  it('allows exact configured hosts; subdomains require their own entry', () => {
     expect(isHostAllowed('https://metadata.example.com/a.json', allowed)).toBe(true);
-    expect(isHostAllowed('https://cdn.ipfs.io/a.json', allowed)).toBe(true);
+    expect(isHostAllowed('https://cdn.ipfs.io/a.json', allowed)).toBe(false);
     expect(isHostAllowed('https://example.com/a.json', allowed)).toBe(false);
   });
 
@@ -82,22 +83,28 @@ describe('host allowlist', () => {
   });
 });
 
-describe('fixtures are valid against the real schema', () => {
-  it('every fixture address passes the same validation a user request does', async () => {
-    const { FIXTURES } = await import('@/lib/rwa/fixtures');
-    expect(FIXTURES.length).toBeGreaterThan(0);
+describe('fixture/live contract', () => {
+  it('all fixtures use the response schema without inventing live addresses', async () => {
+    const { FIXTURES, treasuryAtBoundary } = await import('@/lib/rwa/fixtures');
     for (const fixture of FIXTURES) {
-      const mint = fixture.result.identity?.mint;
-      expect(mint, `${fixture.id} has no mint`).toBeDefined();
-      // A fixture the API would reject is a broken demo, which is worse than none.
-      const parsed = inspectRequestSchema.safeParse({ cluster: 'devnet', mint, fixtureId: fixture.id });
-      expect(parsed.success, `${fixture.id} mint ${mint} failed validation`).toBe(true);
-
-      for (const account of fixture.result.balances?.accounts ?? []) {
-        expect(addressSchema.safeParse(account.tokenAccount).success, `${fixture.id} token account`).toBe(true);
-        expect(addressSchema.safeParse(account.owner).success, `${fixture.id} owner`).toBe(true);
-        expect(/^\d+$/.test(account.rawAmount), `${fixture.id} raw amount is an integer string`).toBe(true);
-      }
+      expect(inspectRequestSchema.safeParse({ mode: 'fixture', fixtureId: fixture.id }).success).toBe(true);
+      expect(inspectResultSchema.safeParse(fixture.result).success).toBe(true);
     }
+    for (const side of ['before', 'at', 'after'] as const) expect(inspectResultSchema.safeParse(treasuryAtBoundary(side)).success).toBe(true);
+  });
+  it('rejects mixed identities and caller-controlled fixture data', () => {
+    for (const extra of [{ mint: VALID }, { owner: VALID }, { cluster: 'devnet' }, { balances: {} }, { fetchedAt: 'now' }]) {
+      expect(inspectRequestSchema.safeParse({ mode: 'fixture', fixtureId: 'treasury-scaled', ...extra }).success).toBe(false);
+    }
+    expect(inspectRequestSchema.safeParse({ mode: 'live', cluster: 'devnet', mint: VALID, fixtureId: 'treasury-scaled' }).success).toBe(false);
+    expect(inspectRequestSchema.safeParse({ cluster: 'devnet', mint: VALID, fixtureId: 'treasury-scaled' }).success).toBe(false);
+    expect(inspectRequestSchema.safeParse({ mode: 'fixture', fixtureId: 'unregistered' }).success).toBe(false);
+  });
+  it('explicitly migrates the deployed live request shape', () => {
+    expect(inspectRequestSchema.parse({ cluster: 'mainnet-beta', mint: VALID })).toEqual({ mode: 'live', cluster: 'mainnet-beta', mint: VALID });
+  });
+  it('rejects base58 strings of plausible length that do not decode to 32 bytes', () => {
+    expect(addressSchema.safeParse('1'.repeat(33)).success).toBe(false);
+    expect(addressSchema.safeParse('z'.repeat(44)).success).toBe(false);
   });
 });

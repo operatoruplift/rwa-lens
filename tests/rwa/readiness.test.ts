@@ -131,3 +131,50 @@ describe('regressions found against real mainnet data', () => {
     expect(evaluateReadiness(active, [account()]).verdict).toBe('unknown');
   });
 });
+
+describe('independent controls and required extension coverage', () => {
+  it('preserves known frozen blocks and unknown hook checks simultaneously', () => {
+    const result = evaluateReadiness(ext('TransferHook'), [account({ state: 'frozen' })]);
+    expect(result).toMatchObject({ verdict: 'blocked', knownBlock: true, unknownChecks: true });
+    expect(result.reasons.some(reason => reason.check === 'Frozen token account')).toBe(true);
+  });
+  it('incomplete account evidence never becomes ready', () => {
+    expect(evaluateReadiness([], [], false)).toMatchObject({ verdict: 'unknown', unknownChecks: true });
+  });
+  it.each(['ScaledUiAmountConfig', 'InterestBearingConfig', 'TransferHook', 'TransferHookAccount', 'DefaultAccountState', 'PermanentDelegate', 'TransferFeeConfig', 'TransferFeeAmount', 'MetadataPointer', 'TokenMetadata', 'NonTransferable', 'PausableConfig', 'CpiGuard', 'ConfidentialTransferMint', 'ConfidentialTransferAccount', 'ConfidentialTransferFee', 'ConfidentialTransferFeeAmount', 'ConfidentialMintBurn', 'GroupPointer', 'GroupMemberPointer'])('classifies required extension %s', kind => {
+    const extension = describeExtension({ __kind: kind }, 'mint');
+    expect(extension).not.toBeNull();
+    expect(extension!.impact.length).toBeGreaterThan(15);
+    expect(extension!.kind).toBe(kind);
+    if (kind.startsWith('Confidential')) expect(extension!.severity).toBe('opaque');
+  });
+  it('does not subtract previously withheld fees or assert a nonzero confidential holding', () => {
+    const withholding = describeExtension({ __kind: 'TransferFeeAmount', withheldAmount: 23n }, 'account')!;
+    expect(withholding.fields).toContainEqual({ label: 'Withheld amount', value: '23' });
+    expect(withholding.impact).toMatch(/not subtracted again/);
+    const capability = describeExtension({ __kind: 'ConfidentialTransferMint' }, 'mint')!;
+    expect(capability.impact).toMatch(/does not prove/);
+  });
+});
+
+
+it('describes zero-timestamp scaled configuration as immediately effective with stored rather than active field labels', () => {
+  const extension = describeExtension({ __kind: 'ScaledUiAmountConfig', multiplier: 1.5, newMultiplier: 2, newMultiplierEffectiveTimestamp: 0n }, 'mint')!;
+  expect(extension.fields).toContainEqual({ label: 'Stored prior multiplier', value: '1.5' });
+  expect(extension.fields).toContainEqual({ label: 'Scheduled multiplier', value: '2' });
+  expect(extension.fields).toContainEqual({ label: 'Effective at', value: 'Immediately effective (Unix timestamp 0)' });
+});
+
+
+it('treats zero-address optional authorities as unset rather than active delegates', () => {
+  const none = '11111111111111111111111111111111';
+  const delegate = describeExtension({ __kind: 'PermanentDelegate', delegate: none }, 'mint')!;
+  expect(delegate).toMatchObject({ inactive: true, severity: 'info', authorities: [] });
+  expect(evaluateReadiness([delegate], [account()]).verdict).toBe('ready');
+  const pausable = describeExtension({ __kind: 'PausableConfig', authority: none, paused: false }, 'mint')!;
+  expect(evaluateReadiness([pausable], [account()]).reasons[0].detail).toMatch(/no pause authority/);
+  const paused = describeExtension({ __kind: 'PausableConfig', authority: none, paused: true }, 'mint')!;
+  expect(evaluateReadiness([paused], [account()]).verdict).toBe('blocked');
+  const scaled = describeExtension({ __kind: 'ScaledUiAmountConfig', authority: none, multiplier: 1, newMultiplier: 1, newMultiplierEffectiveTimestamp: 0n }, 'mint')!;
+  expect(scaled.authorities).toEqual([]);
+});

@@ -1,0 +1,294 @@
+{
+  "capturedAt": "2026-09-19T18:05:22.972Z",
+  "purpose": "Secondary live decoder evidence; not the non-stock RWA example",
+  "httpStatus": 200,
+  "result": {
+    "status": "partial",
+    "mode": "live",
+    "balanceStatus": "partial",
+    "identity": {
+      "mint": "XsbEhLAtcf6HdfpFZ5xEMdqW8nfAvcsP5bdudRLJzJp",
+      "tokenProgram": "token-2022",
+      "tokenProgramAddress": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+      "decimals": 8,
+      "supply": "15376337527821",
+      "mintAuthority": "7pt9tkctJPK7PPNQJ77GKg8ZffSF6QxoMiCFYHxrtaCj",
+      "freezeAuthority": "JDq14BWvqCRFNu1krb12bcRpbGtJZ1FLEakMw6FdxJNs",
+      "isInitialized": true,
+      "metadata": {
+        "name": "Apple xStock",
+        "symbol": "AAPLx",
+        "uri": "https://xstocks-metadata.backed.fi/tokens/Solana/AAPLx/metadata.json",
+        "uriFetch": "skipped"
+      }
+    },
+    "balances": {
+      "owner": "7pt9tkctJPK7PPNQJ77GKg8ZffSF6QxoMiCFYHxrtaCj",
+      "accounts": [],
+      "complete": false,
+      "accountLimit": 100,
+      "totalRawAmount": "0",
+      "display": {
+        "rawAmount": "0",
+        "standardUiAmount": "0",
+        "extensionUiAmount": "0",
+        "multiplier": "1.0032690125398187",
+        "pendingMultiplier": "1.0032690125398187",
+        "effectiveAt": "2026-08-08T00:30:00.000Z",
+        "boundary": "after",
+        "rounding": "official-helper",
+        "note": "Converted with the official Token-2022 display helper, which uses floating-point arithmetic. Treat the displayed value as a display amount, not an exact accounting figure. The raw base units above are exact."
+      }
+    },
+    "extensions": [
+      {
+        "kind": "MetadataPointer",
+        "scope": "mint",
+        "severity": "info",
+        "impact": "Points at where this token’s metadata lives. Metadata is issuer-supplied and is not on-chain proof of anything.",
+        "authorities": [
+          {
+            "role": "Metadata authority",
+            "address": "5aMNNLQJwAEeoemTEMkv5NVjqKwvvefRYCQ5Z67HFvEq"
+          },
+          {
+            "role": "Metadata account",
+            "address": "XsbEhLAtcf6HdfpFZ5xEMdqW8nfAvcsP5bdudRLJzJp"
+          }
+        ],
+        "fields": [],
+        "calculationUnavailable": false,
+        "inactive": false
+      },
+      {
+        "kind": "PermanentDelegate",
+        "scope": "mint",
+        "severity": "attention",
+        "impact": "This address can transfer or burn your tokens without your signature, and you cannot revoke it. Issuers use it for clawback and forced redemption. Treat it as a custodial control.",
+        "authorities": [
+          {
+            "role": "Permanent delegate",
+            "address": "5aMNNLQJwAEeoemTEMkv5NVjqKwvvefRYCQ5Z67HFvEq"
+          }
+        ],
+        "fields": [],
+        "calculationUnavailable": false,
+        "inactive": false
+      },
+      {
+        "kind": "DefaultAccountState",
+        "scope": "mint",
+        "severity": "attention",
+        "impact": "New token accounts for this mint arrive in this state. When that state is frozen, a new holder cannot move the token until an authority thaws their account.",
+        "authorities": [],
+        "fields": [
+          {
+            "label": "Default state",
+            "value": "Initialized"
+          }
+        ],
+        "calculationUnavailable": false,
+        "inactive": false
+      },
+      {
+        "kind": "ScaledUiAmountConfig",
+        "scope": "mint",
+        "severity": "attention",
+        "impact": "Your balance is a raw amount multiplied by an issuer-controlled number. A multiplier update changes display conversion without moving raw tokens; it does not prove yield or investment performance.",
+        "authorities": [
+          {
+            "role": "Multiplier authority",
+            "address": "S7vYFFWH6BjJyEsdrPQpqpYTqLTrPRK6KW3VwsJuRaS"
+          }
+        ],
+        "fields": [
+          {
+            "label": "Current multiplier",
+            "value": "1.0026642075893797"
+          },
+          {
+            "label": "Pending multiplier",
+            "value": "1.0032690125398187"
+          },
+          {
+            "label": "Effective at",
+            "value": "2026-08-08T00:30:00.000Z"
+          }
+        ],
+        "calculationUnavailable": false,
+        "inactive": false
+      },
+      {
+        "kind": "PausableConfig",
+        "scope": "mint",
+        "severity": "attention",
+        "impact": "An authority can pause all transfers of this token. While paused, nobody can move it.",
+        "authorities": [
+          {
+            "role": "Pause authority",
+            "address": "JDq14BWvqCRFNu1krb12bcRpbGtJZ1FLEakMw6FdxJNs"
+          }
+        ],
+        "fields": [
+          {
+            "label": "Paused",
+            "value": "no"
+          }
+        ],
+        "calculationUnavailable": false,
+        "inactive": false
+      },
+      {
+        "kind": "ConfidentialTransferMint",
+        "scope": "mint",
+        "severity": "opaque",
+        "impact": "The mint supports confidential transfers. This capability alone does not prove any holder has an encrypted balance. Account-level encrypted amounts, if present, remain unknown.",
+        "authorities": [],
+        "fields": [],
+        "calculationUnavailable": true,
+        "inactive": false
+      },
+      {
+        "kind": "TransferHook",
+        "scope": "mint",
+        "severity": "info",
+        "impact": "The transfer-hook extension is present but no hook program is set, so no extra program runs on transfer today. The authority below can set one later.",
+        "authorities": [
+          {
+            "role": "Hook update authority",
+            "address": "5aMNNLQJwAEeoemTEMkv5NVjqKwvvefRYCQ5Z67HFvEq"
+          },
+          {
+            "role": "Hook program",
+            "address": "11111111111111111111111111111111"
+          }
+        ],
+        "fields": [],
+        "calculationUnavailable": false,
+        "inactive": true
+      },
+      {
+        "kind": "TokenMetadata",
+        "scope": "mint",
+        "severity": "info",
+        "impact": "Issuer-declared name, symbol and URI. Descriptive only; it carries no guarantee.",
+        "authorities": [],
+        "fields": [
+          {
+            "label": "Name",
+            "value": "Apple xStock"
+          },
+          {
+            "label": "Symbol",
+            "value": "AAPLx"
+          },
+          {
+            "label": "URI",
+            "value": "https://xstocks-metadata.backed.fi/tokens/Solana/AAPLx/metadata.json"
+          }
+        ],
+        "calculationUnavailable": false,
+        "inactive": false
+      }
+    ],
+    "transferReadiness": {
+      "verdict": "unknown",
+      "knownBlock": false,
+      "unknownChecks": true,
+      "reasons": [
+        {
+          "verdict": "attention",
+          "check": "Pausable",
+          "detail": "An authority can pause all transfers of this token at any time.",
+          "evidence": "Pause authority: JDq14BWvqCRFNu1krb12bcRpbGtJZ1FLEakMw6FdxJNs"
+        },
+        {
+          "verdict": "ready",
+          "check": "Default account state",
+          "detail": "New accounts default to Initialized.",
+          "evidence": "DefaultAccountState = Initialized"
+        },
+        {
+          "verdict": "ready",
+          "check": "Transfer hook",
+          "detail": "The transfer-hook extension is present but no hook program is set, so no extra program runs on transfer today. The hook authority can set one later.",
+          "evidence": "Hook program: 11111111111111111111111111111111 (unset)"
+        },
+        {
+          "verdict": "attention",
+          "check": "Permanent delegate",
+          "detail": "This address can move or burn the token without the holder’s signature, and the holder cannot revoke it.",
+          "evidence": "Permanent delegate: 5aMNNLQJwAEeoemTEMkv5NVjqKwvvefRYCQ5Z67HFvEq"
+        },
+        {
+          "verdict": "unknown",
+          "check": "Opaque or unrecognised state",
+          "detail": "Confidential capability or an unsupported extension was detected. Mint capability does not prove an encrypted holding; any encrypted or omitted portion remains unknown.",
+          "evidence": "ConfidentialTransferMint"
+        },
+        {
+          "verdict": "unknown",
+          "check": "Incomplete owner observation",
+          "detail": "Some owner accounts or their state could not be validated. Readiness is not established for the omitted accounts."
+        }
+      ],
+      "disclaimer": "Transfer readiness describes observed on-chain state only. It is not legal advice and not a guarantee that a transfer will succeed or be permitted."
+    },
+    "registry": null,
+    "provenance": {
+      "mode": "live",
+      "cluster": "mainnet-beta",
+      "rpcProvider": "api.mainnet-beta.solana.com",
+      "fetchedAt": "2026-09-19T18:05:22.717Z",
+      "slot": "448483390",
+      "commitment": "confirmed",
+      "decoderVersion": "@solana-program/token-2022@0.17.0+rwa-lens.2",
+      "timeSource": "chain",
+      "clockTimestamp": "2026-09-19T18:05:24.000Z",
+      "clockSlot": "448483390",
+      "observedTimestamp": "2026-09-19T18:05:24.000Z",
+      "slotSpread": "1",
+      "sources": [
+        {
+          "label": "Mint account",
+          "method": "getAccountInfo",
+          "status": "ok",
+          "detail": "owner TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+          "slot": "448483390",
+          "commitment": "confirmed"
+        },
+        {
+          "label": "Mint decoder",
+          "method": "getMintDecoder + getExtensionDecoder",
+          "status": "ok",
+          "slot": "448483390"
+        },
+        {
+          "label": "Clock sysvar",
+          "method": "getAccountInfo(Clock)",
+          "status": "ok",
+          "detail": "unixTimestamp 1789841124; Clock.slot 448483390",
+          "slot": "448483390",
+          "commitment": "confirmed"
+        },
+        {
+          "label": "Owner token accounts",
+          "method": "getTokenAccountsByOwner",
+          "status": "ok",
+          "detail": "0 validated unique account(s); mint filter; token program TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+          "slot": "448483391",
+          "commitment": "confirmed"
+        }
+      ]
+    },
+    "warnings": [
+      "Mint and owner accounts were read at different slots. The aggregate is a mixed-slot observation, not an atomic snapshot."
+    ],
+    "limitations": [
+      "Public inspection performs no on-chain writes. Optional report sign-in uses a wallet message only.",
+      "Raw units use exact integer arithmetic. Scaled display uses the official floating-point helper.",
+      "Issuer metadata is descriptive only, not proof of reserves, compliance or legal transferability.",
+      "RPC reads are not atomic. minContextSlot bounds staleness; it does not create a snapshot. The standard owner RPC has no pagination or proof of provider completeness."
+    ]
+  }
+}

@@ -1,5 +1,5 @@
 import { amountToUiAmountForScaledUiAmountMintWithoutSimulation } from '@solana-program/token-2022';
-import { findExtension } from './extensions';
+import { EXTENSION_DEFINITIONS, findExtension } from './extensions';
 import type { DisplayBalance, RawBalance } from './types';
 
 /**
@@ -26,8 +26,8 @@ type ScaledConfig = {
 /** Exact base-unit → decimal conversion with no float anywhere. */
 export function exactUiAmount(rawAmount: string, decimals: number): string {
   if (!/^\d+$/.test(rawAmount)) throw new Error('Raw amount must be a non-negative integer string.');
-  if (!Number.isInteger(decimals) || decimals < 0 || decimals > 20) {
-    throw new Error('Decimals must be an integer between 0 and 20.');
+  if (!Number.isInteger(decimals) || decimals < 0 || decimals > 255) {
+    throw new Error('Decimals must be an integer between 0 and 255.');
   }
   const raw = BigInt(rawAmount);
   if (decimals === 0) return raw.toString();
@@ -51,20 +51,19 @@ export type MultiplierSelection = {
   multiplier: number;
   pendingMultiplier?: number;
   effectiveAt?: string;
-  boundary: 'before' | 'at' | 'after' | 'none';
+  boundary: 'before' | 'at' | 'after' | 'none' | 'unknown';
 };
 
 /**
  * Picks the multiplier that is actually in force at `observedSeconds`.
  *
- * `newMultiplierEffectiveTimestamp` of 0 means nothing is scheduled. At or past
- * the boundary the new multiplier is the live one — "at" is not "before".
+ * At or past the boundary the new multiplier is active, including timestamp 0
+ * for an immediate update. The same selection is passed to the display helper.
  */
 export function selectMultiplier(config: ScaledConfig, observedSeconds: bigint | null): MultiplierSelection {
+  if (![config.multiplier, config.newMultiplier].every(value => Number.isFinite(value) && value > 0)) throw new Error('Invalid multiplier.');
   const effective = toSeconds(config.newMultiplierEffectiveTimestamp);
-  if (effective === null || effective === 0n) {
-    return { multiplier: config.multiplier, boundary: 'none' };
-  }
+  if (effective === null) throw new Error('Invalid effective timestamp.');
   const effectiveAt = new Date(Number(effective) * 1000).toISOString();
   if (observedSeconds === null) {
     // Without an observed time we must not guess which side of the boundary we are on.
@@ -72,7 +71,7 @@ export function selectMultiplier(config: ScaledConfig, observedSeconds: bigint |
       multiplier: config.multiplier,
       pendingMultiplier: config.newMultiplier,
       effectiveAt,
-      boundary: 'before',
+      boundary: 'unknown',
     };
   }
   if (observedSeconds < effective) {
@@ -95,7 +94,9 @@ export type BuildDisplayInput = {
   totalRawAmount: string;
   decimals: number;
   mintExtensions: unknown;
-  /** Chain block time in seconds, or null when it could not be observed. */
+  /** Unknown account extensions may alter the interpretation of public units. */
+  unknownAccountExtensions?: boolean;
+  /** Observed Clock time, a labelled fallback estimate, or null if unavailable. */
   observedSeconds: bigint | null;
 };
 
@@ -109,7 +110,21 @@ export function buildDisplayBalance(input: BuildDisplayInput): DisplayBalance {
     return { rawAmount: totalRawAmount, rounding: 'unavailable', note: 'The raw amount could not be interpreted.' };
   }
 
+  const unknownMintExtension = !Array.isArray(mintExtensions) || mintExtensions.some(extension => {
+    if (!extension || typeof extension !== 'object' || typeof extension.__kind !== 'string') return true;
+    return extension.__kind !== 'Uninitialized' && !Object.hasOwn(EXTENSION_DEFINITIONS, extension.__kind);
+  });
+  if (unknownMintExtension || input.unknownAccountExtensions) return {
+    rawAmount: totalRawAmount, standardUiAmount, boundary: 'unknown', rounding: 'unavailable',
+    note: 'An extension is unknown or could not be decoded, so extension-aware display conversion is unavailable. The standard decimal amount remains an exact representation of the observed public raw units.',
+  };
+
   const config = findExtension<ScaledConfig>(mintExtensions, 'ScaledUiAmountConfig');
+  const interest = findExtension(mintExtensions, 'InterestBearingConfig');
+  if (interest) return {
+    rawAmount: totalRawAmount, standardUiAmount, rounding: 'unavailable',
+    note: config ? 'Scaled UI Amount and InterestBearingConfig are incompatible. Display conversion is unavailable.' : 'Interest-bearing display conversion is not supported by this release. Standard units are shown separately.',
+  };
   if (!config) {
     return {
       rawAmount: totalRawAmount,
@@ -120,30 +135,30 @@ export function buildDisplayBalance(input: BuildDisplayInput): DisplayBalance {
     };
   }
 
-  const selection = selectMultiplier(config, observedSeconds);
+  let selection: MultiplierSelection;
+  try { selection = selectMultiplier(config, observedSeconds); } catch {
+    return { rawAmount: totalRawAmount, standardUiAmount, rounding: 'unavailable', note: 'The multiplier or effective timestamp is invalid; no display conversion was performed.' };
+  }
+  if (selection.boundary === 'unknown') return {
+    rawAmount: totalRawAmount, standardUiAmount, pendingMultiplier: String(selection.pendingMultiplier),
+    effectiveAt: selection.effectiveAt, boundary: 'unknown', rounding: 'unavailable', note: 'No time was observed, so the active multiplier cannot be selected.',
+  };
 
   let extensionUiAmount: string | undefined;
   let rounding: DisplayBalance['rounding'] = 'official-helper';
   let note =
     'Converted with the official Token-2022 display helper, which uses floating-point arithmetic. Treat the displayed value as a display amount, not an exact accounting figure. The raw base units above are exact.';
 
-  if (selection.multiplier === 1) {
-    // A multiplier of exactly 1 is representable, so the exact path is honest here.
-    extensionUiAmount = standardUiAmount;
-    rounding = 'exact-decimal';
-    note = 'The multiplier is exactly 1, so the scaled amount equals the exact decimal amount.';
-  } else {
-    try {
-      extensionUiAmount = amountToUiAmountForScaledUiAmountMintWithoutSimulation(
-        BigInt(totalRawAmount),
-        decimals,
-        selection.multiplier,
-      );
-    } catch {
-      extensionUiAmount = undefined;
-      rounding = 'unavailable';
-      note = 'The official conversion helper could not produce a value for this amount and multiplier.';
-    }
+  try {
+    // Even multiplier 1 must preserve the program helper's f64 rounding behavior.
+    extensionUiAmount = amountToUiAmountForScaledUiAmountMintWithoutSimulation(
+      BigInt(totalRawAmount), decimals, selection.multiplier,
+    );
+    if (!Number.isFinite(Number(extensionUiAmount)) || !/^\d+(?:\.\d+)?(?:e[+-]?\d+)?$/i.test(extensionUiAmount)) throw new Error('Invalid display output.');
+  } catch {
+    extensionUiAmount = undefined;
+    rounding = 'unavailable';
+    note = 'The official conversion helper could not produce a value for this amount and multiplier.';
   }
 
   return {

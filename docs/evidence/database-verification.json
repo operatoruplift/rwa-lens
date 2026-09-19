@@ -1,0 +1,26 @@
+{
+  "dateLocal": "2026-09-20",
+  "projectId": "skpzggvbnuipdqhtwmbw",
+  "projectName": "rwa-lens",
+  "migration": "rwa_wallet_reports_durable_auth",
+  "migrationApplied": true,
+  "existingResourcesPreserved": ["public.rwa_reports", "public.consume_rate_limit"],
+  "rollbackScopedSqlAssertions": {
+    "singleUseChallenge": "passed",
+    "rateLimitFirstTwoAllowedThirdDenied": "passed",
+    "testWritesRolledBack": true
+  },
+  "parallelIndependentConsumeQueries": [true, false],
+  "privileges": {
+    "anonymousReportSelect": false,
+    "authenticatedReportSelect": false,
+    "anonymousChallengeExecute": false,
+    "serviceRoleReportUpdate": false
+  },
+  "directAnonymousRestRequest": {"table": "rwa_wallet_reports", "httpStatus": 401, "postgresCode": "42501"},
+  "limitations": [
+    "Wallet auth and cloud reports remain disabled on the app deployment.",
+    "No real wallet session or service-role HTTP report save was exercised.",
+    "Two-owner repository tests use mocked PostgREST; ownership is enforced in server queries, not mapped through a Supabase wallet JWT."
+  ]
+}

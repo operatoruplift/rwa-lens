@@ -1,5 +1,2 @@
-import { redirect } from 'next/navigation';
-
-export default function Home() {
-  redirect('/rwa');
-}
+export const dynamic = 'force-dynamic';
+export { default, metadata } from './rwa/page';

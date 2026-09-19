@@ -1,5 +1,6 @@
+import { buildDisplayBalance } from './balance';
 import { DECODER_VERSION, READINESS_DISCLAIMER } from './types';
-import type { InspectResult } from './types';
+import type { InspectRequest, InspectResult } from './types';
 
 /**
  * Deterministic fixtures. These are *illustrative*, not observations of any real
@@ -9,7 +10,7 @@ import type { InspectResult } from './types';
  */
 
 export type Fixture = {
-  id: string;
+  id: Extract<InspectRequest, { mode: 'fixture' }>['fixtureId'];
   label: string;
   summary: string;
   result: InspectResult;
@@ -18,6 +19,7 @@ export type Fixture = {
 const FIXTURE_NOTE = 'Illustrative fixture. Not a real issuer, mint or balance.';
 
 const baseProvenance = (extra: Partial<InspectResult['provenance']> = {}): InspectResult['provenance'] => ({
+  mode: 'fixture',
   cluster: 'devnet',
   rpcProvider: 'fixture',
   fetchedAt: '2026-09-16T00:00:00.000Z',
@@ -37,6 +39,8 @@ const treasury: Fixture = {
   summary: 'Scaled UI Amount with a pending multiplier change. Raw units never move; the display amount does.',
   result: {
     status: 'verified',
+    mode: 'fixture',
+    balanceStatus: 'observed',
     identity: {
       mint: 'RWALensFixtureTreasury1111111111111111111',
       tokenProgram: 'token-2022',
@@ -88,8 +92,8 @@ const treasury: Fixture = {
           'Your balance is a raw amount multiplied by an issuer-controlled number. Yield is applied by changing that multiplier, not by moving tokens.',
         authorities: [{ role: 'Multiplier authority', address: 'RWALensFixtureEmitter11111111111111111111' }],
         fields: [
-          { label: 'Current multiplier', value: '1.04235' },
-          { label: 'Pending multiplier', value: '1.05114' },
+          { label: 'Stored prior multiplier', value: '1.04235' },
+          { label: 'Scheduled multiplier', value: '1.05114' },
           { label: 'Effective at', value: '2026-10-01T00:00:00.000Z' },
         ],
         calculationUnavailable: false,
@@ -150,6 +154,8 @@ const credit: Fixture = {
   summary: 'Transfer hook plus a confidential portion. The verdict is unknown, and unknown is not zero.',
   result: {
     status: 'partial',
+    mode: 'fixture',
+    balanceStatus: 'partial',
     identity: {
       mint: 'RWALensFixtureCredit11111111111111111111',
       tokenProgram: 'token-2022',
@@ -189,7 +195,7 @@ const credit: Fixture = {
         scope: 'mint',
         severity: 'attention',
         impact:
-          'A program runs on every transfer and can reject it. This is how issuers gate transfers to approved holders.',
+          'A program runs on every transfer and can reject it. Its conditions are program-specific and are not evaluated here.',
         authorities: [
           { role: 'Hook update authority', address: 'RWALensFixtureFund11111111111111111111111' },
           { role: 'Hook program', address: 'RWALensFixtureHook11111111111111111111111' },
@@ -202,7 +208,7 @@ const credit: Fixture = {
         scope: 'account',
         severity: 'opaque',
         impact:
-          'This account holds an encrypted balance. The amount shown covers only the public portion; the confidential portion is unknown.',
+          'This account supports encrypted balances; a nonzero encrypted amount is not proven. The amount shown covers only the public portion; the confidential portion is unknown.',
         authorities: [],
         fields: [],
         calculationUnavailable: true,
@@ -244,6 +250,8 @@ const plain: Fixture = {
   summary: 'No extensions exist on this program. The product states that rather than showing an empty result.',
   result: {
     status: 'verified',
+    mode: 'fixture',
+    balanceStatus: 'not-requested',
     identity: {
       mint: 'RWALensFixtureSpot11111111111111111111',
       tokenProgram: 'spl-token',
@@ -283,24 +291,27 @@ export function getFixture(id: string): Fixture | undefined {
  * Re-times the treasury fixture so the UI can demonstrate the multiplier
  * boundary. The raw amount is identical on both sides — that is the point.
  */
-export function treasuryAtBoundary(side: 'before' | 'after'): InspectResult {
+export function treasuryAtBoundary(side: 'before' | 'at' | 'after'): InspectResult {
   const source = treasury.result;
-  const multiplier = side === 'before' ? '1.04235' : '1.05114';
-  const ui = side === 'before' ? '1042.35' : '1051.14';
+  const observed = side === 'before' ? '2026-09-16T00:00:00.000Z' : side === 'at' ? '2026-10-01T00:00:00.000Z' : '2026-10-01T00:00:01.000Z';
+  const display = buildDisplayBalance({
+    totalRawAmount: source.balances!.totalRawAmount, decimals: source.identity!.decimals,
+    observedSeconds: BigInt(Date.parse(observed) / 1000),
+    mintExtensions: [{ __kind: 'ScaledUiAmountConfig', multiplier: 1.04235, newMultiplier: 1.05114, newMultiplierEffectiveTimestamp: BigInt(Date.parse('2026-10-01T00:00:00.000Z') / 1000) }],
+  });
   return {
     ...source,
     balances: source.balances && {
       ...source.balances,
-      display: {
-        ...source.balances.display,
-        multiplier,
-        extensionUiAmount: ui,
-        boundary: side,
-      },
+      display,
     },
     provenance: {
       ...source.provenance,
-      blockTime: side === 'before' ? '2026-09-16T00:00:00.000Z' : '2026-10-01T00:00:01.000Z',
+      blockTime: observed,
+      observedTimestamp: observed,
     },
   };
 }
+
+// Initialize the seeded treasury through the accounting engine too.
+treasury.result.balances!.display = treasuryAtBoundary('before').balances!.display;

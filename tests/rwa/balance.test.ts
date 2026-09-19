@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { amountToUiAmountForScaledUiAmountMintWithoutSimulation } from '@solana-program/token-2022';
 import { buildDisplayBalance, exactUiAmount, selectMultiplier, sumRawAmounts } from '@/lib/rwa/balance';
 
 const scaled = (multiplier: number, newMultiplier: number, effective: bigint) => [
@@ -48,9 +49,9 @@ describe('raw aggregation', () => {
 describe('multiplier boundary selection', () => {
   const config = { __kind: 'ScaledUiAmountConfig' as const, multiplier: 1.5, newMultiplier: 2, newMultiplierEffectiveTimestamp: 1000n };
 
-  it('treats a zero timestamp as nothing scheduled', () => {
+  it('treats a zero timestamp as immediately effective, matching the program', () => {
     const result = selectMultiplier({ ...config, newMultiplierEffectiveTimestamp: 0n }, 5000n);
-    expect(result).toEqual({ multiplier: 1.5, boundary: 'none' });
+    expect(result).toMatchObject({ multiplier: 2, boundary: 'after' });
   });
 
   it('uses the current multiplier strictly before the boundary', () => {
@@ -68,7 +69,7 @@ describe('multiplier boundary selection', () => {
   it('does not guess a side when no time was observed', () => {
     const result = selectMultiplier(config, null);
     expect(result.multiplier).toBe(1.5);
-    expect(result.boundary).toBe('before');
+    expect(result.boundary).toBe('unknown');
   });
 });
 
@@ -81,7 +82,7 @@ describe('display balance', () => {
     expect(display.boundary).toBe('none');
   });
 
-  it('is exact when the multiplier is precisely 1', () => {
+  it('retains official helper rounding when the multiplier is precisely 1', () => {
     const display = buildDisplayBalance({
       totalRawAmount: '1000000000',
       decimals: 6,
@@ -89,7 +90,7 @@ describe('display balance', () => {
       observedSeconds: 0n,
     });
     expect(display.extensionUiAmount).toBe('1000');
-    expect(display.rounding).toBe('exact-decimal');
+    expect(display.rounding).toBe('official-helper');
   });
 
   it('labels a helper conversion as a helper result, never as exact', () => {
@@ -130,5 +131,58 @@ describe('display balance', () => {
     const display = buildDisplayBalance({ totalRawAmount: 'not-a-number', decimals: 6, mintExtensions: [], observedSeconds: 0n });
     expect(display.rounding).toBe('unavailable');
     expect(display.standardUiAmount).toBeUndefined();
+  });
+});
+
+describe('precision and unavailable conversion', () => {
+  it.each([NaN, Infinity, -Infinity, 0, -1])('refuses invalid multiplier %s', value => {
+    const display = buildDisplayBalance({ totalRawAmount: '18446744073709551615', decimals: 9, mintExtensions: scaled(value, value, 0n), observedSeconds: 1n });
+    expect(display.rounding).toBe('unavailable');
+    expect(display.extensionUiAmount).toBeUndefined();
+    expect(display.rawAmount).toBe('18446744073709551615');
+  });
+  it('refuses incompatible interest-bearing and scaled extensions', () => {
+    const display = buildDisplayBalance({ totalRawAmount: '1', decimals: 6, mintExtensions: [...scaled(1.5, 2, 0n), { __kind: 'InterestBearingConfig' }], observedSeconds: 1n });
+    expect(display.rounding).toBe('unavailable');
+    expect(display.note).toMatch(/incompatible/);
+  });
+  it('does not convert a scheduled value without an observed timestamp', () => {
+    const display = buildDisplayBalance({ totalRawAmount: '1', decimals: 6, mintExtensions: scaled(1.5, 2, 1000n), observedSeconds: null });
+    expect(display.rounding).toBe('unavailable');
+    expect(display.boundary).toBe('unknown');
+  });
+  it('contains large u64 floating-point behavior to a labelled display conversion', () => {
+    const display = buildDisplayBalance({ totalRawAmount: '18446744073709551615', decimals: 9, mintExtensions: scaled(1.5, 1.5, 0n), observedSeconds: 1n });
+    expect(display.standardUiAmount).toBe('18446744073.709551615');
+    expect(display.rounding).toBe('official-helper');
+    expect(display.rawAmount).toBe('18446744073709551615');
+  });
+});
+
+describe('unknown extension and identity-multiplier regressions', () => {
+  it.each(['Unknown(25)', 'Unknown(999)', 'Unknown(truncated)', 'FutureDisplayExtension'])('does not infer a definitive display when %s is unrecognized', kind => {
+    const display = buildDisplayBalance({ totalRawAmount: '1250000', decimals: 6, mintExtensions: [{ __kind: kind, byteLength: 56 }], observedSeconds: 1n });
+    expect(display).toMatchObject({ rawAmount: '1250000', standardUiAmount: '1.25', rounding: 'unavailable', boundary: 'unknown' });
+    expect(display.extensionUiAmount).toBeUndefined();
+    expect(display.note).toMatch(/unknown or could not be decoded/);
+  });
+  it('does not compute with known scaled configuration alongside an unknown extension', () => {
+    const display = buildDisplayBalance({ totalRawAmount: '1250000', decimals: 6, mintExtensions: [...scaled(1, 1, 0n), { __kind: 'Unknown(999)', byteLength: 3 }], observedSeconds: 1n });
+    expect(display.rounding).toBe('unavailable');
+    expect(display.standardUiAmount).toBe('1.25');
+  });
+  it('keeps standard units but withholds extension display for an unknown account extension', () => {
+    const display = buildDisplayBalance({ totalRawAmount: '1250000', decimals: 6, mintExtensions: [], unknownAccountExtensions: true, observedSeconds: 1n });
+    expect(display.rounding).toBe('unavailable');
+    expect(display.standardUiAmount).toBe('1.25');
+  });
+  it('preserves official rounding for a large u64 at multiplier 1', () => {
+    const rawAmount = '18446744073709551615';
+    const display = buildDisplayBalance({ totalRawAmount: rawAmount, decimals: 9, mintExtensions: scaled(1, 1, 0n), observedSeconds: 1n });
+    expect(display.rawAmount).toBe(rawAmount);
+    expect(display.standardUiAmount).toBe('18446744073.709551615');
+    expect(display.extensionUiAmount).toBe(amountToUiAmountForScaledUiAmountMintWithoutSimulation(BigInt(rawAmount), 9, 1));
+    expect(display.extensionUiAmount).not.toBe(display.standardUiAmount);
+    expect(display.rounding).toBe('official-helper');
   });
 });
