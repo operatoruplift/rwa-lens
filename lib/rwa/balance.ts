@@ -64,7 +64,14 @@ export function selectMultiplier(config: ScaledConfig, observedSeconds: bigint |
   if (![config.multiplier, config.newMultiplier].every(value => Number.isFinite(value) && value > 0)) throw new Error('Invalid multiplier.');
   const effective = toSeconds(config.newMultiplierEffectiveTimestamp);
   if (effective === null) throw new Error('Invalid effective timestamp.');
-  const effectiveAt = new Date(Number(effective) * 1000).toISOString();
+  // The issuer controls this u64. Past year 9999 toISOString() returns an extended-year
+  // form (+033658-09-27T…) that our own timestamp schema rejects, which would turn a
+  // hostile value into an opaque failure for the whole report. Treat it as unavailable.
+  const effectiveMs = Number(effective) * 1000;
+  if (!Number.isFinite(effectiveMs) || effectiveMs >= 253402300800000 || effectiveMs < -62135596800000) {
+    throw new Error('Effective timestamp out of representable range.');
+  }
+  const effectiveAt = new Date(effectiveMs).toISOString();
   if (observedSeconds === null) {
     // Without an observed time we must not guess which side of the boundary we are on.
     return {

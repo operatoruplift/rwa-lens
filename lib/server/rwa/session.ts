@@ -124,12 +124,33 @@ export async function consumeNonce(nonce: string, address: string, browserToken:
   return challenge;
 }
 
+/**
+ * Ed25519 points of small order. RFC 8032 verification accepts these as public keys,
+ * so an all-zero signature validates against them for roughly one message in four:
+ * a signature that proves possession of no key at all. Node and OpenSSL do not filter
+ * them, so we must. These are the eight canonical encodings.
+ */
+const SMALL_ORDER_KEYS = new Set([
+  '0000000000000000000000000000000000000000000000000000000000000000',
+  '0000000000000000000000000000000000000000000000000000000000000080',
+  '0100000000000000000000000000000000000000000000000000000000000000',
+  'ecffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f',
+  '26e8958fc2b227b045c3f489f2ef98f0d5dfac05d3c63339b13802886d53fc05',
+  '26e8958fc2b227b045c3f489f2ef98f0d5dfac05d3c63339b13802886d53fc85',
+  'c7176a703d4dd84fba3c0b760d10670f2a2053fa2c39ccc64ec7fd7792ac037a',
+  'c7176a703d4dd84fba3c0b760d10670f2a2053fa2c39ccc64ec7fd7792ac03fa',
+]);
+
 /** Node's maintained Ed25519 implementation verifies the exact stored message. */
 export function verifyChallenge(challenge: Challenge, signature: string): boolean {
   try {
     const publicKey = bs58.decode(challenge.address);
     const signatureBytes = bs58.decode(signature);
     if (publicKey.length !== 32 || signatureBytes.length !== 64) return false;
+    // No real wallet holds one of these, and accepting one authenticates nobody.
+    if (SMALL_ORDER_KEYS.has(Buffer.from(publicKey).toString('hex'))) return false;
+    // R is the first half of the signature; the identity element proves nothing.
+    if (signatureBytes.subarray(0, 32).every(byte => byte === 0)) return false;
     const key = createPublicKey({ key: Buffer.concat([Buffer.from('302a300506032b6570032100', 'hex'), Buffer.from(publicKey)]), format: 'der', type: 'spki' });
     return verify(null, Buffer.from(challenge.message), key, signatureBytes);
   } catch { return false; }

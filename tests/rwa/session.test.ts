@@ -73,6 +73,34 @@ describe('durable sign-in challenges', () => {
     expect(verifyChallenge({ ...challenge, message: message + 'tampered' }, signature)).toBe(false);
     expect(verifyChallenge({ ...challenge, address: SECOND }, signature)).toBe(false);
   });
+  it('rejects small-order public keys that an all-zero signature would satisfy', async () => {
+    // RFC 8032 verification accepts these points, so a zero signature validates against
+    // them for roughly one message in four. Repeat across many fresh challenges: a
+    // single-challenge assertion passes by luck about three times in four.
+    const lowOrder = [
+      '11111111111111111111111111111111',
+      bs58.encode(Buffer.from('0000000000000000000000000000000000000000000000000000000000000080', 'hex')),
+      bs58.encode(Buffer.from('0100000000000000000000000000000000000000000000000000000000000000', 'hex')),
+      bs58.encode(Buffer.from('ecffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f', 'hex')),
+    ];
+    const zeroSignature = bs58.encode(Buffer.alloc(64));
+    for (const address of lowOrder) {
+      for (let attempt = 0; attempt < 40; attempt += 1) {
+        const { nonce, message } = await issueNonce(address, BROWSER);
+        const challenge = (await consumeNonce(nonce, address, BROWSER))!;
+        expect(challenge.message).toBe(message);
+        expect(verifyChallenge(challenge, zeroSignature)).toBe(false);
+      }
+    }
+  });
+  it('rejects a signature whose R component is the identity element', async () => {
+    const pair = nacl.sign.keyPair.fromSeed(new Uint8Array(32).fill(7));
+    const { nonce, message } = await issueNonce(ADDRESS, BROWSER);
+    const real = nacl.sign.detached(new TextEncoder().encode(message), pair.secretKey);
+    const challenge = (await consumeNonce(nonce, ADDRESS, BROWSER))!;
+    const zeroedR = Buffer.concat([Buffer.alloc(32), Buffer.from(real.subarray(32))]);
+    expect(verifyChallenge(challenge, bs58.encode(zeroedR))).toBe(false);
+  });
   it('requires exact origin including port and rejects absent origin', () => {
     expect(hasExactOrigin(new Request(`${ORIGIN}/api/rwa/auth`, { headers: { origin: ORIGIN } }))).toBe(true);
     for (const origin of ['', 'https://rwa.example.com:444', 'https://rwa.example.com.attacker.com']) expect(hasExactOrigin(new Request(`${ORIGIN}/api/rwa/auth`, { headers: { origin } }))).toBe(false);
