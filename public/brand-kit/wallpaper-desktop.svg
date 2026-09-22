@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2560" height="1440" viewBox="0 0 2560 1440">
+  <rect width="2560" height="1440" fill="#101a3a"/>
+  <path d="M0 0v1440M80 0v1440M160 0v1440M240 0v1440M320 0v1440M400 0v1440M480 0v1440M560 0v1440M640 0v1440M720 0v1440M800 0v1440M880 0v1440M960 0v1440M1040 0v1440M1120 0v1440M1200 0v1440M1280 0v1440M1360 0v1440M1440 0v1440M1520 0v1440M1600 0v1440M1680 0v1440M1760 0v1440M1840 0v1440M1920 0v1440M2000 0v1440M2080 0v1440M2160 0v1440M2240 0v1440M2320 0v1440M2400 0v1440M2480 0v1440M2560 0v1440M0 0h2560M0 80h2560M0 160h2560M0 240h2560M0 320h2560M0 400h2560M0 480h2560M0 560h2560M0 640h2560M0 720h2560M0 800h2560M0 880h2560M0 960h2560M0 1040h2560M0 1120h2560M0 1200h2560M0 1280h2560M0 1360h2560M0 1440h2560" stroke="#18234a" fill="none"/>
+  <g transform="translate(1120 560) scale(8)">
+  <path d="M20 3 36 12.2v15.6L20 37 4 27.8V12.2L20 3Z" fill="#ffffff"/>
+  <path d="m20 8 11.8 6.8-11.8 7-11.8-7L20 8Z" fill="#5b5ce2"/>
+  <path d="M8.2 19.6 20 26.5l11.8-6.9M8.2 24.7 20 31.6l11.8-6.9M20 21.8v9.8" stroke="#101a3a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></g>
+  <text x="1280" y="1020" text-anchor="middle" fill="#ffffff" font-family="Georgia,'Times New Roman',serif" font-size="72">RWA <tspan font-style="italic">Lens</tspan><tspan fill="#5b5ce2">.</tspan></text></svg>

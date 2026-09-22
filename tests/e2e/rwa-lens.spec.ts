@@ -221,4 +221,25 @@ test.describe('RWA Lens guest product', () => {
     await mkdir(screenshotDir, { recursive: true });
     await page.screenshot({ path: path.join(screenshotDir, 'rwa-reduced-motion.png'), fullPage: true });
   });
+
+  test('brand kit serves every advertised asset and stays reachable from the product', async ({ page }) => {
+    await page.goto('/rwa');
+    await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link', { name: 'Brand kit' }).click();
+    await expect(page).toHaveURL(/\/brand-kit$/);
+    await expect(page.getByRole('heading', { level: 1 })).toContainText('can prove');
+
+    // Walk the page so lazy previews enter the viewport, then require every one to have decoded.
+    await page.evaluate(async () => {
+      for (let y = 0; y < document.body.scrollHeight; y += 600) { window.scrollTo(0, y); await new Promise(resolve => setTimeout(resolve, 120)); }
+      window.scrollTo(0, 0);
+    });
+    await expect.poll(() => page.evaluate(() => Array.from(document.images).every(image => image.complete && image.naturalWidth > 0))).toBe(true);
+
+    // A brand kit whose downloads 404 is worse than no brand kit.
+    const links = await page.locator('a[download]').evaluateAll(nodes => nodes.map(node => node.getAttribute('href')!));
+    expect(links.length).toBeGreaterThanOrEqual(17);
+    for (const href of links) expect((await page.request.get(href)).status(), href).toBe(200);
+    expect(links).toContain('/brand-kit/rwa-lens-brand-kit.zip');
+    expect(links).toContain('/brand-kit/brand-guide.md');
+  });
 });

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs><clipPath id="squircle"><rect width="1024" height="1024" rx="232"/></clipPath></defs>
+  <rect width="1024" height="1024" rx="232" fill="#f6f7fb"/>
+  <g clip-path="url(#squircle)"><path d="M0 0v1024M128 0v1024M256 0v1024M384 0v1024M512 0v1024M640 0v1024M768 0v1024M896 0v1024M1024 0v1024M0 0h1024M0 128h1024M0 256h1024M0 384h1024M0 512h1024M0 640h1024M0 768h1024M0 896h1024M0 1024h1024" stroke="#e3e6ef" fill="none"/></g>
+  <g transform="translate(272 232) scale(12)">
+  <path d="M20 3 36 12.2v15.6L20 37 4 27.8V12.2L20 3Z" fill="#101a3a"/>
+  <path d="m20 8 11.8 6.8-11.8 7-11.8-7L20 8Z" fill="#9e9ff8"/>
+  <path d="M8.2 19.6 20 26.5l11.8-6.9M8.2 24.7 20 31.6l11.8-6.9M20 21.8v9.8" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></g>
+  <text x="512" y="880" text-anchor="middle" fill="#101a3a" font-family="Georgia,'Times New Roman',serif" font-size="96">RWA <tspan font-style="italic">Lens</tspan><tspan fill="#5b5ce2">.</tspan></text></svg>

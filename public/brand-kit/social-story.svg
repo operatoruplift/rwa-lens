@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1920" viewBox="0 0 1080 1920">
+  <rect width="1080" height="1920" fill="#101a3a"/>
+  <path d="M0 1180v740M40 1180v740M80 1180v740M120 1180v740M160 1180v740M200 1180v740M240 1180v740M280 1180v740M320 1180v740M360 1180v740M400 1180v740M440 1180v740M480 1180v740M520 1180v740M560 1180v740M600 1180v740M640 1180v740M680 1180v740M720 1180v740M760 1180v740M800 1180v740M840 1180v740M880 1180v740M920 1180v740M960 1180v740M1000 1180v740M1040 1180v740M1080 1180v740M0 1180h1080M0 1220h1080M0 1260h1080M0 1300h1080M0 1340h1080M0 1380h1080M0 1420h1080M0 1460h1080M0 1500h1080M0 1540h1080M0 1580h1080M0 1620h1080M0 1660h1080M0 1700h1080M0 1740h1080M0 1780h1080M0 1820h1080M0 1860h1080M0 1900h1080" stroke="#1b2650" fill="none"/>
+  <text x="80" y="250" fill="#ffffff" font-family="Georgia,'Times New Roman',serif" font-size="58">RWA <tspan font-style="italic">Lens</tspan><tspan fill="#5b5ce2">.</tspan></text>
+  <g transform="translate(340 420) scale(10)">
+  <path d="M20 3 36 12.2v15.6L20 37 4 27.8V12.2L20 3Z" fill="#ffffff"/>
+  <path d="m20 8 11.8 6.8-11.8 7-11.8-7L20 8Z" fill="#5b5ce2"/>
+  <path d="M8.2 19.6 20 26.5l11.8-6.9M8.2 24.7 20 31.6l11.8-6.9M20 21.8v9.8" stroke="#101a3a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></g>
+  <text x="80" y="960" font-family="Inter,'Helvetica Neue',Arial,sans-serif" font-size="22" letter-spacing="4" fill="#5b5ce2">THE TOKEN BEHIND THE ASSET</text>
+  <text x="75" y="1080" font-family="Inter,'Helvetica Neue',Arial,sans-serif" font-size="104" font-weight="600" letter-spacing="-3" fill="#ffffff">Identity.</text><text x="75" y="1198" font-family="Inter,'Helvetica Neue',Arial,sans-serif" font-size="104" font-weight="600" letter-spacing="-3" fill="#ffffff">Balance.</text><text x="75" y="1316" font-family="Inter,'Helvetica Neue',Arial,sans-serif" font-size="104" font-weight="600" letter-spacing="-3" fill="#ffffff">Controls.</text>
+  <text x="80" y="1500" font-family="Inter,'Helvetica Neue',Arial,sans-serif" font-size="30" fill="#aab3cd">One clear view of a Solana token.</text>
+  <text x="80" y="1560" font-family="Inter,'Helvetica Neue',Arial,sans-serif" font-size="30" fill="#aab3cd">Public, read-only, no signing.</text>
+  <text x="80" y="1810" font-family="Inter,'Helvetica Neue',Arial,sans-serif" font-size="26" fill="#5b5ce2">rwalensonsolana.vercel.app</text></svg>

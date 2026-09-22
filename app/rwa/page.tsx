@@ -24,6 +24,7 @@ export default function RwaPage() {
             <a href="#inspect" className="nav-active">Inspect</a>
             <a href="#how-it-works">How it works</a>
             {reportsEnabled ? <a href="#reports">Reports</a> : null}
+            <Link href="/brand-kit">Brand kit</Link>
             <a href="https://github.com/operatoruplift/rwa-lens" target="_blank" rel="noreferrer noopener" className="source-link">Source <ArrowUpRight size={13} /></a>
           </nav>
           <span className="network-badge"><span />Solana {cluster === 'mainnet-beta' ? 'mainnet' : 'devnet'}</span>
@@ -50,7 +51,7 @@ export default function RwaPage() {
           </div>
         </section>
       </main>
-      <footer className="site-footer"><div className="site-width footer-inner"><div><Link href="/" aria-label="RWA Lens home"><Brand /></Link><p>Clarity for real-world tokens.</p></div><p>Observations, not attestations. RWA Lens does not establish asset backing, legal compliance or investment performance. No transaction signing or asset movement. Optional report sign-in uses a message, never a transaction.</p><a className="text-link" href="https://github.com/operatoruplift/rwa-lens" target="_blank" rel="noreferrer noopener">Built in the open <ArrowUpRight size={14} /></a></div></footer>
+      <footer className="site-footer"><div className="site-width footer-inner"><div><Link href="/" aria-label="RWA Lens home"><Brand /></Link><p>Clarity for real-world tokens.</p></div><p>Observations, not attestations. RWA Lens does not establish asset backing, legal compliance or investment performance. No transaction signing or asset movement. Optional report sign-in uses a message, never a transaction.</p><div className="footer-links"><Link className="text-link" href="/brand-kit">Brand kit</Link><a className="text-link" href="https://github.com/operatoruplift/rwa-lens" target="_blank" rel="noreferrer noopener">Built in the open <ArrowUpRight size={14} /></a></div></div></footer>
     </>
   );
 }

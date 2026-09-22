@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1080" viewBox="0 0 1080 1080">
+  <rect width="1080" height="1080" fill="#f6f7fb"/>
+  <path d="M702 0v1080M742 0v1080M782 0v1080M822 0v1080M862 0v1080M902 0v1080M942 0v1080M982 0v1080M1022 0v1080M1062 0v1080M1102 0v1080M702 0h432M702 40h432M702 80h432M702 120h432M702 160h432M702 200h432M702 240h432M702 280h432M702 320h432M702 360h432M702 400h432M702 440h432M702 480h432M702 520h432M702 560h432M702 600h432M702 640h432M702 680h432M702 720h432M702 760h432M702 800h432M702 840h432M702 880h432M702 920h432M702 960h432M702 1000h432M702 1040h432M702 1080h432" stroke="#e3e6ef" fill="none"/>
+  <g transform="translate(700 120) scale(6.2)">
+  <path d="M20 3 36 12.2v15.6L20 37 4 27.8V12.2L20 3Z" fill="#101a3a"/>
+  <path d="m20 8 11.8 6.8-11.8 7-11.8-7L20 8Z" fill="#9e9ff8"/>
+  <path d="M8.2 19.6 20 26.5l11.8-6.9M8.2 24.7 20 31.6l11.8-6.9M20 21.8v9.8" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></g>
+  <text x="70" y="150" fill="#101a3a" font-family="Georgia,'Times New Roman',serif" font-size="45.88">RWA <tspan font-style="italic">Lens</tspan><tspan fill="#5b5ce2">.</tspan></text>
+  <text x="70" y="257.3" font-family="Inter,'Helvetica Neue',Arial,sans-serif" font-size="16" letter-spacing="3" fill="#5b5ce2">THE TOKEN BEHIND THE ASSET</text>
+  <text x="65" y="342.4" font-family="Inter,'Helvetica Neue',Arial,sans-serif" font-size="74" font-weight="600" letter-spacing="-3" fill="#101a3a">Know what</text><text x="65" y="425.28" font-family="Inter,'Helvetica Neue',Arial,sans-serif" font-size="74" font-weight="600" letter-spacing="-3" fill="#101a3a">your token</text><text x="65" y="508.15999999999997" font-family="Inter,'Helvetica Neue',Arial,sans-serif" font-size="74" font-weight="600" letter-spacing="-3" fill="#101a3a">actually means.</text>
+  <text x="70" y="1018" font-family="Inter,'Helvetica Neue',Arial,sans-serif" font-size="21" fill="#46516e">Identity. Balance. Controls. Read-only on Solana.</text></svg>

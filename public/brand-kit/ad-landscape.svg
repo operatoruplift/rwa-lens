@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="628" viewBox="0 0 1200 628">
+  <rect width="1200" height="628" fill="#f6f7fb"/>
+  <path d="M780 0v628M820 0v628M860 0v628M900 0v628M940 0v628M980 0v628M1020 0v628M1060 0v628M1100 0v628M1140 0v628M1180 0v628M1220 0v628M1260 0v628M780 0h480M780 40h480M780 80h480M780 120h480M780 160h480M780 200h480M780 240h480M780 280h480M780 320h480M780 360h480M780 400h480M780 440h480M780 480h480M780 520h480M780 560h480M780 600h480" stroke="#e3e6ef" fill="none"/>
+  <g transform="translate(855 185) scale(5.4)">
+  <path d="M20 3 36 12.2v15.6L20 37 4 27.8V12.2L20 3Z" fill="#101a3a"/>
+  <path d="m20 8 11.8 6.8-11.8 7-11.8-7L20 8Z" fill="#9e9ff8"/>
+  <path d="M8.2 19.6 20 26.5l11.8-6.9M8.2 24.7 20 31.6l11.8-6.9M20 21.8v9.8" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></g>
+  <text x="70" y="112" fill="#101a3a" font-family="Georgia,'Times New Roman',serif" font-size="39.06">RWA <tspan font-style="italic">Lens</tspan><tspan fill="#5b5ce2">.</tspan></text>
+  <text x="70" y="203.35" font-family="Inter,'Helvetica Neue',Arial,sans-serif" font-size="13" letter-spacing="3" fill="#5b5ce2">THE TOKEN BEHIND THE ASSET</text>
+  <text x="65" y="275.8" font-family="Inter,'Helvetica Neue',Arial,sans-serif" font-size="63" font-weight="600" letter-spacing="-3" fill="#101a3a">Inspect the token</text><text x="65" y="346.36" font-family="Inter,'Helvetica Neue',Arial,sans-serif" font-size="63" font-weight="600" letter-spacing="-3" fill="#101a3a">before you trust it.</text>
+  <text x="70" y="566" font-family="Inter,'Helvetica Neue',Arial,sans-serif" font-size="18" fill="#46516e">Identity. Balance. Controls. Read-only on Solana.</text></svg>

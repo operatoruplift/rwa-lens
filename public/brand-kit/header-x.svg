@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="500" viewBox="0 0 1500 500">
+  <rect width="1500" height="500" fill="#101a3a"/>
+  <path d="M900 0v500M940 0v500M980 0v500M1020 0v500M1060 0v500M1100 0v500M1140 0v500M1180 0v500M1220 0v500M1260 0v500M1300 0v500M1340 0v500M1380 0v500M1420 0v500M1460 0v500M1500 0v500M1540 0v500M900 0h675M900 40h675M900 80h675M900 120h675M900 160h675M900 200h675M900 240h675M900 280h675M900 320h675M900 360h675M900 400h675M900 440h675M900 480h675" stroke="#1b2650" fill="none"/>
+  <g transform="translate(90 202) scale(2.4)">
+  <path d="M20 3 36 12.2v15.6L20 37 4 27.8V12.2L20 3Z" fill="#ffffff"/>
+  <path d="m20 8 11.8 6.8-11.8 7-11.8-7L20 8Z" fill="#5b5ce2"/>
+  <path d="M8.2 19.6 20 26.5l11.8-6.9M8.2 24.7 20 31.6l11.8-6.9M20 21.8v9.8" stroke="#101a3a" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></g>
+  <text x="214" y="256" fill="#ffffff" font-family="Georgia,'Times New Roman',serif" font-size="52">RWA <tspan font-style="italic">Lens</tspan><tspan fill="#5b5ce2">.</tspan></text>
+  <text x="217" y="298" font-family="Inter,'Helvetica Neue',Arial,sans-serif" font-size="18" letter-spacing="2.6" fill="#5b5ce2">THE TOKEN BEHIND THE ASSET</text></svg>
