@@ -138,23 +138,26 @@ test.describe('Native landing motion', () => {
     await expectNoOverflow(page);
   });
 
-  test('marketing content and fragment links remain usable without JavaScript', async ({ browser, baseURL }) => {
-    const context = await browser.newContext({ baseURL, javaScriptEnabled: false, viewport: { width: 390, height: 900 } });
-    const page = await context.newPage();
-    try {
+  test.describe('without JavaScript', () => {
+    test.use({ javaScriptEnabled: false, viewport: { width: 390, height: 900 } });
+
+    test('marketing content and fragment links remain usable without JavaScript', async ({ page }) => {
       await page.goto('/');
       await expectReadable(page.getByRole('heading', { level: 1 }));
       await expect(page.locator('[data-motion]')).toHaveAttribute('data-motion', 'static');
       await page.getByRole('link', { name: 'Explore the lens', exact: true }).click();
       await expect(page).toHaveURL(/#how-it-works$/);
       await expect(page.getByRole('heading', { name: /A number is only/ })).toBeInViewport();
+      // Finish the native anchor scroll before another click scrolls to the closing CTA.
+      await expect.poll(() => page.locator('#how-it-works').evaluate(node => {
+        const inset = parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop);
+        return Math.abs(node.getBoundingClientRect().top - inset);
+      })).toBeLessThan(2);
       for (const chapter of await page.locator('[data-motion-chapter]').all()) await expectReadable(chapter);
       await page.getByRole('link', { name: 'Start a token inspection', exact: true }).click();
       await expect(page).toHaveURL(/#inspect$/);
       await expect(page.getByLabel('Mint address', { exact: true })).toBeInViewport();
       await expectNoOverflow(page);
-    } finally {
-      await context.close();
-    }
+    });
   });
 });
