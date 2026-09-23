@@ -18,12 +18,13 @@
 .navigation .headerCta:hover { color: var(--ink); background: var(--citron); border-color: var(--citron); }
 .hero { min-height: 738px; height: min(880px, calc(100svh - 100px)); position: relative; isolation: isolate; padding: 0 48px; max-width: 1632px; margin-inline: auto; }
 .heroArt { position: absolute; z-index: -2; inset: 0 -1px; overflow: hidden; }
+.heroDepth { position: absolute; inset: -12% -3%; transform: translate3d(0, var(--hero-depth, 0px), 0); }
 .heroImage { object-fit: cover; object-position: center; animation: lensSettle 4.8s cubic-bezier(.16,1,.3,1) both; }
 .heroShade { position: absolute; z-index: -1; inset: 0; background: linear-gradient(90deg, #10121160 0%, #10121120 39%, transparent 70%), linear-gradient(0deg, #101211 0%, transparent 18%, transparent 85%, #10121185 100%); pointer-events: none; }
 .heroTopline { display: flex; align-items: center; justify-content: space-between; padding-top: 25px; font-family: ui-monospace, monospace; font-size: 9px; letter-spacing: 1.3px; color: #b1b5aa; }
 .heroTopline > span { display: inline-flex; gap: 9px; align-items: center; }
 .statusDot { display: inline-block; width: 5px; height: 5px; flex: 0 0 auto; background: var(--citron); border-radius: 50%; }
-.heroContent { position: relative; padding-top: clamp(70px, 10vh, 126px); max-width: 980px; }
+.heroContent { position: relative; padding-top: clamp(70px, 10vh, 126px); max-width: 980px; transform: translate3d(0, var(--hero-copy, 0px), 0); opacity: var(--hero-opacity, 1); }
 .kicker { color: #d3d6cb; font-size: 12px; margin-bottom: 28px; display: flex; align-items: center; gap: 9px; animation: reveal .9s .1s both; }
 .kicker::before { content: ''; width: 23px; height: 1px; background: var(--citron); }
 .heroTitle { margin: 0; color: var(--ivory); font-family: var(--font-display, var(--font-inter)), sans-serif; font-size: clamp(78px, 8.8vw, 142px); letter-spacing: -.078em; line-height: .96; font-weight: 500; animation: reveal 1.15s .12s both; }
@@ -78,6 +79,24 @@
 .methodHeading h2 > span { color: #7d8872; }
 .methodHeading > p:last-child { max-width: 320px; margin-left: auto; color: #abb3a0; font-size: 13px; line-height: 1.9; padding-bottom: 4px; }
 .methodRows { border-bottom: 1px solid #f2f2e924; }
+.methodBody { display: grid; grid-template-columns: minmax(260px, .8fr) minmax(0, 1.35fr); align-items: start; gap: clamp(50px, 8vw, 140px); }
+.methodScene { position: sticky; top: max(32px, 12vh); color: var(--citron); padding-top: 20px; }
+.sceneTopline { display: flex; justify-content: space-between; gap: 14px; color: #929d85; font: 7px ui-monospace, monospace; letter-spacing: 1px; }
+.opticalDiagram { max-width: 390px; margin: 18px auto; }
+.opticalDiagram svg { display: block; width: 100%; height: auto; }
+.orbit { transform-origin: 180px 180px; transform: rotate(var(--lens-turn, -24deg)); }
+.scanBeam { transform: translateY(var(--scan-y, -62px)); }
+.sceneLegend { display: flex; justify-content: space-between; gap: 10px; border-top: 1px solid #f2f2e924; padding-top: 18px; font: 7px ui-monospace, monospace; letter-spacing: .5px; }
+.sceneLegend span { color: #b1b9a8; transition: color .45s; }
+.methodScene[data-step="1"] [data-lens-step="1"], .methodScene[data-step="2"] [data-lens-step="2"], .methodScene[data-step="3"] [data-lens-step="3"] { color: var(--citron); }
+.methodScene > p { color: var(--ivory); margin-top: 25px; font-size: 13px; line-height: 1.8; }
+.methodScene > p > span { color: #929d85; font-size: 10px; }
+.methodBody .methodRow { grid-template-columns: 28px minmax(0, 1fr) 38px; gap: 20px; padding-block: 38px; }
+.methodBody .rowCopy { grid-column: 2; }
+.methodBody .rowCopy > p { max-width: 410px; }
+.methodBody .rowIcon, .methodBody .balanceGlyph { grid-column: 3; grid-row: 1; align-self: start; }
+.methodBody .rowTitle h3 { font-size: clamp(30px, 3.1vw, 43px); letter-spacing: -.04em; }
+.methodBody .rowTitle h3 br { display: none; }
 .methodRow { display: grid; grid-template-columns: .24fr 1fr 1.04fr 70px; gap: 30px; align-items: center; border-top: 1px solid #f2f2e924; padding: 43px 0; }
 .rowNumber { font-family: ui-monospace, monospace; align-self: start; padding-top: 2px; color: #929d85; font-size: 10px; }
 .rowTitle > p { font-family: ui-monospace, monospace; font-size: 8px; letter-spacing: 1.1px; color: var(--citron); margin-bottom: 14px; }
@@ -166,6 +185,16 @@
   .methodHeading h2 { font-size: 47px; }
   .methodHeading > p:last-child { margin-left: 0; font-size: 12px; max-width: 370px; }
   .methodRow { grid-template-columns: 24px 1fr 1.2fr; gap: 18px; padding-block: 31px; }
+  .methodBody { display: block; }
+  .methodScene { position: relative; top: auto; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 24px; padding-top: 0; margin-bottom: 35px; align-items: center; }
+  .sceneTopline { grid-column: 1/-1; }
+  .opticalDiagram { grid-column: 1; grid-row: 2/4; width: 100%; max-width: 240px; margin-block: 10px; }
+  .sceneLegend { grid-column: 2; flex-direction: column; gap: 13px; padding-top: 0; border: 0; align-self: end; }
+  .methodScene > p { grid-column: 2; margin-top: 18px; font-size: 12px; align-self: start; }
+  .methodScene > p > span { font-size: 9px; }
+  .methodBody .methodRow { grid-template-columns: 24px minmax(0, 1fr); gap: 17px; padding-block: 30px; }
+  .methodBody .rowTitle h3 { font-size: 32px; }
+  .methodBody .rowCopy > p { font-size: 12px; }
   .rowTitle h3 { font-size: 25px; }
   .rowCopy > p { font-size: 10px; line-height: 1.9; }
   .rowCopy > span { font-size: 6px; letter-spacing: .5px; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
@@ -226,6 +255,8 @@
   .footer { padding-inline: 20px; }
 }
 @media (prefers-reduced-motion: reduce) {
+  .heroDepth, .heroContent, .orbit, .scanBeam { transform: none; }
+  .heroContent { opacity: 1; }
   .heroImage, .kicker, .heroTitle, .heroDescription, .heroActions, .opticalLabel { animation: none; }
-  .primaryCta, .closing > div > a, .navigation .headerCta, .navigation a { transition: none; }
+  .primaryCta, .closing > div > a, .navigation .headerCta, .navigation a, .sceneLegend span { transition: none; }
 }

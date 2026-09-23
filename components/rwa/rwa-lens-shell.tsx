@@ -108,7 +108,7 @@ export function RwaLensShell({ cluster, reportsEnabled }: { cluster: Cluster; re
 
   return (
     <div className="site-width inspection-shell">
-      <section id="inspect" className="search-panel" aria-label="Inspect a Solana token">
+      <section id="inspect" tabIndex={-1} className="search-panel" aria-label="Inspect a Solana token">
         <div className="search-heading"><h2><Search size={18} />Inspect a token</h2><span><ShieldCheck size={14} /> No wallet connection required</span></div>
         <form className="mint-form" onSubmit={event => { event.preventDefault(); if (mintValid && ownerValid && !loading) void run({ mode: 'live', cluster, mint: mint.trim(), owner: owner.trim() || undefined }); }}>
           <div className="mint-field"><label htmlFor="rwa-mint">Mint address</label><input id="rwa-mint" value={mint} onChange={event => setMint(event.target.value)} placeholder="Paste a Solana token mint" spellCheck={false} autoComplete="off" maxLength={64} aria-invalid={!!mint && !mintValid} aria-describedby={mint && !mintValid ? 'mint-error' : undefined} /></div>

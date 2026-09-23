@@ -19,9 +19,12 @@ write; guest inspection and JSON/CSV export require no wallet.
 
 ## Visual identity
 
-The home page introduces the product with original optical artwork and restrained
-motion; `/rwa` opens a compact version for direct inspection. Both routes retain
-the same public inspector. Motion respects the system's reduced-motion setting.
+The home page pairs original optical artwork with gentle scroll depth, section
+reveals and a sticky optical illustration. Wheel, touch, keyboard and fragment
+navigation retain native browser scrolling. `/rwa` opens a compact version for
+direct inspection; both routes retain the same public inspector. Motion responds
+to changes in the system's reduced-motion setting, and marketing content remains
+readable without JavaScript. The inspector stays outside the animated reveals.
 
 The [brand kit](https://rwalensonsolana.vercel.app/brand-kit) includes an optical
 mark, wordmarks, profile images, three campaign posts, portrait/story layouts,
@@ -115,6 +118,8 @@ npm run test:e2e
 
 Playwright launches `next start` against the production build on port 3300.
 The deterministic suite uses fixtures/mocked failures and requires no secrets.
+Landing checks cover desktop/mobile scrolling, anchor focus, dynamic reduced
+motion and marketing content with JavaScript disabled.
 Run `npm run build` before it; never run two builds against the same `.next`.
 
 Explicit read-only hosted verification is separate:

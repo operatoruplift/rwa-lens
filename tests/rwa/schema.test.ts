@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { FIXTURES, treasuryAtBoundary } from '@/lib/rwa/fixtures';
 import {
   addressSchema,
   inspectRequestSchema,
@@ -84,8 +85,7 @@ describe('host allowlist', () => {
 });
 
 describe('fixture/live contract', () => {
-  it('all fixtures use the response schema without inventing live addresses', async () => {
-    const { FIXTURES, treasuryAtBoundary } = await import('@/lib/rwa/fixtures');
+  it('all fixtures use the response schema without inventing live addresses', () => {
     for (const fixture of FIXTURES) {
       expect(inspectRequestSchema.safeParse({ mode: 'fixture', fixtureId: fixture.id }).success).toBe(true);
       expect(inspectResultSchema.safeParse(fixture.result).success).toBe(true);
