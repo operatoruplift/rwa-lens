@@ -1,0 +1,4 @@
+.brand { display: inline-flex; align-items: center; gap: 10px; color: #101211; white-space: nowrap; font-family: var(--font-inter), Arial, sans-serif; font-size: 26px; line-height: 1; letter-spacing: -1.3px; font-weight: 550; }
+.brand svg { flex: 0 0 auto; }
+.light { color: #f2f2e9; }
+@media (max-width: 640px) { .brand { font-size: 22px; gap: 7px; letter-spacing: -1px; } .brand svg { width: 31px; height: 31px; } }

@@ -1,12 +1,13 @@
 # RWA Lens
 
-**Know what your real-world token means.** RWA Lens helps wallet builders, issuers,
+**Real assets. Clearer vision.** RWA Lens helps wallet builders, issuers,
 fund administrators, custodians and treasury operators inspect a Solana mint,
 reconcile public raw balances with displayed amounts, and understand observable
 transfer controls.
 
 [Open the app](https://rwalensonsolana.vercel.app) ·
 [Inspector](https://rwalensonsolana.vercel.app/rwa) ·
+[Brand kit](https://rwalensonsolana.vercel.app/brand-kit) ·
 [Verification evidence](docs/rwa-demo-evidence.md) ·
 [Capability matrix](docs/rwa-capability-matrix.md) ·
 [Two-minute demo](docs/rwa-demo-script.md)
@@ -15,6 +16,26 @@ The app reads public chain state. It does **not** sign or submit transactions,
 move assets, mint, settle, lend or take custody. Optional wallet **message**
 signing authenticates saved-report ownership only. Saving a report is a database
 write; guest inspection and JSON/CSV export require no wallet.
+
+## Visual identity
+
+The home page introduces the product with original optical artwork and restrained
+motion; `/rwa` opens a compact version for direct inspection. Both routes retain
+the same public inspector. Motion respects the system's reduced-motion setting.
+
+The [brand kit](https://rwalensonsolana.vercel.app/brand-kit) includes an optical
+mark, wordmarks, profile images, three campaign posts, portrait/story layouts,
+headers, link previews, and desktop/mobile wallpapers. Each composition is
+available as an editable SVG; campaign images also ship as PNGs. The gallery
+uses smaller WebP previews. Download the complete ZIP or individual assets.
+
+After `npm ci`, install the renderer with `npx playwright install chromium`.
+The generator requires `/usr/bin/zip` on macOS/Linux; `PW_EXE` can point to an
+existing Chromium executable. Run `node scripts/build-brand-kit.mjs` to rebuild exports and the ZIP from the
+checked-in artwork and embedded Inter font. See the
+[brand guide](public/brand-kit/brand-guide.md) for dimensions, crop guidance and
+source resolution, and [attribution](docs/third-party-notices.md) for MotionSites
+design references and the original artwork provenance.
 
 ## What makes it useful
 

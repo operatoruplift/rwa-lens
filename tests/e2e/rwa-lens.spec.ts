@@ -13,11 +13,11 @@ test.describe('RWA Lens guest product', () => {
     page.on('pageerror', error => errors.push(String(error)));
     for (const route of ['/', '/rwa']) {
       await page.goto(route);
-      await expect(page.getByRole('heading', { name: /know what your real-world token means/i })).toBeVisible();
+      await expect(page.getByRole('heading', { level: 1 })).toHaveText(route === '/' ? /Real assets\.\s*Clearer vision\./ : /The evidence,\s*in focus\./);
       await expect(page.getByText('Synthetic example', { exact: true })).toBeVisible();
       await expect(page.getByTestId('raw-balance')).toHaveText('1000000000');
       await expect(page.getByRole('heading', { name: 'ScaledUiAmountConfig' })).toBeVisible();
-      await expect(page.getByRole('heading', { name: /a balance is a number/i })).toBeAttached();
+      await expect(page.locator('#how-it-works')).toBeAttached();
       await expect(page.locator('.observation-bar')).not.toContainText('verified');
     }
     expect(errors).toEqual([]);
@@ -226,7 +226,7 @@ test.describe('RWA Lens guest product', () => {
     await page.goto('/rwa');
     await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link', { name: 'Brand kit' }).click();
     await expect(page).toHaveURL(/\/brand-kit$/);
-    await expect(page.getByRole('heading', { level: 1 })).toContainText('can prove');
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText(/Clarity,\s*by design\./);
 
     // Walk the page so lazy previews enter the viewport, then require every one to have decoded.
     await page.evaluate(async () => {
@@ -242,4 +242,29 @@ test.describe('RWA Lens guest product', () => {
     expect(links).toContain('/brand-kit/rwa-lens-brand-kit.zip');
     expect(links).toContain('/brand-kit/brand-guide.md');
   });
+
+  for (const width of [390, 1440]) {
+    test(`cinematic landing and asset gallery fit a ${width}px viewport`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 960 });
+      await page.emulateMedia({ reducedMotion: 'reduce' });
+      for (const route of ['/', '/brand-kit']) {
+        await page.goto(route);
+        await page.evaluate(() => document.fonts.ready);
+        await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+        expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1)).toBe(false);
+        const hiddenText = await page.getByRole('heading', { level: 1 }).evaluate(element => {
+          const style = getComputedStyle(element);
+          return style.visibility === 'hidden' || style.opacity === '0';
+        });
+        expect(hiddenText).toBe(false);
+        await mkdir(screenshotDir, { recursive: true });
+        await page.screenshot({ path: path.join(screenshotDir, `${route === '/' ? 'landing' : 'brand-kit'}-${width}.png`) });
+      }
+      await page.goto('/');
+      await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link', { name: 'Inspect', exact: true }).click();
+      await expect(page.getByLabel('Mint address', { exact: true })).toBeVisible();
+      await page.getByRole('button', { name: /At boundary/ }).click();
+      await expect(page.getByTestId('display-balance')).toHaveText('1051.14');
+    });
+  }
 });

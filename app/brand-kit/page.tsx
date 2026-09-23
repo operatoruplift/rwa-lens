@@ -1,194 +1,97 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import type { Metadata } from 'next';
-import { ArrowDownToLine, ArrowUpRight, FileText } from 'lucide-react';
+import { ArrowDownToLine, ArrowUpRight, ArrowRight, FileText } from 'lucide-react';
 import { Brand } from '@/components/rwa/brand';
+import styles from './brand-kit.module.css';
 
 export const metadata: Metadata = {
   title: 'Brand kit',
-  description: 'Download the RWA Lens mark, wordmark, profile artwork, social graphics, headers and the written brand guide.',
+  description: 'The RWA Lens optical identity. Download campaign artwork, headers, wallpapers, logos and editable sources.',
   alternates: { canonical: '/brand-kit' },
   openGraph: {
-    title: 'RWA Lens brand kit',
-    description: 'Marks, wordmarks, profiles, social artwork and the written guide.',
-    images: [{ url: '/brand-kit/og-image.png', width: 1200, height: 630, alt: 'RWA Lens brand kit' }],
+    title: 'RWA Lens — Clarity, by design.',
+    description: 'Original artwork, optical identity and a complete campaign kit.',
+    images: [{ url: '/brand-kit/og-image.png', width: 1200, height: 630, alt: 'RWA Lens — Real assets. Clearer vision.' }],
   },
 };
 
-type Asset = {
-  file: string;
-  label: string;
-  description: string;
-  format: string;
-  width: number;
-  height: number;
-  /** Preview sits on navy when the artwork is drawn for a dark ground. */
-  tone?: 'dark';
-};
-
-const groups: { title: string; note: string; assets: Asset[] }[] = [
-  {
-    title: 'Marks and wordmarks',
-    note: 'The prism reads as a lens and as a stack of records. Keep clear space of at least the height of the top facet.',
-    assets: [
-      { file: 'rwa-lens-mark.svg', label: 'Mark', description: 'Primary prism on a transparent ground.', format: 'SVG · 40 × 40', width: 148, height: 148 },
-      { file: 'rwa-lens-mark-light.svg', label: 'Mark · reverse', description: 'For navy grounds and photography.', format: 'SVG · 40 × 40', width: 148, height: 148, tone: 'dark' },
-      { file: 'rwa-lens-mark-monochrome.svg', label: 'Mark · one ink', description: 'Print and low-fidelity reproduction.', format: 'SVG · 40 × 40', width: 148, height: 148 },
-      { file: 'rwa-lens-wordmark.svg', label: 'Wordmark', description: 'Horizontal lockup with the indigo period.', format: 'SVG · 260 × 56', width: 260, height: 56 },
-      { file: 'rwa-lens-wordmark-light.svg', label: 'Wordmark · reverse', description: 'Lockup for dark surfaces.', format: 'SVG · 260 × 56', width: 260, height: 56, tone: 'dark' },
-    ],
-  },
-  {
-    title: 'Profiles and app icons',
-    note: 'Square artwork for avatars, directories and app listings. The ledger field is clipped to the rounded corner.',
-    assets: [
-      { file: 'profile-light.svg', label: 'Profile · canvas (vector)', description: 'Scales to any avatar size without resampling.', format: 'SVG · 1024 × 1024', width: 240, height: 240 },
-      { file: 'profile-dark.svg', label: 'Profile · navy (vector)', description: 'Reverse avatar for dark directories.', format: 'SVG · 1024 × 1024', width: 240, height: 240, tone: 'dark' },
-      { file: 'profile-light.png', label: 'Profile · canvas', description: 'Raster avatar where SVG is not accepted.', format: 'PNG · 1024 × 1024', width: 240, height: 240 },
-      { file: 'profile-dark.png', label: 'Profile · navy', description: 'Raster reverse avatar.', format: 'PNG · 1024 × 1024', width: 240, height: 240, tone: 'dark' },
-    ],
-  },
-  {
-    title: 'Social and ads',
-    note: 'One editorial composition, re-proportioned per surface rather than stretched to fit.',
-    assets: [
-      { file: 'og-image.png', label: 'Link preview', description: 'Open Graph card for shared links.', format: 'PNG · 1200 × 630', width: 480, height: 252 },
-      { file: 'social-square.png', label: 'Social post', description: 'Square post for feeds and profile grids.', format: 'PNG · 1080 × 1080', width: 300, height: 300 },
-      { file: 'social-story.png', label: 'Story', description: 'Vertical artwork for mobile channels.', format: 'PNG · 1080 × 1920', width: 200, height: 356, tone: 'dark' },
-      { file: 'ad-landscape.png', label: 'Ad · landscape', description: 'Link ad with a single product claim.', format: 'PNG · 1200 × 628', width: 480, height: 251 },
-    ],
-  },
-  {
-    title: 'Headers and wallpaper',
-    note: 'Wide crops keep the lockup clear of avatar overlays and platform chrome.',
-    assets: [
-      { file: 'header-x.png', label: 'Header · X', description: 'Banner sized for X profiles.', format: 'PNG · 1500 × 500', width: 480, height: 160, tone: 'dark' },
-      { file: 'header-linkedin.png', label: 'Header · LinkedIn', description: 'Banner sized for LinkedIn pages.', format: 'PNG · 1584 × 396', width: 480, height: 120 },
-      { file: 'wallpaper-desktop.png', label: 'Wallpaper', description: 'Desktop background at 16:9.', format: 'PNG · 2560 × 1440', width: 480, height: 270, tone: 'dark' },
-    ],
-  },
+type Artwork = { name: string; label: string; width: number; height: number; description: string };
+const campaign: Artwork[] = [
+  { name: 'social-square', label: '01 / Clearer vision', width: 1080, height: 1080, description: 'The opening statement. A study in glass, light and focus.' },
+  { name: 'social-balance', label: '02 / Beyond the balance', width: 1080, height: 1080, description: 'An editorial interruption in our signature citron.' },
+  { name: 'social-evidence', label: '03 / Follow the evidence', width: 1080, height: 1080, description: 'A quieter frame for a sharper question.' },
+];
+const wide: Artwork[] = [
+  { name: 'header-x', label: 'X profile header', width: 1500, height: 500, description: 'A panoramic composition with room for your profile photo.' },
+  { name: 'header-linkedin', label: 'LinkedIn profile header', width: 1584, height: 396, description: 'A tailored crop with the message above the avatar area.' },
+  { name: 'og-image', label: 'Link preview', width: 1200, height: 630, description: 'Our default Open Graph image for shared links.' },
+  { name: 'ad-landscape', label: 'Landscape campaign', width: 1200, height: 628, description: 'A direct invitation to explore the evidence.' },
+];
+const portrait: Artwork[] = [
+  { name: 'social-portrait', label: 'Portrait feed post', width: 1080, height: 1350, description: 'An extended composition for the feed.' },
+  { name: 'social-story', label: 'Story', width: 1080, height: 1920, description: 'A full-height material study with interface-safe type.' },
 ];
 
-const palette = [
-  { name: 'Navy', hex: '#101a3a', use: 'Primary ink and dark grounds' },
-  { name: 'Navy soft', hex: '#46516e', use: 'Secondary text' },
-  { name: 'Navy faint', hex: '#616b82', use: 'Labels and captions' },
-  { name: 'Indigo', hex: '#5b5ce2', use: 'The period, eyebrows, links' },
-  { name: 'Facet', hex: '#9e9ff8', use: 'The lit face of the mark' },
-  { name: 'Canvas', hex: '#f6f7fb', use: 'Page ground' },
-  { name: 'Paper', hex: '#ffffff', use: 'Cards and surfaces' },
-  { name: 'Rule', hex: '#e3e6ef', use: 'Ledger grid and hairlines' },
-];
+function Download({ name, ext = 'png', children }: { name: string; ext?: string; children?: React.ReactNode }) {
+  return <a href={`/brand-kit/${name}.${ext}`} download className={styles.download}><ArrowDownToLine size={15} aria-hidden="true" />{children ?? ext.toUpperCase()}<span className="visually-hidden"> — {name.replaceAll('-', ' ')}</span></a>;
+}
+
+function ArtworkCard({ asset, className = '' }: { asset: Artwork; className?: string }) {
+  return <article className={`${styles.artwork} ${className}`}>
+    <a className={styles.artImage} href={`/brand-kit/${asset.name}.png`} target="_blank" rel="noreferrer" aria-label={`View ${asset.label} at full resolution`}>
+      <Image src={`/brand-kit/${asset.name}-preview.webp`} alt={asset.description} width={asset.width} height={asset.height} sizes="(max-width: 700px) 94vw, 50vw" />
+      <span className={styles.expand}><ArrowUpRight size={20} aria-hidden="true" /></span>
+    </a>
+    <div className={styles.caption}><div><h3>{asset.label}</h3><p>{asset.width} × {asset.height} px</p></div><div className={styles.formats}><Download name={asset.name} /><Download name={asset.name} ext="svg" /></div></div>
+  </article>;
+}
 
 export default function BrandKitPage() {
-  return (
-    <>
-      <a className="skip-link" href="#assets">Skip to assets</a>
-      <header className="site-header">
-        <div className="site-width header-inner">
-          <Link href="/rwa" aria-label="RWA Lens home"><Brand /></Link>
-          <nav aria-label="Main navigation" className="main-nav">
-            <Link href="/rwa">Inspect</Link>
-            <Link href="/brand-kit" className="nav-active" aria-current="page">Brand kit</Link>
-            <a href="https://github.com/operatoruplift/rwa-lens" target="_blank" rel="noreferrer noopener" className="source-link">Source <ArrowUpRight size={13} /></a>
-          </nav>
+  return <div className={styles.page}>
+    <a className="skip-link" href="#assets">Skip to assets</a>
+    <header className={styles.header}>
+      <Link href="/" aria-label="RWA Lens home"><Brand light /></Link>
+      <nav aria-label="Main navigation"><Link href="/rwa">Inspector</Link><Link href="/brand-kit" aria-current="page">Brand kit</Link><a className={styles.navCta} href="/brand-kit/rwa-lens-brand-kit.zip" download>Get the kit <ArrowDownToLine size={15} aria-hidden="true" /></a></nav>
+    </header>
+    <main>
+      <section className={styles.hero} aria-labelledby="page-title">
+        <Image src="/brand/lens-hero.webp" alt="" fill sizes="100vw" preload className={styles.heroArt} />
+        <div className={styles.heroContent}><p className={styles.eyebrow}><span /> THE OPTICAL IDENTITY / 2026</p><h1 id="page-title">Clarity,<br />by <em>design.</em></h1><p className={styles.heroCopy}>A new perspective on real-world tokens.<br />An identity built around the art of looking closer.</p><a className={styles.primary} href="/brand-kit/rwa-lens-brand-kit.zip" download>Download the complete kit <ArrowDownToLine size={18} aria-hidden="true" /></a><p className={styles.fileNote}>Logos, campaign artwork, wallpapers &amp; editable sources</p></div>
+        <div className={styles.heroBottom}><span>RWA LENS / BRAND RESOURCES</span><a href="#assets">Explore the collection <ArrowRight size={17} aria-hidden="true" /></a></div>
+      </section>
+
+      <section id="assets" className={styles.section} aria-labelledby="campaign-title">
+        <div className={styles.sectionHead}><div><p className={styles.kicker}>01 / CAMPAIGN</p><h2 id="campaign-title">One idea.<br />Three perspectives.</h2></div><p>Glass reveals. Light brings focus. Our campaign pairs original optical artwork with a simple invitation: look closer.</p></div>
+        <div className={styles.campaignGrid}>{campaign.map(asset => <ArtworkCard key={asset.name} asset={asset} />)}</div>
+      </section>
+
+      <section className={`${styles.section} ${styles.darkSection}`} aria-labelledby="wallpaper-title">
+        <div className={styles.sectionHead}><div><p className={styles.kicker}>02 / A DIFFERENT VIEW</p><h2 id="wallpaper-title">Space to focus.</h2></div><p>Quiet wallpapers for the screens you spend time with. Original glass studies, subtle light and room to breathe.</p></div>
+        <div className={styles.wallpapers}>
+          <ArtworkCard className={styles.desktopWallpaper} asset={{ name: 'wallpaper-desktop', label: 'Desktop wallpaper', width: 3840, height: 2160, description: 'A glass lens on a charcoal ground with understated RWA Lens branding.' }} />
+          <ArtworkCard className={styles.mobileWallpaper} asset={{ name: 'wallpaper-mobile', label: 'Mobile wallpaper', width: 1440, height: 2560, description: 'A portrait glass study with open space for your clock.' }} />
         </div>
-      </header>
+        <p className={styles.resolutionNote}>Export sizes shown. Original generated artwork: 1672 × 941 landscape and 941 × 1672 portrait, upscaled for wallpaper exports.</p>
+      </section>
 
-      <main>
-        <section className="site-width hero" aria-labelledby="page-title">
-          <div>
-            <p className="eyebrow"><span className="eyebrow-line" />THE TOKEN BEHIND THE ASSET</p>
-            <h1 id="page-title">A brand that states<br />what it <span>can prove.</span></h1>
-          </div>
-          <div className="hero-description">
-            <p>RWA Lens reports exactly what it observes on chain. These assets carry the same discipline: name the thing, end the sentence, claim nothing further.</p>
-            <div className="hero-assurances">
-              <a className="text-link" href="/brand-kit/rwa-lens-brand-kit.zip" download><ArrowDownToLine size={15} /> Download everything (358 KB)</a>
-              <a className="text-link" href="/brand-kit/brand-guide.md" download><FileText size={15} /> Read the brand guide</a>
-            </div>
-          </div>
-        </section>
+      <section className={styles.section} aria-labelledby="headers-title">
+        <div className={styles.sectionHead}><div><p className={styles.kicker}>03 / IN EVERY FORMAT</p><h2 id="headers-title">A consistent point of view.</h2></div><p>Purpose-built crops for profiles, shared links and campaigns. Every format has its own composition and editable source.</p></div>
+        <div className={styles.wideGrid}>{wide.map(asset => <ArtworkCard key={asset.name} asset={asset} />)}</div>
+        <div className={styles.portraitGrid}><div className={styles.portraitNote}><p className={styles.kicker}>MADE FOR THE FEED</p><h3>A taller<br />perspective.</h3><p>Portrait and story formats preserve the whole lens, with generous space around the message.</p><ArrowUpRight size={54} strokeWidth={1} aria-hidden="true" /></div>{portrait.map(asset => <ArtworkCard key={asset.name} asset={asset} />)}</div>
+      </section>
 
-        <section id="assets" className="site-width kit-section" aria-labelledby="assets-title">
-          <h2 id="assets-title" className="visually-hidden">Downloadable assets</h2>
-          {groups.map(group => (
-            <div key={group.title} className="kit-group">
-              <div className="kit-group-head">
-                <h3>{group.title}</h3>
-                <p>{group.note}</p>
-              </div>
-              <ul className="kit-grid">
-                {group.assets.map(asset => (
-                  <li key={asset.file} className="kit-card">
-                    <div className={`kit-preview${asset.tone === 'dark' ? ' is-dark' : ''}`}>
-                      <Image src={`/brand-kit/${asset.file}`} alt={`${asset.label} preview`} width={asset.width} height={asset.height} unoptimized />
-                    </div>
-                    <div className="kit-meta">
-                      <h4>{asset.label}</h4>
-                      <p>{asset.description}</p>
-                      <span className="kit-format">{asset.format}</span>
-                    </div>
-                    <a className="kit-download" href={`/brand-kit/${asset.file}`} download>
-                      <ArrowDownToLine size={14} aria-hidden="true" />
-                      Download {asset.label}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </section>
-
-        <section className="site-width kit-section" aria-labelledby="palette-title">
-          <div className="kit-group-head">
-            <h3 id="palette-title">Colour</h3>
-            <p>State colours in the product (amber, green, red) are never brand colours. Here, a colour that means attention keeps meaning only that.</p>
-          </div>
-          <ul className="palette-grid">
-            {palette.map(entry => (
-              <li key={entry.hex}>
-                <span className="swatch" style={{ background: entry.hex }} aria-hidden="true" />
-                <strong>{entry.name}</strong>
-                <code>{entry.hex}</code>
-                <span>{entry.use}</span>
-              </li>
-            ))}
-          </ul>
-        </section>
-
-        <section className="site-width kit-section" aria-labelledby="type-title">
-          <div className="kit-group-head">
-            <h3 id="type-title">Typography</h3>
-            <p>A serif wordmark against a sans interface, deliberately: the brand speaks, the data does not.</p>
-          </div>
-          <div className="type-specimens">
-            <div className="type-card">
-              <span className="kit-format">WORDMARK · GEORGIA</span>
-              <p className="specimen-serif">RWA <em>Lens</em><span>.</span></p>
-              <p>The period ends the sentence. Never drop it, never recolour it.</p>
-            </div>
-            <div className="type-card">
-              <span className="kit-format">INTERFACE · INTER</span>
-              <p className="specimen-sans">Identity. Balance. Controls.</p>
-              <p>Every heading, label and paragraph in the product.</p>
-            </div>
-            <div className="type-card">
-              <span className="kit-format">DATA · UI MONOSPACE</span>
-              <p className="specimen-mono">EPjFWdd5…TDt1v</p>
-              <p>Addresses and amounts, so a reader can compare character by character.</p>
-            </div>
-          </div>
-        </section>
-      </main>
-
-      <footer className="site-footer">
-        <div className="site-width footer-inner">
-          <div><Link href="/rwa" aria-label="RWA Lens home"><Brand /></Link><p>Clarity for real-world tokens.</p></div>
-          <p>These assets identify RWA Lens. They do not imply an endorsement, a partnership, or any claim about an issuer or asset.</p>
-          <a className="text-link" href="https://github.com/operatoruplift/rwa-lens" target="_blank" rel="noreferrer noopener">Built in the open <ArrowUpRight size={14} /></a>
+      <section className={`${styles.section} ${styles.identitySection}`} aria-labelledby="identity-title">
+        <div className={styles.sectionHead}><div><p className={styles.kicker}>04 / THE ESSENTIALS</p><h2 id="identity-title">An identity in focus.</h2></div><p>An optical mark. A tightly set wordmark. A disciplined palette of ink, ivory and citron.</p></div>
+        <div className={styles.logoGrid}>
+          {[{ name: 'rwa-lens-wordmark', label: 'Primary wordmark', dark: false }, { name: 'rwa-lens-wordmark-light', label: 'Reverse wordmark', dark: true }].map(logo => <article key={logo.name} className={styles.logoCard}><div className={`${styles.logoPreview} ${logo.dark ? styles.darkLogo : ''}`}><Image src={`/brand-kit/${logo.name}.svg`} alt={logo.label} width={252} height={48} unoptimized /></div><div className={styles.caption}><h3>{logo.label}</h3><Download name={logo.name} ext="svg" /></div></article>)}
         </div>
-      </footer>
-    </>
-  );
+        <div className={styles.markDownloads}><p>Optical mark / transparent SVG</p><Download name="rwa-lens-mark" ext="svg">Primary</Download><Download name="rwa-lens-mark-light" ext="svg">Reverse</Download><Download name="rwa-lens-mark-monochrome" ext="svg">One ink</Download></div>
+        <div className={styles.profileRow}>{['light', 'dark'].map(tone => <article key={tone} className={styles.profile}><Image src={`/brand-kit/profile-${tone}-preview.webp`} alt={`${tone === 'light' ? 'Ivory' : 'Ink'} optical profile icon`} width={128} height={128} /><div><h3>{tone === 'light' ? 'Ivory' : 'Ink'} profile icon</h3><p>1024 × 1024 px</p><div className={styles.formats}><Download name={`profile-${tone}`} /><Download name={`profile-${tone}`} ext="svg" /></div></div></article>)}</div>
+        <div className={styles.palette}>{[{ name: 'Ink', value: '#101211' }, { name: 'Ivory', value: '#f2f2e9' }, { name: 'Citron', value: '#d9ff65' }].map(color => <div key={color.name} style={{ background: color.value, color: color.name === 'Ink' ? '#f2f2e9' : '#101211' }}><span>{color.name}</span><code>{color.value}</code></div>)}</div>
+        <div className={styles.guide}><div><h3>The details make the difference.</h3><p>Clear space, typography, source resolutions and guidance for using the identity.</p></div><a className={styles.guideLink} href="/brand-kit/brand-guide.md" download><FileText size={18} aria-hidden="true" /> Download the brand guide <ArrowDownToLine size={17} aria-hidden="true" /></a></div>
+      </section>
+    </main>
+    <footer className={styles.footer}><div><Link href="/" aria-label="RWA Lens home"><Brand light /></Link><p>Real assets. Clearer vision.</p></div><p>Use these assets to identify RWA Lens.<br />They do not imply an endorsement or partnership.</p><Link href="/rwa">Open the inspector <ArrowUpRight size={18} aria-hidden="true" /></Link></footer>
+  </div>;
 }

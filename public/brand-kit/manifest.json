@@ -1,0 +1,119 @@
+{
+  "edition": "Optical / 2026",
+  "palette": {
+    "ink": "#101211",
+    "ivory": "#f2f2e9",
+    "citron": "#d9ff65",
+    "gray": "#a4aaa2"
+  },
+  "assets": [
+    {
+      "name": "rwa-lens-mark",
+      "width": 40,
+      "height": 40,
+      "raster": false
+    },
+    {
+      "name": "rwa-lens-mark-light",
+      "width": 40,
+      "height": 40,
+      "raster": false
+    },
+    {
+      "name": "rwa-lens-mark-monochrome",
+      "width": 40,
+      "height": 40,
+      "raster": false
+    },
+    {
+      "name": "rwa-lens-wordmark",
+      "width": 252,
+      "height": 48,
+      "raster": false
+    },
+    {
+      "name": "rwa-lens-wordmark-light",
+      "width": 252,
+      "height": 48,
+      "raster": false
+    },
+    {
+      "name": "profile-dark",
+      "width": 1024,
+      "height": 1024,
+      "raster": true
+    },
+    {
+      "name": "profile-light",
+      "width": 1024,
+      "height": 1024,
+      "raster": true
+    },
+    {
+      "name": "og-image",
+      "width": 1200,
+      "height": 630,
+      "raster": true
+    },
+    {
+      "name": "ad-landscape",
+      "width": 1200,
+      "height": 628,
+      "raster": true
+    },
+    {
+      "name": "social-square",
+      "width": 1080,
+      "height": 1080,
+      "raster": true
+    },
+    {
+      "name": "social-balance",
+      "width": 1080,
+      "height": 1080,
+      "raster": true
+    },
+    {
+      "name": "social-evidence",
+      "width": 1080,
+      "height": 1080,
+      "raster": true
+    },
+    {
+      "name": "social-portrait",
+      "width": 1080,
+      "height": 1350,
+      "raster": true
+    },
+    {
+      "name": "social-story",
+      "width": 1080,
+      "height": 1920,
+      "raster": true
+    },
+    {
+      "name": "header-x",
+      "width": 1500,
+      "height": 500,
+      "raster": true
+    },
+    {
+      "name": "header-linkedin",
+      "width": 1584,
+      "height": 396,
+      "raster": true
+    },
+    {
+      "name": "wallpaper-desktop",
+      "width": 3840,
+      "height": 2160,
+      "raster": true
+    },
+    {
+      "name": "wallpaper-mobile",
+      "width": 1440,
+      "height": 2560,
+      "raster": true
+    }
+  ]
+}

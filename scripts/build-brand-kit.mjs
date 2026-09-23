@@ -1,153 +1,103 @@
-/**
- * Generates every downloadable brand asset from one source of truth.
- *
- * The mark, palette and wordmark here must stay identical to components/rwa/brand.tsx
- * and app/icon.svg. Re-run with `node scripts/build-brand-kit.mjs` after any change,
- * then commit the output in public/brand-kit/.
- *
- * PNGs are rendered from the SVGs through the installed Chromium so the shipped
- * raster matches the vector exactly rather than being drawn a second time.
+/** Rebuilds the optical identity, editable SVG compositions, PNG exports and archive.
+ * Original generated artwork is embedded in each SVG; typography remains editable.
+ * Chromium renders the embedded Inter font so exports do not depend on system fonts.
  */
-import { mkdirSync, writeFileSync, readFileSync, readdirSync } from 'node:fs';
+import { mkdirSync, writeFileSync, readFileSync, copyFileSync, rmSync, statSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { execFileSync } from 'node:child_process';
 import { chromium } from 'playwright';
+import sharp from 'sharp';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const out = join(root, 'public/brand-kit');
 mkdirSync(out, { recursive: true });
-
-const NAVY = '#101a3a';
-const NAVY_SOFT = '#46516e';
-const INDIGO = '#5b5ce2';
-const FACET = '#9e9ff8';
-const CANVAS = '#f6f7fb';
-const PAPER = '#ffffff';
-const RULE = '#e3e6ef';
-const SERIF = "Georgia,'Times New Roman',serif";
-const SANS = "Inter,'Helvetica Neue',Arial,sans-serif";
-
-/** The faceted prism, drawn at a 40x40 origin and scaled by the caller. */
-const prism = ({ body = NAVY, facet = FACET, line = PAPER } = {}) => `
-  <path d="M20 3 36 12.2v15.6L20 37 4 27.8V12.2L20 3Z" fill="${body}"/>
-  <path d="m20 8 11.8 6.8-11.8 7-11.8-7L20 8Z" fill="${facet}"/>
-  <path d="M8.2 19.6 20 26.5l11.8-6.9M8.2 24.7 20 31.6l11.8-6.9M20 21.8v9.8" stroke="${line}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>`;
-
-/** Ruled field from the social card: a quiet ledger reference, never decoration for its own sake. */
-const ledger = (x, y, w, h, stroke = RULE, step = 40) => {
-  const parts = [];
-  for (let v = x; v <= x + w; v += step) parts.push(`M${v} ${y}v${h}`);
-  for (let u = y; u <= y + h; u += step) parts.push(`M${x} ${u}h${w}`);
-  return `<path d="${parts.join('')}" stroke="${stroke}" fill="none"/>`;
+const INK = '#101211', IVORY = '#f2f2e9', ACID = '#d9ff65', GRAY = '#a4aaa2';
+const font = readFileSync(join(out, 'source/Inter-latin.woff2')).toString('base64');
+const art = `data:image/webp;base64,${(await sharp(join(root, 'public/brand/lens-master.png')).webp({ quality: 96 }).toBuffer()).toString('base64')}`;
+const portrait = `data:image/webp;base64,${(await sharp(join(root, 'public/brand/lens-portrait.png')).webp({ quality: 96 }).toBuffer()).toString('base64')}`;
+const assets = [];
+const esc = value => String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('"', '&quot;');
+const text = (x, y, value, size = 24, color = IVORY, weight = 500, tracking = 0) => `<text x="${x}" y="${y}" font-family="Inter,Arial,sans-serif" font-size="${size}" font-weight="${weight}" letter-spacing="${tracking}" fill="${color}">${esc(value)}</text>`;
+const mark = (ink = IVORY, dot = ACID, ground = INK) => `<circle cx="20" cy="20" r="16" stroke="${ink}" stroke-width="2.5" fill="none"/><ellipse cx="20" cy="20" rx="9" ry="16" transform="rotate(38 20 20)" stroke="${ink}" stroke-width="2.5" fill="none"/><circle cx="31.3" cy="8.7" r="3.6" fill="${dot}" stroke="${ground}" stroke-width="1.5"/>`;
+const lockup = (x, y, scale = 1, ink = IVORY, dot = ACID, ground = INK) => `<g transform="translate(${x} ${y}) scale(${scale})">${mark(ink, dot, ground)}${text(51, 29, 'RWA Lens', 28, ink, 550, -1.5)}</g>`;
+const image = (x, y, w, h, src = art) => `<image href="${src}" x="${x}" y="${y}" width="${w}" height="${h}" preserveAspectRatio="xMidYMid slice"/>`;
+const rule = (x, y, w, ink = '#454a43') => `<path d="M${x} ${y}h${w}" stroke="${ink}" stroke-width="1"/>`;
+const arrow = (x, y, size = 40, ink = ACID) => `<path d="M${x} ${y + size}l${size} -${size}m-${size} 0h${size}v${size}" stroke="${ink}" stroke-width="${size / 14}" fill="none"/>`;
+const label = (x, y, value, color = ACID) => text(x, y, value, 17, color, 550, 2.2);
+const svg = (w, h, body, bg = INK) => `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}"><defs>${body.includes('<text') ? `<style>@font-face{font-family:Inter;font-style:normal;font-weight:100 900;src:url(data:font/woff2;base64,${font}) format('woff2')}</style>` : ''}<linearGradient id="shade"><stop stop-color="${INK}"/><stop offset=".65" stop-color="${INK}" stop-opacity=".87"/><stop offset="1" stop-color="${INK}" stop-opacity="0"/></linearGradient></defs>${bg ? `<rect width="${w}" height="${h}" fill="${bg}"/>` : ''}${body}</svg>\n`;
+const add = (name, w, h, body, bg = INK, raster = true) => {
+  writeFileSync(join(out, `${name}.svg`), svg(w, h, body, bg));
+  assets.push({ name, width: w, height: h, raster });
 };
 
-const wordmark = (x, y, size, ink, dot = INDIGO) =>
-  `<text x="${x}" y="${y}" fill="${ink}" font-family="${SERIF}" font-size="${size}">RWA <tspan font-style="italic">Lens</tspan><tspan fill="${dot}">.</tspan></text>`;
+// Logo sources stay simple enough to read at favicon sizes.
+add('rwa-lens-mark', 40, 40, mark(INK, INK, IVORY), null, false);
+add('rwa-lens-mark-light', 40, 40, mark(), null, false);
+add('rwa-lens-mark-monochrome', 40, 40, mark(INK, INK, IVORY), null, false);
+add('rwa-lens-wordmark', 252, 48, lockup(4, 4, 1, INK, INK, IVORY), null, false);
+add('rwa-lens-wordmark-light', 252, 48, lockup(4, 4), null, false);
+add('profile-dark', 1024, 1024, `<circle cx="512" cy="512" r="450" fill="none" stroke="#262b25" stroke-width="1"/><g transform="translate(232 232) scale(14)">${mark()}</g>`);
+add('profile-light', 1024, 1024, `<circle cx="512" cy="512" r="450" fill="none" stroke="#d6d9cd" stroke-width="1"/><g transform="translate(232 232) scale(14)">${mark(INK, INK, IVORY)}</g>`, IVORY);
 
-const svg = (w, h, body) =>
-  `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">${body}</svg>\n`;
+// Landscape campaign — generous quiet left, material close-up to the right.
+add('og-image', 1200, 630, `${image(0, -22, 1200, 675)}<rect width="760" height="630" fill="url(#shade)"/>${lockup(62, 52, .95)}${label(66, 218, 'A CLEARER VIEW OF REAL-WORLD TOKENS')}${text(59, 318, 'Real assets.', 82, IVORY, 500, -5)}${text(59, 406, 'Clearer vision.', 82, ACID, 500, -5)}${rule(65, 520, 430)}${text(65, 558, 'Inspect public Solana token data.', 21, IVORY)}${arrow(1100, 520, 33)}`);
+add('ad-landscape', 1200, 628, `${image(0, 0, 1200, 675)}<rect width="810" height="628" fill="url(#shade)"/>${lockup(64, 52)}${label(67, 231, 'READ THE TOKEN. SEE THE DETAILS.')}${text(59, 327, 'Follow the', 87, IVORY, 500, -5.5)}${text(59, 420, 'evidence.', 87, ACID, 500, -5.5)}${text(66, 552, 'Identity. Balances. Issuer controls.', 23, IVORY)}${arrow(1110, 515, 31)}`);
 
-const files = {};
+// Three distinct square compositions; these are a campaign, not resized clones.
+add('social-square', 1080, 1080, `${image(-465, 281, 1640, 923)}${lockup(62, 57, 1.13)}${label(65, 191, '01 / SEE THE WHOLE PICTURE')}${text(58, 309, 'Real assets.', 110, IVORY, 500, -7)}${text(58, 425, 'Clearer vision.', 110, ACID, 500, -7)}<rect x="0" y="957" width="1080" height="123" fill="${INK}" fill-opacity=".88"/>${rule(65, 976, 950)}${text(65, 1020, 'RWA INTELLIGENCE, ON SOLANA.', 18, IVORY, 500, 2)}${arrow(977, 1000, 23)}`);
+add('social-balance', 1080, 1080, `${lockup(62, 55, 1.12, INK, INK, ACID)}${label(65, 190, '02 / LOOK BEYOND THE NUMBER', INK)}${text(58, 308, 'A balance', 113, INK, 550, -7)}${text(58, 423, 'is only the', 113, INK, 550, -7)}${text(58, 538, 'beginning.', 113, INK, 550, -7)}${image(60, 604, 960, 401)}${text(91, 672, 'RAW UNITS', 17, IVORY, 500, 2)}${text(91, 711, 'DISPLAYED BALANCE', 17, IVORY, 500, 2)}${text(91, 750, 'ISSUER CONTROLS', 17, IVORY, 500, 2)}${arrow(89, 915, 32)}`, ACID);
+add('social-evidence', 1080, 1080, `${lockup(62, 53, 1.12, INK, INK, IVORY)}${label(65, 190, '03 / CLARITY STARTS WITH A QUESTION', INK)}${text(58, 310, 'Follow the', 117, INK, 500, -7)}${text(58, 430, 'evidence.', 117, INK, 500, -7)}${image(60, 495, 960, 461)}<rect x="60" y="900" width="960" height="56" fill="${ACID}"/>${text(82, 936, 'PUBLIC DATA. READ-ONLY. YOUR OWN CONCLUSIONS.', 18, INK, 550, 1.1)}${text(65, 1020, 'rwalensonsolana.vercel.app', 22, INK)}${arrow(979, 999, 23, INK)}`, IVORY);
 
-// ---- Marks -----------------------------------------------------------------
-files['rwa-lens-mark.svg'] = svg(40, 40, prism());
-files['rwa-lens-mark-light.svg'] = svg(40, 40, prism({ body: PAPER, facet: INDIGO, line: NAVY }));
-files['rwa-lens-mark-monochrome.svg'] = svg(40, 40, `
-  <path d="M20 3 36 12.2v15.6L20 37 4 27.8V12.2L20 3Z" fill="${NAVY}"/>
-  <path d="m20 8 11.8 6.8-11.8 7-11.8-7L20 8Z" fill="${PAPER}" fill-opacity=".28"/>
-  <path d="M8.2 19.6 20 26.5l11.8-6.9M8.2 24.7 20 31.6l11.8-6.9M20 21.8v9.8" stroke="${PAPER}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>`);
+// Tall compositions use a separately art-directed portrait, preserving the full lens.
+add('social-portrait', 1080, 1350, `${image(320, 0, 760, 1350, portrait)}<rect width="530" height="1350" fill="url(#shade)"/>${lockup(65, 59, 1.13)}${label(68, 224, 'LOOK CLOSER')}${text(61, 348, 'Real assets.', 113, IVORY, 500, -7)}${text(61, 468, 'Clearer vision.', 113, ACID, 500, -7)}${text(68, 555, 'One clear view of a Solana token.', 27, IVORY)}${rule(65, 1251, 950)}${text(65, 1296, 'RWA Lens / Clarity starts on chain.', 22, IVORY)}${arrow(979, 1271, 24)}`);
+add('social-story', 1080, 1920, `${image(0, 0, 1080, 1920, portrait)}${lockup(70, 250, 1.3)}${label(75, 424, 'THE TOKEN BEHIND THE ASSET')}${text(63, 554, 'Look closer.', 127, IVORY, 500, -8)}${text(71, 640, 'Identity. Balance. Controls.', 32, ACID)}${rule(73, 1630, 931)}${text(73, 1691, 'Explore the public data.', 28, IVORY)}${text(73, 1733, 'Make your own assessment.', 28, IVORY)}${arrow(942, 1670, 39)}`);
 
-// ---- Wordmarks -------------------------------------------------------------
-const lockup = (ink, line) => `<g transform="translate(4,8)">${prism({ line })}</g>${wordmark(57, 39, 34, ink)}`;
-files['rwa-lens-wordmark.svg'] = svg(260, 56, lockup(NAVY, PAPER));
-files['rwa-lens-wordmark-light.svg'] = svg(260, 56, `${lockup(PAPER, NAVY).replace('fill="#101a3a"/>', `fill="${PAPER}"/>`)}`);
+// Social headers leave the lower-left avatar overlap empty; the brand sits above it.
+add('header-x', 1500, 500, `${image(657, -16, 926, 521)}<rect width="1010" height="500" fill="url(#shade)"/>${lockup(59, 58, .95)}${label(385, 137, 'REAL-WORLD TOKENS. IN FOCUS.')}${text(379, 224, 'Real assets.', 77, IVORY, 500, -4.5)}${text(379, 307, 'Clearer vision.', 77, ACID, 500, -4.5)}${text(386, 392, 'Public Solana data, made legible.', 22, IVORY)}`);
+add('header-linkedin', 1584, 396, `${image(830, -38, 867, 488)}<rect width="1150" height="396" fill="url(#shade)"/>${lockup(59, 55, .86)}${label(359, 99, 'THE TOKEN BEHIND THE ASSET')}${text(353, 183, 'Real assets.', 74, IVORY, 500, -4.8)}${text(353, 261, 'Clearer vision.', 74, ACID, 500, -4.8)}${text(359, 325, 'A clearer view of public Solana token data.', 20, IVORY)}`);
 
-// ---- Profile / app icon ----------------------------------------------------
-const profile = (bg, ink, line, facet) => svg(1024, 1024, `
-  <defs><clipPath id="squircle"><rect width="1024" height="1024" rx="232"/></clipPath></defs>
-  <rect width="1024" height="1024" rx="232" fill="${bg}"/>
-  <g clip-path="url(#squircle)">${ledger(0, 0, 1024, 1024, bg === NAVY ? '#1b2650' : RULE, 128)}</g>
-  <g transform="translate(272 232) scale(12)">${prism({ body: ink, facet, line })}</g>
-  <text x="512" y="880" text-anchor="middle" fill="${ink}" font-family="${SERIF}" font-size="96">RWA <tspan font-style="italic">Lens</tspan><tspan fill="${INDIGO}">.</tspan></text>`);
-files['profile-light.svg'] = profile(CANVAS, NAVY, PAPER, FACET);
-files['profile-dark.svg'] = profile(NAVY, PAPER, NAVY, INDIGO);
+// Wallpapers are quiet; export resolution is distinct from the original artwork resolution.
+add('wallpaper-desktop', 3840, 2160, `${image(0, 0, 3840, 2160)}${lockup(146, 1900, 2.1)}${text(148, 2051, 'A CLEARER VIEW.', 28, GRAY, 500, 5)}`);
+add('wallpaper-mobile', 1440, 2560, `${image(0, 0, 1440, 2560, portrait)}${lockup(100, 2300, 1.7)}${text(105, 2430, 'A CLEARER VIEW.', 24, IVORY, 500, 4.5)}`);
 
-// ---- Social, ads, headers --------------------------------------------------
-/** One editorial composition, re-proportioned per surface rather than stretched. */
-const card = ({ w, h, bg, ink, soft, facet, line, eyebrow, headline, support, markScale, markX, markY, pad = 70, headSize, titleY }) => svg(w, h, `
-  <rect width="${w}" height="${h}" fill="${bg}"/>
-  ${ledger(w * 0.65, 0, w * 0.4, h, bg === NAVY ? '#1b2650' : RULE)}
-  <g transform="translate(${markX} ${markY}) scale(${markScale})">${prism({ body: ink, facet, line })}</g>
-  ${wordmark(pad, titleY, headSize * 0.62, ink)}
-  <text x="${pad}" y="${titleY + headSize * 1.45}" font-family="${SANS}" font-size="${Math.round(headSize * 0.21)}" letter-spacing="3" fill="${INDIGO}">${eyebrow}</text>
-  ${headline.map((row, index) => `<text x="${pad - 5}" y="${titleY + headSize * 2.6 + index * headSize * 1.12}" font-family="${SANS}" font-size="${headSize}" font-weight="600" letter-spacing="-3" fill="${ink}">${row}</text>`).join('')}
-  <text x="${pad}" y="${h - 62}" font-family="${SANS}" font-size="${Math.round(headSize * 0.29)}" fill="${soft}">${support}</text>`);
-
-const copy = {
-  eyebrow: 'THE TOKEN BEHIND THE ASSET',
-  support: 'Identity. Balance. Controls. Read-only on Solana.',
-};
-const lightTones = { bg: CANVAS, ink: NAVY, soft: NAVY_SOFT, facet: FACET, line: PAPER };
-const darkTones = { bg: NAVY, ink: PAPER, soft: '#aab3cd', facet: INDIGO, line: NAVY };
-
-files['og-image.svg'] = card({ w: 1200, h: 630, ...lightTones, ...copy, headline: ['Know what your', 'real-world token means.'], markScale: 5.4, markX: 855, markY: 185, headSize: 67, titleY: 112 });
-files['social-square.svg'] = card({ w: 1080, h: 1080, ...lightTones, ...copy, headline: ['Know what', 'your token', 'actually means.'], markScale: 6.2, markX: 700, markY: 120, headSize: 74, titleY: 150 });
-/** A story is twice as tall as it is wide, so the block is optically centred rather than stacked at the top. */
-files['social-story.svg'] = svg(1080, 1920, `
-  <rect width="1080" height="1920" fill="${NAVY}"/>
-  ${ledger(0, 1180, 1080, 740, '#1b2650')}
-  ${wordmark(80, 250, 58, PAPER)}
-  <g transform="translate(340 420) scale(10)">${prism({ body: PAPER, facet: INDIGO, line: NAVY })}</g>
-  <text x="80" y="960" font-family="${SANS}" font-size="22" letter-spacing="4" fill="${INDIGO}">${copy.eyebrow}</text>
-  ${['Identity.', 'Balance.', 'Controls.'].map((row, index) => `<text x="75" y="${1080 + index * 118}" font-family="${SANS}" font-size="104" font-weight="600" letter-spacing="-3" fill="${PAPER}">${row}</text>`).join('')}
-  <text x="80" y="1500" font-family="${SANS}" font-size="30" fill="#aab3cd">One clear view of a Solana token.</text>
-  <text x="80" y="1560" font-family="${SANS}" font-size="30" fill="#aab3cd">Public, read-only, no signing.</text>
-  <text x="80" y="1810" font-family="${SANS}" font-size="26" fill="${INDIGO}">rwalensonsolana.vercel.app</text>`);
-files['ad-landscape.svg'] = card({ w: 1200, h: 628, ...lightTones, ...copy, headline: ['Inspect the token', 'before you trust it.'], markScale: 5.4, markX: 855, markY: 185, headSize: 63, titleY: 112 });
-
-/** Headers are wide and short, so the lockup sits on one line with room to breathe. */
-const header = (w, h, tones) => svg(w, h, `
-  <rect width="${w}" height="${h}" fill="${tones.bg}"/>
-  ${ledger(w * 0.6, 0, w * 0.45, h, tones.bg === NAVY ? '#1b2650' : RULE)}
-  <g transform="translate(${Math.round(w * 0.06)} ${Math.round(h / 2 - 48)}) scale(2.4)">${prism({ body: tones.ink, facet: tones.facet, line: tones.line })}</g>
-  ${wordmark(Math.round(w * 0.06) + 124, Math.round(h / 2 + 6), 52, tones.ink)}
-  <text x="${Math.round(w * 0.06) + 127}" y="${Math.round(h / 2 + 48)}" font-family="${SANS}" font-size="18" letter-spacing="2.6" fill="${INDIGO}">${copy.eyebrow}</text>`);
-files['header-x.svg'] = header(1500, 500, darkTones);
-files['header-linkedin.svg'] = header(1584, 396, lightTones);
-
-// ---- Wallpaper -------------------------------------------------------------
-files['wallpaper-desktop.svg'] = svg(2560, 1440, `
-  <rect width="2560" height="1440" fill="${NAVY}"/>
-  ${ledger(0, 0, 2560, 1440, '#18234a', 80)}
-  <g transform="translate(1120 560) scale(8)">${prism({ body: PAPER, facet: INDIGO, line: NAVY })}</g>
-  <text x="1280" y="1020" text-anchor="middle" fill="${PAPER}" font-family="${SERIF}" font-size="72">RWA <tspan font-style="italic">Lens</tspan><tspan fill="${INDIGO}">.</tspan></text>`);
-
-for (const [name, content] of Object.entries(files)) writeFileSync(join(out, name), content);
-console.log(`wrote ${Object.keys(files).length} svg assets`);
-
-// ---- Raster ----------------------------------------------------------------
-const raster = [
-  ['profile-light.svg', 'profile-light.png', 1024, 1024],
-  ['profile-dark.svg', 'profile-dark.png', 1024, 1024],
-  ['og-image.svg', 'og-image.png', 1200, 630],
-  ['social-square.svg', 'social-square.png', 1080, 1080],
-  ['social-story.svg', 'social-story.png', 1080, 1920],
-  ['ad-landscape.svg', 'ad-landscape.png', 1200, 628],
-  ['header-x.svg', 'header-x.png', 1500, 500],
-  ['header-linkedin.svg', 'header-linkedin.png', 1584, 396],
-  ['wallpaper-desktop.svg', 'wallpaper-desktop.png', 2560, 1440],
-];
 const browser = await chromium.launch({ executablePath: process.env.PW_EXE });
-for (const [source, target, w, h] of raster) {
-  const page = await browser.newPage({ viewport: { width: w, height: h }, deviceScaleFactor: 1 });
-  const markup = readFileSync(join(out, source), 'utf8');
-  await page.setContent(`<style>html,body{margin:0;padding:0}svg{display:block}</style>${markup}`, { waitUntil: 'load' });
-  await page.evaluate(() => document.fonts.ready);
-  await page.screenshot({ path: join(out, target), omitBackground: false });
-  await page.close();
-  console.log(`  rendered ${target}`);
-}
-await browser.close();
+try {
+  for (const asset of assets.filter(asset => asset.raster)) {
+    const page = await browser.newPage({ viewport: { width: asset.width, height: asset.height }, deviceScaleFactor: 1 });
+    try {
+      await page.setContent(`<style>html,body{margin:0;padding:0}svg{display:block}</style>${readFileSync(join(out, `${asset.name}.svg`), 'utf8')}`, { waitUntil: 'load' });
+      await page.evaluate(async () => {
+        await document.fonts.ready;
+        await document.fonts.load('500 32px Inter');
+        if (!document.fonts.check('500 32px Inter')) throw new Error('Embedded Inter font did not load');
+      });
+      await page.screenshot({ path: join(out, `${asset.name}.png`), omitBackground: false });
+      await sharp(join(out, `${asset.name}.png`)).resize({ width: Math.min(960, asset.width) }).webp({ quality: 84 }).toFile(join(out, `${asset.name}-preview.webp`));
+      console.log(`Rendered ${asset.name}: ${asset.width} x ${asset.height}`);
+    } finally { await page.close(); }
+  }
+} finally { await browser.close(); }
 
-const listing = readdirSync(out).sort();
-console.log(`brand kit contains ${listing.length} files`);
+copyFileSync(join(out, 'rwa-lens-wordmark.svg'), join(root, 'public/brand/rwa-lens.svg'));
+copyFileSync(join(out, 'og-image.svg'), join(root, 'public/brand/social-card.svg'));
+copyFileSync(join(out, 'og-image.png'), join(root, 'public/brand/social-card.png'));
+const icon = svg(80, 80, `<g transform="translate(10 10) scale(1.5)">${mark()}</g>`);
+writeFileSync(join(root, 'app/icon.svg'), icon);
+await sharp(Buffer.from(icon)).resize(180, 180).png().toFile(join(root, 'app/apple-icon.png'));
+const faviconPng = await sharp(Buffer.from(icon)).resize(32, 32).png().toBuffer();
+const faviconHeader = Buffer.alloc(22);
+faviconHeader.writeUInt16LE(1, 2); faviconHeader.writeUInt16LE(1, 4);
+faviconHeader[6] = 32; faviconHeader[7] = 32;
+faviconHeader.writeUInt16LE(1, 10); faviconHeader.writeUInt16LE(32, 12);
+faviconHeader.writeUInt32LE(faviconPng.length, 14); faviconHeader.writeUInt32LE(22, 18);
+writeFileSync(join(root, 'app/favicon.ico'), Buffer.concat([faviconHeader, faviconPng]));
+
+const manifest = { edition: 'Optical / 2026', palette: { ink: INK, ivory: IVORY, citron: ACID, gray: GRAY }, assets };
+writeFileSync(join(out, 'manifest.json'), `${JSON.stringify(manifest, null, 2)}\n`);
+writeFileSync(join(out, 'brand-guide.md'), `# RWA Lens / Optical identity\n\n## Idea\nReal assets. Clearer vision. An optical instrument is the central motif: glass reveals rather than promises. The lens sculpture is original AI-generated artwork created for RWA Lens.\n\n## Mark and type\nThe optical mark uses a circle, a rotated ellipse and a focus indicator. Keep at least 8 units of clear space around the 40-unit mark. Minimum mark size: 16px. Use the reverse mark on dark surfaces. The wordmark uses Inter at weight 550 with tight tracking. Inter is embedded in the editable SVG files; its font and OFL license are included in source/. Preserve aspect ratio.\n\n## Palette\n| Colour | Hex | Role |\n|---|---|---|\n| Ink | ${INK} | Ground and primary text |\n| Ivory | ${IVORY} | Reading surfaces and reversed text |\n| Citron | ${ACID} | Focus, direction and campaign emphasis |\n| Gray | ${GRAY} | Secondary text on dark surfaces |\n\nCitron is an accent, never a claim about an asset's safety or performance. Product warning and error colours retain their own meanings.\n\n## Campaign\nThe three square posts form a sequence: Real assets. Clearer vision. / A balance is only the beginning. / Follow the evidence. Their compositions deliberately vary: dark material study, citron editorial poster, ivory evidence panel. Tall posts use separately generated portrait art, so the entire lens remains visible.\n\n## Formats and safe areas\n${assets.filter(asset => asset.raster).map(asset => `- ${asset.name}.png / editable .svg: ${asset.width} × ${asset.height}px`).join('\n')}\n\nX and LinkedIn headers reserve the lower-left for profile avatars. Story text stays away from the top and bottom interface areas. The mobile wallpaper leaves its upper third clear for a clock. Actual platform cropping varies; preview on the intended account before posting.\n\nThe desktop wallpaper exports at 3840 × 2160; the source artwork is 1672 × 941. The mobile wallpaper exports at 1440 × 2560; the source artwork is 941 × 1672. Typography and logo vectors render sharply at export dimensions, while the raster artwork is upscaled. These are not native 4K renders. PNGs are final exports; SVGs contain editable live text and embedded raster art. Small WebP files are gallery previews.\n\n## Voice\nDescribe observations, sources and limitations. RWA Lens reads public Solana token state; it does not establish legal compliance, asset backing, investment performance or issuer trust. Do not imply endorsements or partnerships.\n\n## Design references\nMotionSites RIVR DeFi and Digital Reality informed the cinematic contrast, bold editorial scale, restrained accent and material imagery. References: [RIVR DeFi](https://motionsites.ai/?prompt=rivr-defi-landing) and [Digital Reality](https://motionsites.ai/?prompt=digital-reality-hero). No template images, logos, customer claims or proprietary prompt text are redistributed.\n\n## Rebuild\nPrerequisites: Node 22.19+, npm ci, and npx playwright install chromium. On macOS/Linux, /usr/bin/zip must be installed. Set PW_EXE to use another installed Chromium executable. Run node scripts/build-brand-kit.mjs in the repository. Required original artwork: public/brand/lens-master.png and public/brand/lens-portrait.png. The generator rebuilds PNGs, editable SVGs, previews, application icons, the asset manifest and the ZIP.\n`);
+const archive = join(out, 'rwa-lens-brand-kit.zip');
+rmSync(archive, { force: true });
+const archiveFiles = ['brand-guide.md', 'manifest.json', 'source', ...assets.flatMap(asset => [`${asset.name}.svg`, ...(asset.raster ? [`${asset.name}.png`] : [])])];
+execFileSync('/usr/bin/zip', ['-q', '-r', '-9', archive, ...archiveFiles], { cwd: out });
+console.log(`${assets.length} editable assets, ${assets.filter(asset => asset.raster).length} PNGs. Archive: ${(statSync(archive).size / 1024 / 1024).toFixed(1)} MB`);
