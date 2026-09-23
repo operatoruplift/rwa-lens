@@ -73,7 +73,10 @@ describe('durable sign-in challenges', () => {
     expect(verifyChallenge({ ...challenge, message: message + 'tampered' }, signature)).toBe(false);
     expect(verifyChallenge({ ...challenge, address: SECOND }, signature)).toBe(false);
   });
-  it('rejects small-order public keys that an all-zero signature would satisfy', async () => {
+  // Four keys x forty fresh challenges is 160 signing round trips, which is well past
+  // the 5s default on a loaded machine. The repetition is the point of the test, so the
+  // budget grows rather than the coverage shrinking.
+  it('rejects small-order public keys that an all-zero signature would satisfy', { timeout: 60_000 }, async () => {
     // RFC 8032 verification accepts these points, so a zero signature validates against
     // them for roughly one message in four. Repeat across many fresh challenges: a
     // single-challenge assertion passes by luck about three times in four.
