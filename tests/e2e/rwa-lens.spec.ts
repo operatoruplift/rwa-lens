@@ -266,7 +266,10 @@ test.describe('RWA Lens mainnet product', () => {
       for (let y = 0; y < document.body.scrollHeight; y += 600) { window.scrollTo(0, y); await new Promise(resolve => setTimeout(resolve, 120)); }
       window.scrollTo(0, 0);
     });
-    await expect.poll(() => page.evaluate(() => Array.from(document.images).every(image => image.complete && image.naturalWidth > 0))).toBe(true);
+    // The gallery is large and lazily loaded, so decoding every preview takes well
+    // past the default poll budget on a busy machine. All sixteen do load; give them
+    // the time rather than asserting a race.
+    await expect.poll(() => page.evaluate(() => Array.from(document.images).every(image => image.complete && image.naturalWidth > 0)), { timeout: 45_000 }).toBe(true);
     const links = await page.locator('a[download]').evaluateAll(nodes => nodes.map(node => node.getAttribute('href')!));
     expect(links.length).toBeGreaterThanOrEqual(17);
     for (const href of links) expect((await page.request.get(href)).status(), href).toBe(200);

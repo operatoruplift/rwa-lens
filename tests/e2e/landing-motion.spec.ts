@@ -1,4 +1,12 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
+import { inspectResultSchema } from '../../lib/rwa/schema';
+import evidence from '../../docs/evidence/live-observations.json';
+
+// Fixtures are switched off wherever this suite runs, so the inspector has no
+// seeded observation of its own. Replay the archived observation for the mint the
+// page requests on arrival: the inspector verifies that a response matches its
+// request and refuses anything else, so a mismatched replay renders an error.
+const seededObservation = inspectResultSchema.parse(evidence.observations[0].result);
 
 const transform = (element: Locator) => element.evaluate(node => getComputedStyle(node).transform);
 const verticalTranslation = (element: Locator) => element.evaluate(node => new DOMMatrixReadOnly(getComputedStyle(node).transform).m42);
@@ -97,6 +105,7 @@ test.describe('Native landing motion', () => {
     await page.keyboard.press('Tab');
     await expect(page.getByLabel('Mint address', { exact: true })).toBeFocused();
 
+    await page.route('**/api/rwa/inspect', route => route.fulfill({ json: seededObservation }));
     await page.goto('/rwa');
     await expect(page.locator('[data-motion]')).toHaveAttribute('data-motion', 'static');
     await expect(page.locator('[data-motion-scene]')).toHaveCount(0);
@@ -106,7 +115,11 @@ test.describe('Native landing motion', () => {
     await expect(page.locator('#inspect')).toBeFocused();
     await page.keyboard.press('Tab');
     await expect(page.getByLabel('Mint address', { exact: true })).toBeFocused();
-    await expect(page.getByTestId('raw-balance')).toHaveText('1000000000');
+    // /rwa is the compact inspector; the full result panels, and the raw-balance
+    // readout with them, live on /demo. Assert what this surface shows: the
+    // observation loaded and its identity is on screen after a keyboard-only walk.
+    await expect(page.getByText('Inspection unavailable', { exact: false })).toHaveCount(0);
+    await expect(page.getByText(seededObservation.registry!.assetClass!, { exact: false }).first()).toBeVisible();
   });
 
   test('reduced motion is static on arrival and immediately resets active motion when changed', async ({ page }) => {
