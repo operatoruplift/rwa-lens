@@ -205,3 +205,7 @@ See [limitations](docs/rwa-limitations.md), [deployment/rollback](docs/rwa-deplo
 and [third-party notices](docs/third-party-notices.md). No backing, compliance,
 eligibility, redemption, investment-performance or transfer-success certification
 is made. The project uses the [MIT license](LICENSE).
+
+## Seeker, Android and PWA
+
+RWA Lens installs as a PWA and ships an Android WebView shell (`android/`) for the Solana Seeker and dApp Store, with Solana Mobile Wallet Adapter support where the app connects a wallet. Build, test and publishing steps: [docs/seeker-and-pwa.md](docs/seeker-and-pwa.md).

@@ -10,7 +10,11 @@ const CSP = [
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data:",
   "font-src 'self' data:",
-  "connect-src 'self'",
+  // Mobile Wallet Adapter (Seeker, Android) talks to the wallet app over a
+  // localhost WebSocket on an ephemeral port; nothing else leaves the origin.
+  "connect-src 'self' ws://localhost:*",
+  "worker-src 'self'",
+  "manifest-src 'self'",
   "frame-ancestors 'none'",
   "base-uri 'self'",
   "form-action 'self'",
