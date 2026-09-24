@@ -71,7 +71,7 @@ describe('transfer readiness', () => {
   it('returns unknown for a transfer hook it cannot execute', () => {
     const readiness = evaluateReadiness(ext('TransferHook'), [account()]);
     expect(readiness.verdict).toBe('unknown');
-    expect(readiness.reasons[0].detail).toMatch(/does not execute or simulate/i);
+    expect(readiness.reasons[0].detail).toMatch(/does not execute/i);
   });
 
   it('never softens an unknown into a ready', () => {
@@ -177,4 +177,14 @@ it('treats zero-address optional authorities as unset rather than active delegat
   expect(evaluateReadiness([paused], [account()]).verdict).toBe('blocked');
   const scaled = describeExtension({ __kind: 'ScaledUiAmountConfig', authority: none, multiplier: 1, newMultiplier: 1, newMultiplierEffectiveTimestamp: 0n }, 'mint')!;
   expect(scaled.authorities).toEqual([]);
+});
+
+ describe('mint authority controls', () => {
+  it('reports legacy and Token-2022 freeze authority without declaring accounts frozen', () => {
+    const readiness = evaluateReadiness([], [], true, { freezeAuthority: 'authority' });
+    expect(readiness.verdict).toBe('attention');
+    expect(readiness.knownBlock).toBe(false);
+    expect(readiness.reasons[0].check).toBe('Freeze authority');
+    expect(readiness.reasons[0].detail).toContain('does not mean');
+  });
 });

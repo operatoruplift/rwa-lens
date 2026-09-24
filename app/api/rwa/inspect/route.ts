@@ -1,3 +1,4 @@
+import { fixturesEnabled } from '@/lib/server/rwa/config';
 import { NextResponse } from 'next/server';
 import { inspectRequestSchema } from '@/lib/rwa/schema';
 import { inspectRequest } from '@/lib/server/rwa/inspect';
@@ -16,6 +17,7 @@ export async function POST(request: Request) {
   catch { return NextResponse.json({ status: 'invalid', message: 'Send a JSON body no larger than 4 KB.' }, { status: 400 }); }
   const parsed = inspectRequestSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ status: 'invalid', message: parsed.error.issues[0]?.message ?? 'Check the mint and wallet addresses.' }, { status: 400 });
+  if (parsed.data.mode === 'fixture' && !fixturesEnabled()) return NextResponse.json({ status: 'invalid', message: 'Only live network inspections are enabled on this deployment.' }, { status: 403 });
   const limited = await rateLimit(request, parsed.data.mode === 'fixture' ? 'fixture' : 'inspect');
   if (!limited.ok) return NextResponse.json({ status: 'unavailable', kind: 'rate-limited', message: 'Too many requests. Wait a moment and try again.' }, { status: 429, headers: { 'retry-after': String(limited.retryAfterSeconds) } });
   try { return NextResponse.json(await inspectRequest(parsed.data), { status: 200 }); }

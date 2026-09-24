@@ -1,0 +1,182 @@
+{
+  "title": "RWA Lens — Real assets. Clearer vision.",
+  "edition": "Mainnet / September 2026",
+  "url": "https://rwalensonsolana.vercel.app",
+  "slides": [
+    {
+      "section": "RWA INTELLIGENCE / SOLANA",
+      "title": "Real assets.\nClearer vision.",
+      "summary": "The token behind the asset, brought into focus.",
+      "kind": "cover",
+      "theme": "dark",
+      "notes": "Open with the product, not a market statistic. RWA Lens gives teams a clear view of the public Solana token data behind an asset: its identity, units, display conversion and observable controls. The live product is a read-only inspector on Solana mainnet. This is an invitation to use it and shape the next integrations."
+    },
+    {
+      "section": "01 / THE PROBLEM",
+      "title": "A balance is only\nthe beginning.",
+      "summary": "A token amount leaves operational questions unanswered.",
+      "kind": "cards",
+      "theme": "ivory",
+      "items": [
+        { "label": "01", "title": "What am I holding?", "body": "Mint, program, metadata and issuer attribution." },
+        { "label": "02", "title": "What does it mean?", "body": "Raw units, decimals and display conversion." },
+        { "label": "03", "title": "What can change?", "body": "Authorities, account states and transfer controls." }
+      ],
+      "notes": "A displayed balance is useful, but incomplete. Teams still need to understand the mint, the calculation behind the number and which controls can affect the token. Reading these separately creates reconciliation work and leaves room for incorrect assumptions. RWA Lens organizes those questions into one inspection."
+    },
+    {
+      "section": "02 / WHO IT SERVES",
+      "title": "Built for the people\nbehind the product.",
+      "summary": "One inspection language across operational teams.",
+      "kind": "cards",
+      "theme": "dark",
+      "items": [
+        { "label": "WALLETS", "title": "Explain the balance", "body": "Make token behavior understandable in a wallet workflow." },
+        { "label": "ISSUERS", "title": "Expose the controls", "body": "Give integrators a clear view of observable configuration." },
+        { "label": "TREASURIES", "title": "Carry the evidence", "body": "Inspect public accounts and export a dated record." }
+      ],
+      "notes": "The initial audience is wallet builders, token issuers, custodians and treasury operators. Wallet teams need clearer balance explanations. Issuers need their controls to be legible to integrators. Treasury teams need exportable evidence for investigation and reconciliation. These are target users and design-partner hypotheses, not a claim of customers or adoption."
+    },
+    {
+      "section": "03 / THE WORKFLOW",
+      "title": "From address\nto understanding.",
+      "summary": "Start with a public mint. Leave with a portable record.",
+      "kind": "flow",
+      "theme": "ivory",
+      "items": [
+        { "label": "01", "title": "Inspect", "body": "Mint + optional public owner" },
+        { "label": "02", "title": "Understand", "body": "Identity + amounts + controls" },
+        { "label": "03", "title": "Export", "body": "JSON + CSV evidence" }
+      ],
+      "note": "Guest access · No wallet required · No asset movement",
+      "notes": "Enter a mint and optionally a public owner address. The server validates inputs and reads the configured Solana network. The result separates identity, balances, extensions, readiness and source evidence. Export JSON for the complete structured record or CSV for tabular review. Guest inspection and local exports require no wallet. RWA Lens does not sign or submit transactions."
+    },
+    {
+      "section": "04 / THE LIVE DEMO",
+      "title": "Follow USDY\non mainnet.",
+      "summary": "A real Solana mint, from the issuer’s address registry.",
+      "kind": "demo",
+      "theme": "dark",
+      "items": [
+        { "label": "ASSET", "title": "Ondo USDY", "body": "Treasury-linked note" },
+        { "label": "PROGRAM", "title": "SPL Token", "body": "Legacy token program" },
+        { "label": "NETWORK", "title": "Mainnet", "body": "Public chain observation" }
+      ],
+      "note": "Open the guided demo → /demo",
+      "notes": "Open https://rwalensonsolana.vercel.app/demo and run the USDY inspection. The official mint is A1KLoBrKBde8Ty9qtNQUtq3C2ortoC3u7twggz7sEto6. Confirm the full mint address and legacy SPL Token program. Review identity, authorities, evidence and export. Explain that USDY’s legacy SPL program is separate from the product’s Token-2022 support. Issuer descriptions provide attribution; they do not independently establish backing, legal rights, eligibility or investment performance. Keep the live result visible if the provider reports an unavailable or partial observation."
+    },
+    {
+      "section": "05 / SOLANA ACCOUNTING",
+      "title": "Exact underneath.\nClear on the surface.",
+      "summary": "Separate the accounting quantity from its display.",
+      "kind": "equation",
+      "theme": "ivory",
+      "items": [
+        { "label": "ACCOUNTING", "title": "Raw units", "body": "Integer strings + BigInt" },
+        { "label": "DECIMALS", "title": "Standard amount", "body": "Exact decimal formatting" },
+        { "label": "TOKEN-2022", "title": "Display amount", "body": "Official Scaled UI helper" }
+      ],
+      "note": "Display conversion never feeds back into raw accounting.",
+      "notes": "Raw amounts and supply remain integer strings or BigInt. Accounts are validated for program, mint and owner, then deduplicated before summing. Standard decimal formatting is exact. For supported Token-2022 Scaled UI Amount configuration, the official helper produces a separate floating-point display value. The observed Clock timestamp selects the active multiplier. Display output is never used as raw accounting. Interest-bearing conversion is detected but not calculated. Confidential holdings remain unobservable."
+    },
+    {
+      "section": "06 / OBSERVABLE CONTROLS",
+      "title": "See the controls.\nKeep the unknowns.",
+      "summary": "Known blocks and unresolved checks stay visible together.",
+      "kind": "cards",
+      "theme": "dark",
+      "items": [
+        { "label": "AUTHORITIES", "title": "Who has control?", "body": "Mint, freeze, delegate and extension authorities." },
+        { "label": "TOKEN BEHAVIOR", "title": "What is configured?", "body": "Fees, hooks, pause state and account restrictions." },
+        { "label": "BOUNDARIES", "title": "What is unresolved?", "body": "Hook execution, recipient eligibility and private amounts." }
+      ],
+      "notes": "The extension inventory explains observable configuration instead of collapsing it into one reassuring badge. Known transfer blocks and unknown checks can coexist. A configured transfer hook still needs evaluation in its execution context. An address does not establish KYC status. A default account state governs new accounts and does not replace inspection of existing accounts. The result is a public-state explanation, not a guarantee of transfer success or legal authorization."
+    },
+    {
+      "section": "07 / THE ARCHITECTURE",
+      "title": "Every conclusion\nhas a path back.",
+      "summary": "Bounded reads. Official decoders. Inspectable provenance.",
+      "kind": "architecture",
+      "theme": "ivory",
+      "items": [
+        { "label": "INPUT", "title": "Validated API", "body": "Server-only network configuration" },
+        { "label": "READ + DECODE", "title": "Solana state", "body": "Mint · Clock · owner accounts" },
+        { "label": "OUTPUT", "title": "Evidence record", "body": "Typed result · context slots · export" }
+      ],
+      "note": "Reads have separate context slots; they are not an atomic snapshot.",
+      "notes": "The Next.js interface calls a validated server route. Bounded Solana RPC reads retrieve mint data, Clock and optional owner accounts. Official Solana codecs drive token and extension decoding. The result preserves source information, observation time, per-read context slots and incomplete states. Requests have timeout, retry and size bounds. Metadata retrieval is explicit and allowlisted, with private-address rejection and pinned connections. Secrets stay on the server. The separate reads do not form an atomic snapshot."
+    },
+    {
+      "section": "08 / WHY RWA LENS",
+      "title": "More context.\nLess guesswork.",
+      "summary": "A focused investigation workflow for token operations.",
+      "kind": "cards",
+      "theme": "citron",
+      "items": [
+        { "label": "RECONCILE", "title": "Amounts, connected", "body": "Raw, standard and extension display in one view." },
+        { "label": "INTERPRET", "title": "Controls, explained", "body": "Technical configuration translated into operational meaning." },
+        { "label": "RETAIN", "title": "Evidence, portable", "body": "Source context and local JSON/CSV exports travel together." }
+      ],
+      "notes": "The differentiation is the combination: amount reconciliation, controls explained in context and a portable observation. This is complementary to block explorers, issuer documentation and wallet interfaces. We are not claiming that other products cannot provide these features. The product’s focus is making the investigation easier to complete and easier to discuss across teams."
+    },
+    {
+      "section": "09 / COMMERCIAL DIRECTION",
+      "title": "Start with clarity.\nBuild into workflows.",
+      "summary": "Planned model, to validate with design partners.",
+      "kind": "cards",
+      "theme": "dark",
+      "items": [
+        { "label": "ENTRY", "title": "Public inspection", "body": "Keep the core research and export workflow accessible." },
+        { "label": "TEAM VALUE", "title": "Operational workflow", "body": "Explore shared review, retained evidence and monitoring." },
+        { "label": "INTEGRATION", "title": "Embedded intelligence", "body": "Validate API and wallet integration demand." }
+      ],
+      "notes": "This slide describes a proposed business model, not shipped commercial features or booked revenue. The accessible inspector is the entry point. The working hypothesis is that teams pay for repeatable operational workflows and integration value, such as retained evidence, monitoring and embedded explanations. Pricing, packaging and demand need validation with partners. Cloud report storage is not part of the current public launch. No revenue or adoption figure is asserted."
+    },
+    {
+      "section": "10 / DELIVERY ROADMAP",
+      "title": "A useful product now.\nA deliberate next step.",
+      "summary": "Expand only where partner workflows justify it.",
+      "kind": "flow",
+      "theme": "ivory",
+      "items": [
+        { "label": "AVAILABLE", "title": "Inspect + export", "body": "Mainnet reads, token decoding and local evidence." },
+        { "label": "NEXT", "title": "Partner pilots", "body": "Validate real review and integration workflows." },
+        { "label": "PLANNED", "title": "Team capabilities", "body": "Prioritize monitoring, retained history and integrations." }
+      ],
+      "notes": "The current product supports public mainnet token inspection and local evidence exports. Engineering verification covers accounting, decoders, request validation, failure states, keyboard and responsive UI paths. The next step is partner workflow validation. Monitoring, shared retained history and productized external integrations are roadmap items. These are priorities, not dated delivery commitments. Production RPC availability remains an operational dependency."
+    },
+    {
+      "section": "11 / THE INVITATION",
+      "title": "Bring one workflow.\nLet’s make it clearer.",
+      "summary": "Seeking wallet, issuer and treasury design partners.",
+      "kind": "cards",
+      "theme": "citron",
+      "items": [
+        { "label": "CHOOSE", "title": "A real task", "body": "Select a token investigation or reconciliation workflow." },
+        { "label": "EVALUATE", "title": "The useful evidence", "body": "Identify which explanations your team needs to act." },
+        { "label": "SHAPE", "title": "The next integration", "body": "Define success and prioritize the smallest valuable pilot." }
+      ],
+      "notes": "The ask is for design partners, not a fundraising amount. Bring one real operational task and a person who performs it. Together, define the evidence required, evaluate the product and agree what a useful pilot should achieve. Success criteria might include clearer explanations, fewer unresolved handoffs or a more usable evidence export; measure these during the pilot rather than promising a result in advance."
+    },
+    {
+      "section": "RWA LENS / ON SOLANA",
+      "title": "Look closer.",
+      "summary": "Real assets. Clearer vision.",
+      "kind": "close",
+      "theme": "dark",
+      "notes": "Close by opening the live product or guided demo. RWA Lens makes observable public token state easier to inspect, explain and carry into a team's next decision. Invite questions about the accounting model, the evidence boundary or the partner workflow. Live product: https://rwalensonsolana.vercel.app. Demo: /demo. Technical breakdown: /technical. Source: https://github.com/operatoruplift/rwa-lens."
+    }
+  ],
+  "qa": [
+    { "question": "Does the product move funds?", "answer": "No. Public inspection and local export are read-only. No asset transaction is signed or submitted." },
+    { "question": "Does USDY use Token-2022?", "answer": "The attributed USDY mint uses legacy SPL Token. The inspector also supports Token-2022 mints and decodes their observed extensions separately." },
+    { "question": "Does the result prove backing or compliance?", "answer": "No. Issuer attribution, chain observations and legal or economic assurances are different things. The product reports observable token data." },
+    { "question": "How are balances kept exact?", "answer": "Raw quantities remain integer strings or BigInt. Standard decimals are formatted exactly. Supported extension display conversion is isolated and never becomes an accounting input." },
+    { "question": "Can every holder balance be determined?", "answer": "No. Public owner account reads can be partial, capped or unavailable, and confidential amounts are not observable. These states remain visible." },
+    { "question": "Can the result certify transfer success?", "answer": "No. Recipient state, hook execution and other unresolved checks can affect execution. Known blocks and unknown checks remain separate." },
+    { "question": "Are all reads from one atomic snapshot?", "answer": "No. Mint, Clock and owner calls expose their separate slots. A context spread is preserved, and a timestamp fallback is identified as an estimate." },
+    { "question": "What is live and what is planned?", "answer": "Public mainnet inspection and JSON/CSV exports are available. Commercial packaging, monitoring, shared retained history and productized integrations are plans to validate. Cloud reports remain outside the current public launch." },
+    { "question": "What happens when an upstream provider fails?", "answer": "The UI reports the unavailable read. The server bounds retries, deadlines and response sizes; it does not quietly change networks or replace the result." },
+    { "question": "What is the immediate ask?", "answer": "A wallet, issuer or treasury team willing to evaluate one real workflow and help define a useful integration pilot. No fundraising terms are proposed here." }
+  ]
+}

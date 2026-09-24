@@ -14,10 +14,10 @@ function positiveInt(raw: string | undefined, fallback: number, max: number): nu
   return Number.isSafeInteger(parsed) && parsed > 0 ? Math.min(parsed, max) : fallback;
 }
 export function resolveRpcConfig(cluster: Cluster): RpcConfig {
-  const configured = (process.env.RWA_CLUSTER ?? 'devnet').trim();
+  const configured = (process.env.RWA_CLUSTER ?? 'mainnet-beta').trim();
   const url = (process.env.RWA_RPC_URL ?? '').trim();
-  if (!url) throw new RpcError('not-configured', 'No RPC URL is configured. Fixture mode remains available.');
-  if (!['devnet', 'mainnet-beta'].includes(configured) || configured !== cluster) throw new RpcError('not-configured', 'The requested network is not configured on this deployment. Fixture mode remains available.');
+  if (!url) throw new RpcError('not-configured', 'The network provider is not configured. Please try again after service configuration is complete.');
+  if (!['devnet', 'mainnet-beta'].includes(configured) || configured !== cluster) throw new RpcError('not-configured', 'The requested network is not configured on this deployment.');
   let provider: string;
   try {
     const parsed = new URL(url);

@@ -13,18 +13,43 @@ export function ScrollExperience({ children, className, enabled }: { children: R
     if (!root || !enabled) return;
     const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
     let stop = () => {};
+    let ambientPaused = false;
 
     function configure() {
       stop();
       if (!root || preference.matches || !('IntersectionObserver' in window)) return;
 
       const hero = root.querySelector<HTMLElement>('[data-motion-hero]');
+      const motionToggle = root.querySelector<HTMLButtonElement>('[data-ambient-toggle]');
+      const motionLabel = motionToggle?.querySelector<HTMLElement>('[data-motion-label]');
       const story = root.querySelector<HTMLElement>('[data-motion-story]');
       const scene = root.querySelector<HTMLElement>('[data-motion-scene]');
       const chapters = Array.from(root.querySelectorAll<HTMLElement>('[data-motion-chapter]'));
       const reveals = Array.from(root.querySelectorAll<HTMLElement>('[data-reveal]'));
       const animations = new Map<Element, Animation>();
       let frame = 0;
+      let heroVisible = false;
+
+      function updateAmbient() {
+        if (hero) hero.dataset.ambient = heroVisible && !document.hidden && !ambientPaused ? 'running' : 'paused';
+        motionToggle?.setAttribute('aria-pressed', String(ambientPaused));
+        if (motionLabel) motionLabel.textContent = ambientPaused ? 'Play motion' : 'Pause motion';
+      }
+
+      function toggleAmbient() {
+        ambientPaused = !ambientPaused;
+        updateAmbient();
+      }
+
+      const heroObserver = new IntersectionObserver(entries => {
+        heroVisible = entries.some(entry => entry.isIntersecting);
+        updateAmbient();
+      });
+      if (hero) heroObserver.observe(hero);
+      if (motionToggle) motionToggle.hidden = false;
+      motionToggle?.addEventListener('click', toggleAmbient);
+      document.addEventListener('visibilitychange', updateAmbient);
+      updateAmbient();
 
       const observer = new IntersectionObserver(entries => {
         for (const entry of entries) {
@@ -104,11 +129,16 @@ export function ScrollExperience({ children, className, enabled }: { children: R
       stop = () => {
         cancelAnimationFrame(frame);
         observer.disconnect();
+        heroObserver.disconnect();
         resizeObserver?.disconnect();
         animations.forEach(animation => animation.cancel());
         window.removeEventListener('scroll', schedule);
         window.removeEventListener('resize', schedule);
         root.removeEventListener('focusin', revealFocused);
+        document.removeEventListener('visibilitychange', updateAmbient);
+        motionToggle?.removeEventListener('click', toggleAmbient);
+        if (motionToggle) motionToggle.hidden = true;
+        hero?.removeAttribute('data-ambient');
         for (const property of ['--hero-depth', '--hero-copy', '--hero-opacity']) hero?.style.removeProperty(property);
         for (const property of ['--lens-turn', '--scan-y']) scene?.style.removeProperty(property);
         scene?.removeAttribute('data-step');

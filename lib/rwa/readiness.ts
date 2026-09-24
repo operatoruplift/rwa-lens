@@ -27,8 +27,11 @@ export function evaluateReadiness(
   extensions: DecodedExtension[],
   accounts: RawBalance[],
   complete = true,
+  mintControls?: { freezeAuthority?: string },
 ): TransferReadiness {
   const reasons: ReadinessReason[] = [];
+
+  if (mintControls?.freezeAuthority) reasons.push({ verdict: 'attention', check: 'Freeze authority', detail: 'The mint has an authority that can freeze or thaw token accounts. Its presence does not mean an existing holder is currently frozen.', evidence: `Freeze authority: ${mintControls.freezeAuthority}` });
 
   const has = (kind: string) => extensions.find(extension => extension.kind === kind);
 
@@ -84,7 +87,7 @@ export function evaluateReadiness(
             verdict: 'unknown',
             check: 'Transfer hook',
             detail:
-              'Every transfer calls a program that can reject it. Whether a specific transfer succeeds depends on that program, which this tool does not execute or simulate.',
+              'Every transfer calls a program that can reject it. Whether a specific transfer succeeds depends on that program, which this tool does not execute.',
             evidence: program ? `Hook program: ${program}` : 'TransferHook present on the mint.',
           },
     );

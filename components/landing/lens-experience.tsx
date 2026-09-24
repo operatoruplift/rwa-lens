@@ -1,10 +1,11 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowDown, ArrowRight, ArrowUpRight, Crosshair, ScanLine, ShieldCheck } from 'lucide-react';
+import { ArrowDown, ArrowRight, ArrowUpRight, Crosshair, Pause, Play, ScanLine, ShieldCheck } from 'lucide-react';
 import { Brand } from '@/components/rwa/brand';
 import { RwaLensShell } from '@/components/rwa/rwa-lens-shell';
 import { repositoryState } from '@/lib/server/rwa/repository';
 import { sessionsConfigured } from '@/lib/server/rwa/session';
+import { fixturesEnabled } from '@/lib/server/rwa/config';
 import { ScrollExperience } from './scroll-experience';
 import styles from './lens-experience.module.css';
 
@@ -15,10 +16,11 @@ function Header({ reportsEnabled }: { reportsEnabled: boolean }) {
     <header className={styles.header}>
       <Link href="/" className={styles.homeLink} aria-label="RWA Lens home"><Brand light /></Link>
       <nav className={styles.navigation} aria-label="Main navigation">
-        <a href="#how-it-works" className={styles.desktopLink}>The lens</a>
+        <Link href="/demo" className={styles.desktopLink}>Demo</Link>
+        <Link href="/technical" className={styles.desktopLink}>Technical</Link>
+        <Link href="/pitch" className={styles.desktopLink}>Pitch</Link>
         {reportsEnabled ? <a href="#reports" className={styles.desktopLink}>Reports</a> : null}
         <Link href="/brand-kit">Brand kit</Link>
-        <a href={sourceUrl} className={styles.sourceLink} target="_blank" rel="noreferrer noopener">Source <ArrowUpRight size={13} /></a>
         <a href="#inspect" className={styles.headerCta}>Inspect <ArrowUpRight size={16} /></a>
       </nav>
     </header>
@@ -29,12 +31,20 @@ function Hero({ cluster }: { cluster: 'mainnet-beta' | 'devnet' }) {
   return (
     <section className={styles.hero} aria-labelledby="page-title" data-motion-hero>
       <div className={styles.heroArt} aria-hidden="true">
-        <div className={styles.heroDepth} data-hero-depth><Image src="/brand/lens-hero.webp" alt="" fill sizes="100vw" loading="eager" fetchPriority="high" className={styles.heroImage} /></div>
+        <div className={styles.heroDepth} data-hero-depth>
+          <div className={styles.heroFloating}><Image src="/brand/lens-hero.webp" alt="" fill sizes="100vw" loading="eager" fetchPriority="high" className={styles.heroImage} /></div>
+          <div className={styles.heroLight} />
+        </div>
       </div>
       <div className={styles.heroShade} aria-hidden="true" />
-      <div className={styles.heroTopline}><span><span className={styles.statusDot} />SOLANA {cluster === 'mainnet-beta' ? 'MAINNET' : 'DEVNET'}</span><span>THE TOKEN BEHIND THE ASSET</span></div>
+      <div className={styles.heroTopline}><span><span className={styles.statusDot} />SOLANA {cluster === 'mainnet-beta' ? 'MAINNET' : 'DEVNET'}</span><span>INDEPENDENT TOKEN INTELLIGENCE</span></div>
+      <svg className={styles.heroCalibration} viewBox="0 0 440 440" fill="none" aria-hidden="true">
+        <circle cx="220" cy="220" r="202" stroke="currentColor" strokeOpacity=".18" strokeDasharray="1 15" />
+        <g className={styles.calibrationOrbit}><path d="M220 18a202 202 0 0 1 143 59M220 422a202 202 0 0 1-143-59" stroke="currentColor" strokeOpacity=".55" /><circle cx="220" cy="18" r="3" fill="currentColor" /></g>
+        <path d="M220 7v20M220 413v20M7 220h20M413 220h20" stroke="currentColor" strokeOpacity=".4" />
+      </svg>
       <div className={styles.heroContent}>
-        <p className={styles.kicker}>A clearer view starts here.</p>
+        <p className={styles.kicker}>The token behind the asset.</p>
         <h1 id="page-title" className={styles.heroTitle}>Real assets.<br /><span>Clearer vision.</span></h1>
         <p className={styles.heroDescription}>Look beyond the ticker. Understand your token&rsquo;s identity, the balance behind the number, and who holds the controls.</p>
         <div className={styles.heroActions}>
@@ -43,9 +53,10 @@ function Hero({ cluster }: { cluster: 'mainnet-beta' | 'devnet' }) {
         </div>
       </div>
       <div className={styles.opticalLabel} aria-hidden="true"><Crosshair size={19} strokeWidth={1} /><div><span>FOCUS / ON-CHAIN REALITY</span><strong>Observation over assumption.</strong></div></div>
+      <button type="button" className={styles.motionToggle} data-ambient-toggle aria-pressed="false" hidden><Pause size={12} className={styles.pauseIcon} aria-hidden="true" /><Play size={12} className={styles.playIcon} aria-hidden="true" /><span data-motion-label>Pause motion</span></button>
       <div className={styles.heroBottom}>
         <div className={styles.assurances}><span><ScanLine size={14} />Public data</span><span><ShieldCheck size={14} />Read-only by design</span></div>
-        <a href="#inspect">BRING THE DETAILS INTO FOCUS <ArrowDown size={15} /></a>
+        <Link href="/demo"><Play size={12} />TAKE THE PRODUCT TOUR <ArrowUpRight size={15} /></Link>
       </div>
     </section>
   );
@@ -112,6 +123,19 @@ function Method({ immersive }: { immersive: boolean }) {
   );
 }
 
+function Resources() {
+  return (
+    <section className={styles.resources} aria-labelledby="resources-title">
+      <div className={styles.resourcesHeading} data-reveal><p className={styles.sectionLabel}>03 / GET THE FULL PICTURE</p><h2 id="resources-title">Go a little deeper.</h2><p>See the product in action.<br />Understand what sits underneath.</p></div>
+      <div className={styles.resourceLinks}>
+        <Link href="/demo" data-reveal><span className={styles.resourceNumber}>01 / PRODUCT TOUR</span><strong>The full walkthrough.</strong><span>From a mint address to an evidence receipt.</span><ArrowUpRight size={26} strokeWidth={1.4} aria-hidden="true" /></Link>
+        <Link href="/technical" data-reveal><span className={styles.resourceNumber}>02 / UNDER THE HOOD</span><strong>Built to be inspected.</strong><span>Architecture, data sources and verification.</span><ArrowUpRight size={26} strokeWidth={1.4} aria-hidden="true" /></Link>
+        <Link href="/pitch" data-reveal><span className={styles.resourceNumber}>03 / THE BIGGER PICTURE</span><strong>Clarity is the opportunity.</strong><span>The product thesis and presentation.</span><ArrowUpRight size={26} strokeWidth={1.4} aria-hidden="true" /></Link>
+      </div>
+    </section>
+  );
+}
+
 function Footer() {
   return (
     <>
@@ -124,7 +148,7 @@ function Footer() {
         <div className={styles.footerTop}>
           <Link href="/" aria-label="RWA Lens home"><Brand light /></Link>
           <p>Clarity for real-world tokens.</p>
-          <div><Link href="/brand-kit">Brand kit <ArrowUpRight size={14} /></Link><a href={sourceUrl} target="_blank" rel="noreferrer noopener">Built in the open <ArrowUpRight size={14} /></a></div>
+          <div><Link href="/demo">Demo <ArrowUpRight size={14} /></Link><Link href="/technical">Technical <ArrowUpRight size={14} /></Link><Link href="/pitch">Pitch <ArrowUpRight size={14} /></Link><Link href="/brand-kit">Brand kit <ArrowUpRight size={14} /></Link><a href={sourceUrl} target="_blank" rel="noreferrer noopener">Source <ArrowUpRight size={14} /></a></div>
         </div>
         <div className={styles.footerBottom}><span>OBSERVATIONS, NOT ATTESTATIONS.</span><p>RWA Lens does not establish asset backing, legal compliance or investment performance. No transaction signing or asset movement. Optional report sign-in uses a message, never a transaction.</p><span>RWA LENS / SOLANA</span></div>
       </footer>
@@ -133,7 +157,7 @@ function Footer() {
 }
 
 export function LensExperience({ compact = false }: { compact?: boolean }) {
-  const cluster = process.env.RWA_CLUSTER === 'mainnet-beta' ? 'mainnet-beta' : 'devnet';
+  const cluster = process.env.RWA_CLUSTER === 'devnet' ? 'devnet' : 'mainnet-beta';
   const reportsEnabled = repositoryState() === 'ready' && sessionsConfigured();
   return (
     <ScrollExperience className={styles.experience} enabled={!compact}>
@@ -146,11 +170,12 @@ export function LensExperience({ compact = false }: { compact?: boolean }) {
         <section className={`${styles.inspector} ${compact ? styles.compactInspector : ''}`} aria-labelledby={compact ? 'page-title' : 'inspection-title'}>
           <div className={styles.inspectorIntro} data-reveal>
             <div><p className={styles.sectionLabel}>01 / THE INSPECTOR</p>{compact ? <h1 id="page-title">The evidence,<br /><span>in focus.</span></h1> : <h2 id="inspection-title">The evidence,<br /><span>in focus.</span></h2>}</div>
-            <div><p>Paste a mint address to inspect a token, or explore a synthetic example below. Add a public wallet to reconcile a holder&rsquo;s balance.</p><span><span className={styles.statusDot} />SOLANA {cluster === 'mainnet-beta' ? 'MAINNET' : 'DEVNET'} <span aria-hidden="true">/</span> NO WALLET CONNECTION</span></div>
+            <div><p>Start with a mint address. Read its identity, understand its controls, and trace the numbers to their source. Add a public wallet to inspect a holder&rsquo;s balance.</p><span><span className={styles.statusDot} />SOLANA {cluster === 'mainnet-beta' ? 'MAINNET' : 'DEVNET'} <span aria-hidden="true">/</span> NO WALLET CONNECTION</span></div>
           </div>
-          <RwaLensShell cluster={cluster} reportsEnabled={reportsEnabled} />
+          <RwaLensShell cluster={cluster} reportsEnabled={reportsEnabled} fixturesEnabled={fixturesEnabled()} />
         </section>
         <Method immersive={!compact} />
+        {compact ? null : <Resources />}
       </main>
       <Footer />
     </ScrollExperience>

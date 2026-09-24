@@ -15,8 +15,9 @@ export default defineConfig({
   webServer: process.env.E2E_BASE_URL
     ? undefined
     : {
-        // Fixture-only: no RPC is configured, which is also the guest path.
+        // Mainnet UI contract; browser tests mock API responses, never production data.
         command: 'npm run start -- --port 3300',
+        env: { RWA_CLUSTER: 'mainnet-beta', RWA_FIXTURES_ENABLED: 'false' },
         url: 'http://127.0.0.1:3300/rwa',
         reuseExistingServer: !process.env.CI,
         timeout: 120_000,

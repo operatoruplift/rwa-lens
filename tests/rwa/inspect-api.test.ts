@@ -8,10 +8,18 @@ vi.mock('@/lib/server/rwa/rate-limit', () => ({ rateLimit: mocks.limit }));
 import { POST } from '@/app/api/rwa/inspect/route';
 const request = (body: unknown, origin?: string) => new Request('https://rwalens.example/api/rwa/inspect', { method: 'POST', headers: { 'content-type': 'application/json', ...(origin ? { origin } : {}) }, body: JSON.stringify(body) });
 const live = { mode: 'live', cluster: 'mainnet-beta', mint: 'A1KLoBrKBde8Ty9qtNQUtq3C2ortoC3u7twggz7sEto6' };
-beforeEach(() => { mocks.limit.mockResolvedValue({ ok: true }); mocks.inspect.mockResolvedValue(getFixture('treasury-scaled')!.result); });
-afterEach(() => vi.resetAllMocks());
+beforeEach(() => { vi.stubEnv('RWA_FIXTURES_ENABLED', 'false'); vi.stubEnv('RWA_CLUSTER', 'mainnet-beta'); mocks.limit.mockResolvedValue({ ok: true }); mocks.inspect.mockResolvedValue(getFixture('treasury-scaled')!.result); });
+afterEach(() => { vi.resetAllMocks(); vi.unstubAllEnvs(); });
 describe('inspection API contract', () => {
-  it('serves a validated fixture response through its separate lightweight limit', async () => {
+  it.each([['mainnet-beta', 'preview', 'true'], ['devnet', 'production', 'true'], ['devnet', 'preview', 'false']])('rejects fixtures on %s / %s when flag is %s', async (cluster, environment, enabled) => {
+    vi.stubEnv('RWA_CLUSTER', cluster); vi.stubEnv('VERCEL_ENV', environment); vi.stubEnv('RWA_FIXTURES_ENABLED', enabled);
+    const response = await POST(request({ mode: 'fixture', fixtureId: 'treasury-scaled', scenario: 'at' }));
+    expect(response.status).toBe(403);
+    expect(mocks.inspect).not.toHaveBeenCalled();
+    expect(mocks.limit).not.toHaveBeenCalled();
+  });
+  it('serves an explicitly enabled offline fixture through its separate lightweight limit', async () => {
+    vi.stubEnv('RWA_FIXTURES_ENABLED', 'true'); vi.stubEnv('RWA_CLUSTER', 'devnet'); vi.stubEnv('VERCEL_ENV', 'preview');
     const response = await POST(request({ mode: 'fixture', fixtureId: 'treasury-scaled', scenario: 'at' }));
     expect(response.status).toBe(200); expect(inspectResultSchema.safeParse(await response.json()).success).toBe(true);
     expect(mocks.limit.mock.calls[0][1]).toBe('fixture');

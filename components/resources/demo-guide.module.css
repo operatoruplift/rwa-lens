@@ -1,0 +1,20 @@
+.guide { border: 1px solid #1d281a2a; border-radius: 5px; margin-bottom: 48px; overflow: hidden; background: #ffffff55; }
+.tabs { display: grid; grid-template-columns: repeat(4, 1fr); border-bottom: 1px solid #1d281a2a; }
+.tabs button { border: 0; background: transparent; min-height: 64px; display: flex; justify-content: flex-start; align-items: center; padding: 16px 24px; gap: 14px; font-size: 13px; color: #5b6653; border-right: 1px solid #1d281a16; }
+.tabs button:last-child { border: 0; }
+.tabs button span { font: 10px ui-monospace, monospace; opacity: .7; }
+.tabs button[aria-pressed='true'] { background: #1d281a; color: #d9ff65; }
+.chapter { display: grid; grid-template-columns: 1.6fr 1fr; gap: 70px; padding: clamp(25px, 4vw, 55px); min-height: 300px; }
+.counter { font: 10px ui-monospace, monospace; color: #6b745f; letter-spacing: .1em; }
+.chapter h2 { font-size: clamp(30px, 3.5vw, 45px); font-weight: 450; line-height: 1.15; letter-spacing: -.04em; margin: 20px 0; }
+.copy { font-size: 15px; color: #5b6554; line-height: 1.8; max-width: 60ch; }
+.chapter aside { padding-top: 10px; }
+.chapter aside > span { font: 9px ui-monospace, monospace; color: #6b745f; letter-spacing: .12em; }
+.chapter aside p { font-size: 13px; line-height: 1.8; color: #5b6554; margin-block: 20px; }
+.chapter aside a { color: #172015; display: inline-flex; align-items: center; gap: 14px; min-height: 44px; font-size: 12px; border-bottom: 1px solid #8d9d7c; }
+.controls { border-top: 1px solid #1d281a16; display: flex; justify-content: space-between; align-items: center; padding: 15px 24px; gap: 20px; }
+.controls > span { font-size: 11px; color: #6b745f; }
+.controls > div { display: flex; gap: 8px; }
+.controls button { background: transparent; border: 1px solid #1d281a26; border-radius: 30px; padding: 10px 16px; min-height: 44px; display: inline-flex; gap: 12px; align-items: center; color: #1d281a; font-size: 12px; }
+.controls button:hover:not(:disabled) { background: #e7eadc; }
+@media (max-width: 750px) { .chapter { grid-template-columns: 1fr; gap: 16px; } .tabs button { flex-direction: column; align-items: flex-start; gap: 7px; padding: 14px; font-size: 11px; } .chapter aside { border-top: 1px solid #1d281a20; padding-top: 24px; } .controls { padding: 14px; } .controls > span { max-width: 100px; line-height: 1.6; } }

@@ -10,9 +10,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     env:
-      # No RPC is configured in CI. The suite is deterministic and fixture-only,
-      # which is also the guest path a judge takes.
-      RWA_CLUSTER: devnet
+      # Browser tests intercept RPC API responses with archived mainnet payloads.
+      # Production fixture controls remain off; live network checks run separately.
+      RWA_CLUSTER: mainnet-beta
+      RWA_FIXTURES_ENABLED: 'false'
       RWA_RPC_URL: ''
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

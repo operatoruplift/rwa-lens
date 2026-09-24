@@ -1,4 +1,5 @@
 import 'server-only';
+import { fixturesEnabled } from './config';
 import { TOKEN_2022_PROGRAM_ADDRESS, TOKEN_PROGRAM_ADDRESS, getMintDecoder, getTokenDecoder, getMintSize, getTokenSize, getMultisigSize, getExtensionDecoder } from '@solana-program/token-2022';
 import { getU16Decoder } from '@solana/kit';
 import { buildDisplayBalance, sumRawAmounts } from '@/lib/rwa/balance';
@@ -202,7 +203,7 @@ export async function inspectOnChain(input: InspectInput): Promise<InspectResult
   const registry = await lookupRegistry(input.mint, input.cluster);
   return {
     status: sources.some(source => source.status === 'failed') || metadataUnavailable || !complete || extensions.some(ext => ext.kind.startsWith('Unknown(')) || balances?.display.rounding === 'unavailable' ? 'partial' : 'verified',
-    mode: 'live', balanceStatus, identity, balances, extensions, transferReadiness: evaluateReadiness(extensions, accountsOut, complete), registry,
+    mode: 'live', balanceStatus, identity, balances, extensions, transferReadiness: evaluateReadiness(extensions, accountsOut, complete, { freezeAuthority: identity.freezeAuthority }), registry,
     provenance: { mode: 'live', cluster: input.cluster, rpcProvider: config.provider, fetchedAt, slot: account.slot.toString(), commitment: config.commitment, decoderVersion: DECODER_VERSION, timeSource: time.timeSource, clockTimestamp: time.timeSource === 'chain' ? timestamp : undefined, clockSlot: time.clockSlot?.toString(), observedTimestamp: timestamp, blockTime: time.blockTime === null ? undefined : new Date(Number(time.blockTime) * 1000).toISOString(), slotSpread: (maxSlot - minSlot).toString(), sources },
     warnings, limitations: BASE_LIMITATIONS,
   };
@@ -212,6 +213,7 @@ const inspectionCache = new Map<string, { expiresAt: number; savedAt: number; re
 /** Canonical server-generated response for the API and owner-scoped report creation. */
 export async function inspectRequest(input: InspectRequest): Promise<InspectResult> {
   if (input.mode === 'fixture') {
+    if (!fixturesEnabled()) throw new RpcError('not-configured', 'Only live network inspections are enabled on this deployment.');
     const fixture = getFixture(input.fixtureId);
     if (!fixture) throw new RpcError('invalid-address', 'Unknown fixture.');
     return inspectResultSchema.parse(input.fixtureId === 'treasury-scaled' ? treasuryAtBoundary(input.scenario) : fixture.result);

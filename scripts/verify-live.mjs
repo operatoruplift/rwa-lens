@@ -70,7 +70,7 @@ try {
   assert.ok(mint.provenance.sources.some(source => source.slot), 'Per-call slot evidence must be present');
 
   // The mint authority is a public on-chain address, used only as a declared
-  // read-only example. No claim is made about who controls it or its holdings.
+  // read-only query. No claim is made about who controls it or its holdings.
   const owner = mint.identity.mintAuthority;
   assert.ok(owner, 'This reproducible public-owner query needs the observed authority');
   const holder = await inspect('Declared public owner (observed mint authority)', {
@@ -79,27 +79,18 @@ try {
   assertBalances(holder, owner);
   assert.equal(holder.identity.tokenProgramAddress, asset.observedProgramAddress);
 
-  for (const scenario of ['before', 'at', 'after']) {
-    await inspect(`Synthetic treasury: ${scenario}`, { mode: 'fixture', fixtureId: 'treasury-scaled', scenario });
-  }
-  const scenarios = observations.slice(-3).map(item => item.result);
-  for (const [index, result] of scenarios.entries()) {
-    assertBalances(result);
-    assert.equal(result.provenance.timeSource, 'fixture');
-    assert.equal(result.balances.display.boundary, ['before', 'at', 'after'][index]);
-    assert.equal(result.balances.display.multiplier, index === 0 ? '1.04235' : '1.05114');
-    assert.equal(result.balances.display.extensionUiAmount, index === 0 ? '1042.35' : '1051.14');
-    assert.equal(result.balances.display.rounding, 'official-helper');
-  }
-  const raw = scenarios.map(item => item.balances.display.rawAmount);
-  assert.ok(raw.every(amount => amount === '1000000000'), 'Raw units must remain unchanged');
-  assert.notEqual(scenarios[0].balances.display.extensionUiAmount, scenarios[1].balances.display.extensionUiAmount);
-  assert.equal(scenarios[1].balances.display.extensionUiAmount, scenarios[2].balances.display.extensionUiAmount);
+  const rejected = await fetch(new URL('/api/rwa/inspect', base), {
+    method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ mode: 'fixture', fixtureId: 'treasury-scaled', scenario: 'before' }), signal: AbortSignal.timeout(30_000),
+  });
+  const rejection = await rejected.json();
+  observations.push({ label: 'Production offline-data rejection', httpStatus: rejected.status, result: rejection });
+  assert.equal(rejected.status, 403, 'Production must reject fixture requests');
   verified = true;
   console.log(JSON.stringify({ verifiedAt: new Date().toISOString(), base, mint: asset.mint, owner,
     program: mint.identity.tokenProgram, slot: mint.provenance.slot,
     ownerStatus: holder.balanceStatus, ownerComplete: holder.balances.complete,
-    fixtureRawUnchanged: raw[0], output }, null, 2));
+    offlineDataRejected: true, output }, null, 2));
 } finally {
   await mkdir(dirname(output), { recursive: true });
   await writeFile(output, JSON.stringify({ capturedAt: new Date().toISOString(), verified, base,

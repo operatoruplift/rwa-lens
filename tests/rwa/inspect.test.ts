@@ -138,7 +138,8 @@ describe('live inspection envelope and accounting', () => {
     const result = await inspectOnChain({ cluster: 'mainnet-beta', mint: MINT });
     expect(result.provenance.timeSource).toBe('block-time-estimate'); expect(result.provenance.clockTimestamp).toBeUndefined(); expect(result.status).toBe('partial');
   });
-  it('fixtures and live inspections satisfy one response schema', async () => {
+  it('explicit offline fixtures satisfy the response schema', async () => {
+    vi.stubEnv('RWA_CLUSTER', 'devnet'); vi.stubEnv('RWA_FIXTURES_ENABLED', 'true'); vi.stubEnv('VERCEL_ENV', 'preview');
     rpcMock();
     for (const scenario of ['before', 'at', 'after'] as const) {
       const fixture = await inspectRequest({ mode: 'fixture', fixtureId: 'treasury-scaled', scenario });
