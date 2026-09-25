@@ -1,5 +1,7 @@
 # RWA Lens
 
+> **In 20 seconds.** RWA Lens reads a Solana Token-2022 mint with the official decoders, reconciles raw and displayed balances (ScaledUiAmount, fees, frozen state), and lists who can transfer, freeze, or burn. Try it: [rwalensonsolana.vercel.app/rwa](https://rwalensonsolana.vercel.app/rwa) with Ondo USDY as the live example. Built by Matt ([RVAClassic](https://x.com/operatoruplift), Operator Uplift) for the Solana Foundation **Tokenized Real-World Assets** sprint, September 2026. Real today: live mainnet reads, JSON/CSV receipts, installable PWA, Seeker Android shell, wallet sign-in through Mobile Wallet Adapter. Not yet: cloud report storage on the public deployment. Everything below is verification detail; nothing claims traction or audits that have not happened.
+
 **Real assets. Clearer vision.** RWA Lens helps wallet builders, issuers,
 fund administrators, custodians and treasury operators inspect a Solana mint,
 reconcile public raw balances with displayed amounts, and understand observable
