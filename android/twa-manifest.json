@@ -1,0 +1,9 @@
+{
+  "packageId": "com.operatoruplift.rwalens",
+  "host": "rwalensonsolana.vercel.app",
+  "name": "RWA Lens",
+  "launcherName": "RWA Lens",
+  "startUrl": "/rwa",
+  "fallbackType": "webview",
+  "generatorApp": "webshell-cli"
+}
