@@ -2,12 +2,13 @@ import type { Metadata, Viewport } from 'next';
 import { MobileSupport } from '@/components/app/mobile-support';
 import localFont from 'next/font/local';
 import './globals.css';
+import { SITE_URL } from './site';
 
 // Self-hosted (SIL OFL) so the app has no third-party font request, builds offline, and stays installable.
 const inter = localFont({ src: './fonts/Inter-latin.woff2', variable: '--font-inter', weight: '100 900', display: 'swap', fallback: ['ui-sans-serif', 'system-ui', 'sans-serif'] });
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://rwalensonsolana.vercel.app'),
+  metadataBase: new URL(SITE_URL),
   alternates: { canonical: '/' },
   title: 'RWA Lens — real assets, clearer vision',
   description: 'Inspect Solana tokens, reconcile raw and displayed balances, and understand on-chain controls. Public, read-only inspection for real-world assets.',
