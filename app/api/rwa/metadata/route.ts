@@ -7,12 +7,14 @@ import { readBoundedJson, requestOrigin } from '@/lib/server/rwa/http';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-/** Outcome → HTTP status. A skipped fetch is a 200 with an honest state. */
+/** Outcome → HTTP status. Every host-policy determination about a well-formed
+ * request is a 200 carrying its honest state, including a declined host; only an
+ * upstream read failure is a 5xx. Malformed requests keep their own 4xx below. */
 const STATUS: Record<string, number> = {
   ok: 200,
   'not-configured': 200,
   skipped: 200,
-  blocked: 400,
+  blocked: 200,
   failed: 502,
 };
 

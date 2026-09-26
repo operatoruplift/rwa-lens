@@ -8,6 +8,10 @@ import { isHostAllowed, metadataBodySchema, metadataUriSchema, parseAllowedHosts
 export type MetadataOutcome =
   | { state: 'ok'; body: Record<string, unknown>; fetchedAt: string; bytes: number; cacheAgeMs?: number }
   | { state: 'skipped' | 'blocked' | 'failed' | 'not-configured'; reason: string };
+/** The host decision for a declared URI, reached without any network read. */
+export type MetadataUriPolicy =
+  | { state: 'skipped'; uri: string; reason: string }
+  | { state: 'blocked' | 'not-configured'; reason: string };
 const TIMEOUT_MS = 5000;
 const MAX_BYTES = 128 * 1024;
 const CACHE_TTL_MS = 60_000;
@@ -29,6 +33,18 @@ export function isPublicAddress(address: string): boolean {
   return false;
 }
 export function allowedMetadataHosts(): string[] { return parseAllowedHosts(process.env.RWA_METADATA_ALLOWED_HOSTS); }
+
+/**
+ * Single source of truth for the fetch policy. It depends only on the declared URI
+ * and the deployment allowlist, so an inspection can state the outcome up front and
+ * a fetch request reaches the network only when the host is already permitted.
+ */
+export function metadataUriPolicy(uri: string, allowed: string[] = allowedMetadataHosts()): MetadataUriPolicy {
+  if (!allowed.length) return { state: 'not-configured', reason: 'No metadata host is allowlisted. Inspection does not depend on metadata retrieval.' };
+  const parsed = metadataUriSchema.safeParse(uri);
+  if (!parsed.success || !isHostAllowed(parsed.data, allowed)) return { state: 'blocked', reason: 'The metadata URI is not permitted by the HTTPS host policy.' };
+  return { state: 'skipped', uri: parsed.data, reason: 'This host is allowlisted. The document is requested only when it is asked for.' };
+}
 
 type Address = { address: string; family: number };
 type Dependencies = {
@@ -99,15 +115,13 @@ async function load(uri: string, deps: Dependencies, schema: z.ZodType<Record<st
 export function createMetadataFetcher(deps: Dependencies = defaults) {
   const cache = new Map<string, { at: number; outcome: MetadataOutcome }>();
   return async (uri: string): Promise<MetadataOutcome> => {
-    const allowed = allowedMetadataHosts();
-    if (!allowed.length) return { state: 'not-configured', reason: 'No metadata host is allowlisted. Inspection does not depend on metadata retrieval.' };
-    const parsed = metadataUriSchema.safeParse(uri);
-    if (!parsed.success || !isHostAllowed(parsed.data, allowed)) return { state: 'blocked', reason: 'The metadata URI is not permitted by the HTTPS host policy.' };
-    const cached = cache.get(parsed.data);
+    const policy = metadataUriPolicy(uri);
+    if (policy.state !== 'skipped') return { state: policy.state, reason: policy.reason };
+    const cached = cache.get(policy.uri);
     if (cached && Date.now() - cached.at < CACHE_TTL_MS) return cached.outcome.state === 'ok' ? { ...cached.outcome, cacheAgeMs: Date.now() - cached.at } : cached.outcome;
-    const outcome = await load(parsed.data, deps);
+    const outcome = await load(policy.uri, deps);
     if (cache.size >= MAX_CACHE_ENTRIES) cache.delete(cache.keys().next().value!);
-    cache.set(parsed.data, { at: Date.now(), outcome });
+    cache.set(policy.uri, { at: Date.now(), outcome });
     return outcome;
   };
 }

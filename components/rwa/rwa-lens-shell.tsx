@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ArrowDownToLine, ArrowRight, ArrowUpRight, ChevronDown, FlaskConical, Info, LoaderCircle, Search, ShieldCheck } from 'lucide-react';
 import { addressSchema, inspectResultSchema } from '@/lib/rwa/schema';
+import { recoveryCopy, recoveryFor, type InspectionError } from '@/lib/rwa/inspection-error';
 import { FIXTURES } from '@/lib/rwa/fixtures';
 import liveAssets from '@/lib/rwa/live-assets.json';
 import type { Cluster, InspectRequest, InspectResult } from '@/lib/rwa/types';
@@ -67,7 +68,7 @@ export function RwaLensShell({ cluster, reportsEnabled, fixturesEnabled = false,
   const [loading, setLoading] = useState(!fixturesEnabled && !!defaultMint);
   const [result, setResult] = useState<InspectResult | null>(fixturesEnabled ? FIXTURES[0].result : null);
   const [activeRequest, setActiveRequest] = useState<InspectRequest | null>(fixturesEnabled ? { mode: 'fixture', fixtureId: FIXTURES[0].id, scenario: 'before' } : null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<InspectionError | null>(null);
   const [exportError, setExportError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const requestCounter = useRef(0);
@@ -86,20 +87,23 @@ export function RwaLensShell({ cluster, reportsEnabled, fixturesEnabled = false,
     setLoading(true); setError(null); setNotice(null); setExportError(null);
     try {
       const response = await fetch('/api/rwa/inspect', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body), signal: controller.signal });
-      const data = (await response.json()) as InspectResult & { message?: string };
+      const data = (await response.json()) as InspectResult & { message?: string; kind?: string };
       if (requestCounter.current !== requestId) return;
       if (!response.ok) {
-        setError(data.message ?? (response.status === 429 ? 'Too many inspections. Wait a moment and try again.' : 'The inspection could not be completed. Check the mint address or try again.'));
+        setError({
+          message: data.message ?? (response.status === 429 ? 'Too many inspections were requested from this network.' : 'The inspection could not be completed.'),
+          recovery: recoveryFor(response.status, typeof data.kind === 'string' ? data.kind : undefined),
+        });
         return;
       }
       const validated = inspectResultSchema.parse(data);
       if (body.mode === 'live' && (validated.mode !== 'live' || validated.provenance.mode !== 'live' || validated.provenance.cluster !== body.cluster || validated.identity?.mint !== body.mint || (validated.balances && validated.balances.owner !== body.owner))) {
-        setError('The returned observation does not match this inspection. Please retry.');
+        setError({ message: 'The returned observation does not match this inspection.', recovery: 'provider' });
         return;
       }
       setResult(validated); setActiveRequest(body); setFixtureId(selectedFixture); setScenario(nextScenario);
     } catch {
-      if (requestCounter.current === requestId) setError('The request could not be completed. Check your connection and try again.');
+      if (requestCounter.current === requestId) setError({ message: 'The request could not be completed. Check your connection.', recovery: 'provider' });
     } finally {
       clearTimeout(deadline);
       if (requestCounter.current === requestId) setLoading(false);
@@ -142,11 +146,11 @@ export function RwaLensShell({ cluster, reportsEnabled, fixturesEnabled = false,
         {notice ? <div className="mt-3"><Callout tone="amber">{notice}</Callout></div> : null}
       </section>
 
-      <div aria-live="polite" aria-atomic="true">{error ? <div className="inspection-error"><Callout tone="amber"><strong>Inspection unavailable.</strong> {error} {result ? 'The previous observation remains below with its original timestamp.' : 'No observation is available yet.'} Retry the inspection when the provider is available.</Callout></div> : null}</div>
+      <div aria-live="polite" aria-atomic="true">{error ? <div className="inspection-error"><Callout tone="amber"><strong>Inspection unavailable.</strong> {error.message} {result ? 'The previous observation remains below with its original timestamp.' : 'No observation is available yet.'} {recoveryCopy[error.recovery]}</Callout></div> : null}</div>
       {!result ? <section className="empty-balance inspection-results" aria-label="Inspection results" aria-busy={loading}><span className="empty-icon">{loading ? <LoaderCircle size={25} className="spinner" /> : <Search size={25} />}</span><p className="micro-label">{cluster === 'mainnet-beta' ? 'SOLANA MAINNET' : 'SOLANA DEVNET'}</p><h2>{loading ? 'Reading the chain…' : 'Ready for a closer look.'}</h2><p>{loading ? 'Fetching the mint account and source evidence from the configured RPC provider.' : 'Inspect a mint address to see its identity, token controls and source evidence.'}</p><noscript>Enable JavaScript to run a token inspection and export its observation.</noscript></section> : <section className={`inspection-results ${loading ? 'is-loading' : ''}`} aria-busy={loading} aria-label="Inspection results">
         <div className="observation-bar"><div className="observation-label"><span className={`observation-dot ${isFixture ? 'synthetic' : result.status === 'verified' ? 'live' : ''}`} /><strong>{isFixture ? 'Test fixture' : result.provenance.mode === 'recorded' ? 'Recorded observation' : 'Live observation'}</strong>{!isFixture || result.status !== 'verified' ? <StatusPill status={result.status} /> : <span className="muted-tag">Offline data</span>}</div><span className="observation-detail">{isFixture ? 'No RPC call · not a real issuer or holding' : `${result.provenance.rpcProvider}${result.provenance.slot ? ` · slot ${result.provenance.slot}` : ''}`}</span><div id="inspection-export" tabIndex={-1} className="export-buttons"><button type="button" onClick={() => void exportReceipt('json')} disabled={loading} aria-label="Export JSON"><ArrowDownToLine size={14} />JSON</button><button type="button" onClick={() => void exportReceipt('csv')} disabled={loading} aria-label="Export CSV"><ArrowDownToLine size={14} />CSV</button></div></div>
         {exportError ? <Callout tone="amber">{exportError}</Callout> : null}
-        {liveAsset ? <div className="issuer-attribution"><span className="asset-monogram">{liveAsset.symbol.slice(0, 1)}</span><div><strong>{liveAsset.name} <span>{liveAsset.symbol}</span></strong><p>{liveAsset.category} · Issuer attribution: {liveAsset.issuer}</p></div><a href={liveAsset.addressSourceUrl} target="_blank" rel="noreferrer noopener">Official address source <ArrowUpRight size={14} /></a><p className="attribution-note">Issuer documentation retrieved {liveAsset.retrievedAt}. Attribution does not establish backing, eligibility or redemption rights.</p></div> : null}
+        {liveAsset ? <div className="issuer-attribution"><span className="asset-monogram">{liveAsset.symbol.slice(0, 1)}</span><div><strong>{liveAsset.name} <span>{liveAsset.symbol}</span></strong><p>{result.registry?.assetClass ?? liveAsset.category} · Issuer attribution: {result.registry?.issuer ?? liveAsset.issuer}</p></div><a href={liveAsset.addressSourceUrl} target="_blank" rel="noreferrer noopener">Official address source <ArrowUpRight size={14} /></a><p className="attribution-note">{result.registry ? `Issuer documentation retrieved ${result.registry.fetchedAt}. ` : ''}Attribution does not establish backing, eligibility or redemption rights.</p></div> : null}
         {result.warnings.filter(warning => !isFixture || !/illustrative|fixture data|not a real issuer/i.test(warning)).length ? <div className="result-warnings">{result.warnings.filter(warning => !isFixture || !/illustrative|fixture data|not a real issuer/i.test(warning)).map(warning => <Callout key={warning} tone="amber">{warning}</Callout>)}</div> : null}
         <div id="inspection-identity" tabIndex={-1} className="primary-results">
           {result.identity ? <IdentityCard identity={result.identity} metadataUri={metadataUri(result)} synthetic={isFixture} cluster={result.provenance.cluster} /> : null}

@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { getFixture } from '@/lib/rwa/fixtures';
 import { inspectResultSchema } from '@/lib/rwa/schema';
 import { RpcError } from '@/lib/server/rwa/rpc';
+import { recoveryCopy, recoveryFor } from '@/lib/rwa/inspection-error';
 const mocks = vi.hoisted(() => ({ inspect: vi.fn(), limit: vi.fn() }));
 vi.mock('@/lib/server/rwa/inspect', () => ({ inspectRequest: mocks.inspect }));
 vi.mock('@/lib/server/rwa/rate-limit', () => ({ rateLimit: mocks.limit }));
@@ -42,6 +43,19 @@ describe('inspection API contract', () => {
     mocks.inspect.mockRejectedValue(new RpcError(kind, 'A safe failure message.'));
     const response = await POST(request(live)); expect(response.status).toBe(status);
     expect(await response.json()).toMatchObject({ kind, message: 'A safe failure message.' });
+  });
+  it('paces a caller with the condition alone, leaving the recovery sentence to say it once', async () => {
+    mocks.limit.mockResolvedValue({ ok: false, retryAfterSeconds: 30 });
+    const response = await POST(request(live));
+    expect(response.status).toBe(429);
+    expect(response.headers.get('retry-after')).toBe('30');
+    const body = await response.json();
+    expect(body).toMatchObject({ kind: 'rate-limited' });
+    // The shell appends recoveryCopy for the kind, so a message that also told the
+    // caller to try again would state the same action twice in one banner.
+    expect(recoveryCopy[recoveryFor(429, body.kind)]).toBe('Retry the inspection in a moment.');
+    expect(body.message).not.toMatch(/try again|retry|wait/i);
+    expect(mocks.inspect).not.toHaveBeenCalled();
   });
   it('redacts unexpected exceptions', async () => {
     mocks.inspect.mockRejectedValue(new Error('private-api-key=secret'));

@@ -174,6 +174,7 @@ describe('bounded pointed metadata observations', () => {
   const pointer = (metadataAddress: OptionOrNullable<Address>) => ({ __kind: 'MetadataPointer' as const, authority: none<Address>(), metadataAddress });
   const metadata = (mint: Address = MINT) => ({ __kind: 'TokenMetadata' as const, updateAuthority: none<Address>(), mint, name: 'External treasury description', symbol: 'EXT', uri: 'https://issuer.example/metadata.json', additionalMetadata: new Map<string, string>() });
   it('reads one valid pointer and decodes only the official matching Token-2022 layout', async () => {
+    vi.stubEnv('RWA_METADATA_ALLOWED_HOSTS', 'issuer.example');
     const seen = rpcMock({ program: TOKEN_2022_PROGRAM_ADDRESS, mint: mintBytes([pointer(ACCOUNT2)]), metadataAccount: encoded(mintBytes([metadata(), pointer(ACCOUNT)]), TOKEN_2022_PROGRAM_ADDRESS), metadataSlot: 102 });
     const result = await inspectOnChain({ cluster: 'mainnet-beta', mint: MINT });
     expect(result.identity).toMatchObject({ mint: MINT, supply: '1000000000', metadata: { name: 'External treasury description', symbol: 'EXT', uriFetch: 'skipped' } });
@@ -200,6 +201,19 @@ describe('bounded pointed metadata observations', () => {
     expect(result.identity).toMatchObject({ mint: MINT, supply: '1000000000' });
     expect(result.identity?.metadata).toBeUndefined();
     expect(result.extensions.find(extension => extension.kind === 'TokenMetadata')).toMatchObject({ calculationUnavailable: true, fields: [{ label: 'Decode status', value: expect.stringContaining('unavailable') }] });
+  });
+  it.each([
+    ['skipped', 'issuer.example'],
+    ['blocked', 'metadata.example.com'],
+    ['not-configured', ''],
+  ] as const)('records the declared URI host decision as %s without requesting it', async (uriFetch, allowedHosts) => {
+    vi.stubEnv('RWA_METADATA_ALLOWED_HOSTS', allowedHosts);
+    const seen = rpcMock({ program: TOKEN_2022_PROGRAM_ADDRESS, mint: mintBytes([pointer(MINT), metadata()]) });
+    const result = await inspectOnChain({ cluster: 'mainnet-beta', mint: MINT });
+    expect(result.identity?.metadata).toMatchObject({ uri: 'https://issuer.example/metadata.json', uriFetch });
+    expect(inspectResultSchema.safeParse(result).success).toBe(true);
+    // The decision is policy, not a fetch: only the mint and Clock reads happen.
+    expect(seen.filter(call => call.method === 'getAccountInfo')).toHaveLength(2);
   });
   it.each(['unset', 'self'])('avoids another RPC read for a %s pointer', async kind => {
     const extensions = kind === 'self' ? [pointer(MINT), metadata()] : [pointer(none())];

@@ -1,0 +1,32 @@
+[
+  {
+    "width": 1920,
+    "height": 1080,
+    "slides": 13,
+    "overflows": []
+  },
+  {
+    "width": 1280,
+    "height": 720,
+    "slides": 13,
+    "overflows": []
+  },
+  {
+    "width": 768,
+    "height": 1024,
+    "slides": 13,
+    "overflows": []
+  },
+  {
+    "width": 375,
+    "height": 667,
+    "slides": 13,
+    "overflows": []
+  },
+  {
+    "width": 667,
+    "height": 375,
+    "slides": 13,
+    "overflows": []
+  }
+]

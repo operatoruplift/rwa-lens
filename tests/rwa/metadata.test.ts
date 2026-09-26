@@ -2,9 +2,10 @@ import { EventEmitter } from 'node:events';
 import type { request as httpsRequest, RequestOptions } from 'node:https';
 import type { IncomingMessage } from 'node:http';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createMetadataFetcher, isPublicAddress } from '@/lib/server/rwa/metadata-fetch';
+import { createMetadataFetcher, isPublicAddress, metadataUriPolicy } from '@/lib/server/rwa/metadata-fetch';
 import { hashObservation, reportsEnabled, repositoryState } from '@/lib/server/rwa/repository';
-import { registryConfigured } from '@/lib/server/rwa/registry';
+import { lookupRegistry, registryConfigured } from '@/lib/server/rwa/registry';
+import liveAssets from '@/lib/rwa/live-assets.json';
 
 function transport(body = JSON.stringify({ name: 'Fixture Fund', symbol: 'fFUND' }), options: { status?: number; type?: string; length?: number } = {}) {
   let requested: RequestOptions | undefined;
@@ -75,6 +76,45 @@ describe('metadata policy and transport', () => {
     vi.useFakeTimers(); const io = transport(); io.resolve.mockImplementation(() => new Promise(() => {}));
     const pending = io.fetch('https://metadata.example.com/a.json'); await vi.advanceTimersByTimeAsync(5001);
     expect(await pending).toEqual({state:'failed',reason:'The metadata host did not respond in time.'});
+  });
+});
+
+describe('declared URI host policy', () => {
+  it('permits an allowlisted host and normalises the URI it would request', () => {
+    expect(metadataUriPolicy('  https://metadata.example.com/a.json  ')).toEqual({ state: 'skipped', uri: 'https://metadata.example.com/a.json', reason: expect.stringContaining('allowlisted') });
+  });
+  it('reports an unconfigured allowlist without inspecting the URI', () => {
+    vi.stubEnv('RWA_METADATA_ALLOWED_HOSTS', '');
+    expect(metadataUriPolicy('https://metadata.example.com/a.json').state).toBe('not-configured');
+  });
+  it.each(['https://evil.example.net/a.json', 'http://metadata.example.com/a.json', 'https://metadata.example.com:8443/a.json', 'https://sub.metadata.example.com/a.json', 'ipfs://issuer-document', 'not a uri'])('declines %s up front', uri => {
+    expect(metadataUriPolicy(uri).state).toBe('blocked');
+  });
+  it('is the single source of truth the fetcher applies', async () => {
+    const io = transport();
+    for (const uri of ['https://evil.example.net/a.json', 'https://metadata.example.com/a.json']) {
+      expect((await io.fetch(uri)).state).toBe(metadataUriPolicy(uri).state === 'skipped' ? 'ok' : metadataUriPolicy(uri).state);
+    }
+    vi.stubEnv('RWA_METADATA_ALLOWED_HOSTS', '');
+    expect((await transport().fetch('https://metadata.example.com/a.json')).state).toBe(metadataUriPolicy('https://metadata.example.com/a.json').state);
+  });
+});
+
+describe('curated issuer attribution', () => {
+  const asset = liveAssets[0];
+  it('exports the one retrieval time the manifest records', async () => {
+    vi.stubEnv('RWA_REGISTRY_URL', '');
+    const record = await lookupRegistry(asset.mint, 'mainnet-beta');
+    expect(record).toMatchObject({ issuer: asset.issuer, assetClass: asset.category, fetchedAt: asset.retrievedAtUtc, source: asset.addressSourceUrl });
+  });
+  it('carries a single retrieval field, so no second date can be shown beside the receipt', () => {
+    const retrievalFields = Object.keys(asset).filter(key => /^retrieved/i.test(key));
+    expect(retrievalFields).toEqual(['retrievedAtUtc']);
+    expect(() => new Date(asset.retrievedAtUtc).toISOString()).not.toThrow();
+  });
+  it('states no attribution for a mint the manifest does not list', async () => {
+    vi.stubEnv('RWA_REGISTRY_URL', '');
+    expect(await lookupRegistry('A1KLoBrKBde8Ty9qtNQUtq3C2ortoC3u7twggz7sEto7', 'mainnet-beta')).toBeNull();
   });
 });
 

@@ -19,7 +19,7 @@ export async function POST(request: Request) {
   if (!parsed.success) return NextResponse.json({ status: 'invalid', message: parsed.error.issues[0]?.message ?? 'Check the mint and wallet addresses.' }, { status: 400 });
   if (parsed.data.mode === 'fixture' && !fixturesEnabled()) return NextResponse.json({ status: 'invalid', message: 'Only live network inspections are enabled on this deployment.' }, { status: 403 });
   const limited = await rateLimit(request, parsed.data.mode === 'fixture' ? 'fixture' : 'inspect');
-  if (!limited.ok) return NextResponse.json({ status: 'unavailable', kind: 'rate-limited', message: 'Too many requests. Wait a moment and try again.' }, { status: 429, headers: { 'retry-after': String(limited.retryAfterSeconds) } });
+  if (!limited.ok) return NextResponse.json({ status: 'unavailable', kind: 'rate-limited', message: 'Too many inspection requests were received from this network.' }, { status: 429, headers: { 'retry-after': String(limited.retryAfterSeconds) } });
   try { return NextResponse.json(await inspectRequest(parsed.data), { status: 200 }); }
   catch (error) {
     if (error instanceof RpcError) return NextResponse.json({ status: ['invalid-address', 'not-a-mint', 'decoder-failure'].includes(error.kind) ? 'invalid' : 'unavailable', message: error.message, kind: error.kind }, { status: STATUS[error.kind] ?? 502 });

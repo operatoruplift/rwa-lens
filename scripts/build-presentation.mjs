@@ -85,6 +85,22 @@ pptx.lang = 'en-US';
 pptx.theme = { headFontFace: 'Inter', bodyFontFace: 'Inter', lang: 'en-US' };
 // Slide height in inches; the deck uses the built-in LAYOUT_WIDE for its width.
 const SH = 7.5;
+
+/**
+ * Place a source image inside a slide box, showing the region the deck wants.
+ * Args are the box (x, y, w, h) then the fraction of the source to keep
+ * (cropX, cropY, cropW, cropH). pptxgenjs expresses a crop in inches of the
+ * image's own displayed size, so the fractions are scaled by the size the
+ * source would occupy at the box's height.
+ */
+function imageSizingCrop(path, x, y, w, h, cropX, cropY, cropW, cropH) {
+  const full = { w: w / cropW, h: h / cropH };
+  return {
+    x, y, w, h,
+    sizing: { type: 'crop', x: full.w * cropX, y: full.h * cropY, w, h },
+  };
+}
+
 const shape = pptx.ShapeType;
 const tx = (slide, value, x, y, w, h, size, color, extra = {}) => slide.addText(value, { x, y, w, h, fontFace: 'Inter', fontSize: size, color, margin: 0, breakLine: false, valign: 'mid', ...extra });
 for (const [i, content] of deck.slides.entries()) {
@@ -97,7 +113,7 @@ for (const [i, content] of deck.slides.entries()) {
   slide.background = { color: bg };
   const cover = ['cover', 'close'].includes(content.kind);
   if (cover) {
-    slide.addImage({ path: join(root, 'public/brand/lens-master.png'), ...pptx.imageSizingCrop(join(root, 'public/brand/lens-master.png'), 5.8, 0, 7.53, SH, .4, 0, .6, 1) });
+    slide.addImage({ path: join(root, 'public/brand/lens-master.png'), ...imageSizingCrop(join(root, 'public/brand/lens-master.png'), 5.8, 0, 7.53, SH, .4, 0, .6, 1) });
     slide.addShape(shape.rect, { x: 0, y: 0, w: 7.3, h: SH, fill: { color: bg }, line: { color: bg } });
   }
   slide.addShape(shape.ellipse, { x: .59, y: .4, w: .29, h: .29, fill: { color: bg, transparency: 100 }, line: { color: ink, width: 1.5 } });
