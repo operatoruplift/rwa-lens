@@ -10,6 +10,7 @@ import { addressSchema, inspectResultSchema } from '@/lib/rwa/schema';
 import { DECODER_VERSION } from '@/lib/rwa/types';
 import type { AccountState, Cluster, Identity, InspectRequest, InspectResult, ProvenanceSource, RawBalance, TokenProgram } from '@/lib/rwa/types';
 import { RpcError, createClient, readAccount, readChainTime, readOwnerTokenAccounts, resolveRpcConfig } from './rpc';
+import { metadataUriPolicy } from './metadata-fetch';
 import { lookupRegistry } from './registry';
 
 const BASE_LIMITATIONS = [
@@ -100,7 +101,10 @@ export async function inspectOnChain(input: InspectInput): Promise<InspectResult
   const applyMetadata = (metadata: RawExtension) => {
     if (metadata.mint !== input.mint) throw new RpcError('decoder-failure', 'Metadata mint does not match the inspected mint.');
     if (typeof metadata.name !== 'string' || metadata.name.length > 200 || typeof metadata.symbol !== 'string' || metadata.symbol.length > 40 || typeof metadata.uri !== 'string' || metadata.uri.length > 2048) throw new RpcError('decoder-failure', 'Token metadata exceeds the supported display limits.');
-    identity.metadata = { name: typeof metadata.name === 'string' ? metadata.name : undefined, symbol: typeof metadata.symbol === 'string' ? metadata.symbol : undefined, uri: typeof metadata.uri === 'string' ? metadata.uri : undefined, uriFetch: 'skipped' };
+    const uri = typeof metadata.uri === 'string' && metadata.uri ? metadata.uri : undefined;
+    // The host decision is recorded with the observation, so the client states it
+    // without a request that the policy would decline anyway.
+    identity.metadata = { name: typeof metadata.name === 'string' ? metadata.name : undefined, symbol: typeof metadata.symbol === 'string' ? metadata.symbol : undefined, uri, uriFetch: uri ? metadataUriPolicy(uri).state : 'skipped' };
   };
   if (tokenMetadata) {
     try { applyMetadata(tokenMetadata); }

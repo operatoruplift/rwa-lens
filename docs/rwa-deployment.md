@@ -26,15 +26,21 @@ follow-up commits may produce another deployment with identical application code
 ## Release procedure
 
 1. Inspect `git status`, preserve unrelated work, run lint/typecheck/unit tests.
-2. Run `npm run build`, then `npm run test:e2e` against `next start`.
-3. Review changes and commit/push to the existing repository. Verify the GitHub
+2. Write the pitch kit into `public/presentation` with
+   `node scripts/build-presentation.mjs` (it resolves `@playwright/test` Chromium
+   and `pptxgenjs`, for example through `NODE_PATH`). A deployment serves what is
+   present under `public/`, so run this before the build; the documents already
+   committed there ship as they are. Confirm every `/presentation` link on
+   `/pitch`, `/demo` and `/technical` resolves on the deployed alias.
+3. Run `npm run build`, then `npm run test:e2e` against `next start`.
+4. Review changes and commit/push to the existing repository. Verify the GitHub
    deterministic workflow on the release commit.
-4. Deploy the linked Vercel project using `vercel --prod --yes` if the repository
+5. Deploy the linked Vercel project using `vercel --prod --yes` if the repository
    push does not already produce the intended production release. Verify the
    production alias points to the new Ready deployment.
-5. Exercise `/` and `/rwa`, live USDY inspection, fixture timeline, JSON/CSV
+6. Exercise `/` and `/rwa`, live USDY inspection, fixture timeline, JSON/CSV
    export, invalid input, optional endpoints, security headers and mobile views.
-6. Run `node scripts/verify-live.mjs` and the deliberately separate hosted-read
+7. Run `node scripts/verify-live.mjs` and the deliberately separate hosted-read
    GitHub workflow; preserve receipts and actual outcomes.
 
 Never publish `.env.local`, production pull files, cookies, API keys or wallet

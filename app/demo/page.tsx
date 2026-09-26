@@ -13,7 +13,7 @@ export default function DemoPage() {
     <ResourceShell active="demo" eyebrow="THE PRODUCT / IN ACTION" title="From address to insight." description="A complete walkthrough of the lens. Follow four chapters, inspect a real Solana mint, and leave with a receipt you can independently review.">
       <div className={styles.content}>
         <DemoGuide />
-        <div className={styles.section}><p className={styles.label}>THE LIVE WORKSPACE</p><h2>Your evidence starts here.</h2><p>The inspector below makes actual mainnet reads. Start with USDY, select another listed asset, or enter a mint of your own. Every observation keeps its source and time.</p></div>
+        <div className={styles.section}><p className={styles.label}>THE LIVE WORKSPACE</p><h2>Your evidence starts here.</h2><p>The inspector below makes actual mainnet reads. Start with the listed USDY mint, or enter a mint of your own. Every observation keeps its source and time.</p></div>
       </div>
       <RwaLensShell cluster="mainnet-beta" reportsEnabled={false} />
       <div className={styles.content}>

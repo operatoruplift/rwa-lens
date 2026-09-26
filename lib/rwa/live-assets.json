@@ -9,7 +9,6 @@
     "issuer": "Ondo Finance",
     "addressSourceUrl": "https://docs.ondo.finance/addresses",
     "categorySourceUrl": "https://docs.ondo.finance/general-access-products/usdy/basics",
-    "retrievedAt": "2026-09-20",
     "attributionNote": "Official issuer documentation identifies this Solana address as USDY. The issuer describes a tokenized note with backing dependent on issuance date. This attribution is not proof of backing, legal eligibility, redemption rights or investment performance. USDY uses the legacy SPL Token program at the recorded observation; the synthetic treasury fixture demonstrates Token-2022 extensions separately.",
     "observedProgramAddress": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
     "initialVerificationSlot": "448478604",

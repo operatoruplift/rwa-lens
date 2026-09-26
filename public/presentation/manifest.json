@@ -1,0 +1,43 @@
+{
+  "title": "RWA Lens — Real assets. Clearer vision.",
+  "edition": "Mainnet / September 2026",
+  "slideCount": 13,
+  "files": [
+    {
+      "name": "rwa-lens-pitch.html",
+      "url": "/presentation/rwa-lens-pitch.html",
+      "bytes": 360287,
+      "sha256": "c8c63fad580cef917a0aa685cb8e88c69c60a41de8119dd0ff892be9da637773"
+    },
+    {
+      "name": "rwa-lens-pitch.pdf",
+      "url": "/presentation/rwa-lens-pitch.pdf",
+      "bytes": 1314916,
+      "sha256": "4618ccf2acfb275d845fe5f37a22e546ce4443a23785d8b574dc49a2b0a7506a"
+    },
+    {
+      "name": "rwa-lens-pitch.pptx",
+      "url": "/presentation/rwa-lens-pitch.pptx",
+      "bytes": 3753211,
+      "sha256": "9fce1dbad3c08e801cb06d8045cf0f6af36672d588b637cf5b8a47da443404b5"
+    },
+    {
+      "name": "rwa-lens-presenter-notes.md",
+      "url": "/presentation/rwa-lens-presenter-notes.md",
+      "bytes": 11168,
+      "sha256": "f0618659a832a95d40acfdb356d5ab4dafb5ae9b8e7bafe9223170873f4c2015"
+    },
+    {
+      "name": "rwa-lens-pitch-preview.png",
+      "url": "/presentation/rwa-lens-pitch-preview.png",
+      "bytes": 628864,
+      "sha256": "63f0da33b108a6e1fb8c5d271c8999b0ec97a0fd18d42a853fb56e5accdc0342"
+    },
+    {
+      "name": "Inter-OFL.txt",
+      "url": "/presentation/Inter-OFL.txt",
+      "bytes": 4380,
+      "sha256": "262481e844521b326f5ecd053e59b98c8b2da78c8ee1bdbb6e8174305e54935a"
+    }
+  ]
+}

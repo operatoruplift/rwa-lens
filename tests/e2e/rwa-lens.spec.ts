@@ -206,8 +206,47 @@ test.describe('RWA Lens mainnet product', () => {
     await ready(page);
     await page.locator('.inline-details > summary').click();
     await expect(page.getByText('ipfs://issuer-document', { exact: true })).toBeVisible();
-    await expect(page.getByText(/skipped: this uri does not meet/i)).toBeVisible();
+    await expect(page.getByText(/this uri does not meet the https fetch policy/i)).toBeVisible();
     expect(calls).toEqual([]);
+  });
+
+  test('a declined metadata host is explained without a request', async ({ page }) => {
+    const calls: string[] = [];
+    page.on('request', request => { if (request.url().includes('/api/rwa/metadata')) calls.push(request.url()); });
+    const response = structuredClone(mintObservation);
+    response.identity!.metadata = { name: 'Declared metadata', symbol: 'DCL', uri: 'https://metadata.example.com/token.json', uriFetch: 'blocked' };
+    await page.route('**/api/rwa/inspect', route => route.fulfill({ json: response }));
+    await page.goto('/rwa');
+    await ready(page);
+    await page.locator('.inline-details > summary').click();
+    await expect(page.getByText('https://metadata.example.com/token.json', { exact: true })).toBeVisible();
+    await expect(page.getByText(/outside the deployment fetch allowlist/i)).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Fetch metadata' })).toHaveCount(0);
+    expect(calls).toEqual([]);
+  });
+
+  test('a permanent address determination asks for another address, not a provider retry', async ({ page }) => {
+    await page.goto('/rwa');
+    await ready(page);
+    await page.route('**/api/rwa/inspect', route => route.fulfill({ status: 422, json: { status: 'invalid', kind: 'not-a-mint', message: 'That account is not a mint owned by a supported Solana token program.' } }));
+    await page.getByRole('button', { name: 'Inspect', exact: true }).click();
+    const banner = page.locator('.inspection-error');
+    await expect(banner).toContainText('Enter a different mint address to inspect.');
+    await expect(banner).not.toContainText(/provider/i);
+    await expect(page.locator('.identity-card')).toContainText(VALID_MINT);
+  });
+
+  test('issuer attribution states the retrieval time the receipt exports', async ({ page }) => {
+    await page.goto('/rwa');
+    await ready(page);
+    const attribution = page.locator('.issuer-attribution');
+    await expect(attribution).toContainText(mintObservation.registry!.fetchedAt);
+    const download = page.waitForEvent('download');
+    await page.getByRole('button', { name: 'Export JSON', exact: true }).click();
+    const receipt = await readFile((await (await download).path())!, 'utf8');
+    const shown = (await attribution.innerText()).match(/\d{4}-\d{2}-\d{2}(T[\d:.]+Z)?/g) ?? [];
+    expect(shown.length).toBeGreaterThan(0);
+    for (const value of shown) expect(receipt).toContain(value);
   });
 
   test('stale issuer attribution stays separate from decoded evidence', async ({ page }) => {
