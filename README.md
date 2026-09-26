@@ -1,6 +1,6 @@
 # RWA Lens
 
-> **In 20 seconds.** RWA Lens reads a Solana Token-2022 mint with the official decoders, reconciles raw and displayed balances (ScaledUiAmount, fees, frozen state), and lists who can transfer, freeze, or burn. Try it: [rwalensonsolana.vercel.app/rwa](https://rwalensonsolana.vercel.app/rwa) with Ondo USDY as the live example. Built by Matt ([RVAClassic](https://x.com/operatoruplift), Operator Uplift) for the Solana Foundation **Tokenized Real-World Assets** sprint, September 2026. Real today: live mainnet reads, JSON/CSV receipts, installable PWA, Seeker Android shell, wallet sign-in through Mobile Wallet Adapter. Not yet: cloud report storage on the public deployment. Everything below is verification detail; nothing claims traction or audits that have not happened.
+> **In 20 seconds.** RWA Lens reads a Solana Token-2022 mint with the official decoders, reconciles raw and displayed balances (ScaledUiAmount, fees, frozen state), and lists who can transfer, freeze, or burn. Try it: [rwalensonsolana.vercel.app/rwa](https://rwalensonsolana.vercel.app/rwa) with Ondo USDY as the live example. Built by Matt ([RVAClassic](https://x.com/operatoruplift), Operator Uplift) for the Solana Foundation **Tokenized Real-World Assets** sprint, September 2026. Real today: live mainnet reads, JSON/CSV receipts, installable PWA, Seeker Android shell, wallet sign-in through Mobile Wallet Adapter. Cloud report storage is a deployment-configured capability: a deployment that supplies its own database, session secret and exact origin serves owner-scoped saved reports, and the public deployment serves the guest path, where inspection and receipts need no account. Everything below is verification detail; nothing claims traction or audits that have not happened.
 
 **Real assets. Clearer vision.** RWA Lens helps wallet builders, issuers,
 fund administrators, custodians and treasury operators inspect a Solana mint,
@@ -14,10 +14,11 @@ transfer controls.
 [Capability matrix](docs/rwa-capability-matrix.md) ·
 [Two-minute demo](docs/rwa-demo-script.md)
 
-The app reads public chain state. It does **not** sign or submit transactions,
-move assets, mint, settle, lend or take custody. Optional wallet **message**
-signing authenticates saved-report ownership only. Saving a report is a database
-write; guest inspection and JSON/CSV export require no wallet.
+**Read-only by design.** The app reads public chain state and guarantees it
+never signs or submits transactions, moves assets, mints, settles, lends or takes
+custody. Optional wallet **message** signing authenticates saved-report
+ownership only. Saving a report is a database write; guest inspection and
+JSON/CSV export require no wallet.
 
 ## Visual identity
 
@@ -73,8 +74,8 @@ an estimate; incomplete accounts and unsupported data remain partial or unknown.
 | Extension | Explanation |
 | --- | --- |
 | Scaled UI Amount | Changes display conversion without changing raw units; scheduled boundaries and rounding are shown. |
-| Interest Bearing | Detected; calculation unavailable. Incompatible with Scaled UI Amount. |
-| Transfer Hook | An active hook requires evaluation beyond this inspector; an unset hook is inactive. Its address does not establish KYC status. |
+| Interest Bearing | Decoded and reported: current rate, pre-update rate and the rate authority, shown next to the exact standard decimal amount. Accrued display value sits outside this release's conversion scope, and Token-2022 treats the extension as incompatible with Scaled UI Amount. |
+| Transfer Hook | Names the hook program and its update authority, and keeps transfer success an open question rather than executing that program. When the extension carries no hook program, it says so plainly: no extra program runs on transfer today, and it names the authority able to set one later. A hook address is not a KYC credential. |
 | Default Account State | Describes newly created accounts; existing account states are checked separately. |
 | Permanent Delegate | Discloses the mint-level authority that holders cannot revoke. |
 | Transfer Fee Config / Amount | Shows fee configuration and withheld units separately; holding alone does not charge a fresh fee. |
@@ -121,8 +122,10 @@ npm run test:e2e
 Playwright launches `next start` against the production build on port 3300.
 The deterministic suite uses fixtures/mocked failures and requires no secrets.
 Landing checks cover desktop/mobile scrolling, anchor focus, dynamic reduced
-motion and marketing content with JavaScript disabled.
-Run `npm run build` before it; never run two builds against the same `.next`.
+motion, and marketing content plus fragment links that stay usable with
+JavaScript turned off in the browser.
+Run `npm run build` first, and give each build sole ownership of one `.next`
+directory.
 
 Explicit read-only hosted verification is separate:
 
@@ -187,21 +190,27 @@ optional remote registry and NAV adapters cannot supply invented fiat values.
 
 Fixture requests cannot override balances, identity, timestamps or provenance.
 Malformed input returns 400; missing accounts 404; a non-mint account 422;
-provider failures return structured unavailable responses with appropriate 5xx
-status. Error bodies contain neither credentials nor stack traces.
+a provider failure is reported honestly as a structured `unavailable` state
+with the matching 5xx status, so a caller can always tell a failed read from an
+empty one. Error bodies contain neither credentials nor stack traces.
 
 ## Optional reports and security boundaries
 
-Production inspection and export are guest features. Cloud reports and wallet
-sign-in remain disabled unless their complete independent database, origin,
-secret and durable challenge configuration is supplied. An HMAC cookie is not a
-Supabase JWT. Service-role repository access relies on tested server-enforced
-ownership; it must not be described as automatic RLS identity mapping.
+Production inspection and export are guest features that need no account. Cloud
+reports and wallet sign-in are deployment-configured capabilities: supply the
+complete independent database, origin, secret and durable challenge
+configuration and the owner-scoped report path is served, while the app stays
+fully usable as a guest with local JSON/CSV export either way. An HMAC cookie is
+not a Supabase JWT, and the description here is exact: service-role repository
+access relies on server-enforced ownership checked on every query and covered by
+tests, rather than automatic RLS identity mapping.
 
 The existing **rwa-lens** Supabase project is independent of Lotline. Its shared
-rate limiter is preserved. Read-only local fallback is bounded but is not a
-cross-instance security guarantee. Authentication fails closed when durable
-storage or required rate limiting is unavailable.
+rate limiter is preserved. Public reads keep a bounded per-instance local
+fallback, scoped deliberately to availability rather than to cross-instance
+protection. Authentication and report writes fail closed: when the shared limiter
+or the durable challenge store cannot be reached, no session is issued and
+nothing is written.
 
 See [limitations](docs/rwa-limitations.md), [deployment/rollback](docs/rwa-deployment.md)
 and [third-party notices](docs/third-party-notices.md). No backing, compliance,
