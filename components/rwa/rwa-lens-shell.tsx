@@ -61,7 +61,7 @@ function toCsv(result: InspectResult, hash: string, request: InspectRequest): st
   return rows.map(row => row.map(cell).join(',')).join('\r\n') + '\r\n';
 }
 
-export function RwaLensShell({ cluster, reportsEnabled, fixturesEnabled = false, initialMint }: { cluster: Cluster; reportsEnabled: boolean; fixturesEnabled?: boolean; initialMint?: string }) {
+export function RwaLensShell({ cluster, reportsEnabled, fixturesEnabled = false, deployEnabled = false, initialMint }: { cluster: Cluster; reportsEnabled: boolean; fixturesEnabled?: boolean; deployEnabled?: boolean; initialMint?: string }) {
   const defaultMint = initialMint ?? liveAssets.find(asset => asset.cluster === cluster)?.mint ?? '';
   const [mint, setMint] = useState(defaultMint);
   const [owner, setOwner] = useState('');
@@ -161,7 +161,7 @@ export function RwaLensShell({ cluster, reportsEnabled, fixturesEnabled = false,
         </div>
         <div id="inspection-controls" tabIndex={-1} className="control-results"><ExtensionInventory extensions={result.extensions} synthetic={isFixture} />{result.transferReadiness ? <TransferReadinessCard readiness={result.transferReadiness} synthetic={isFixture} /> : null}</div>
         <RegistryPanel registry={result.registry} />
-        {!isFixture && result.provenance.mode === 'live' && result.provenance.cluster === 'mainnet-beta' && result.identity ? <VenuesPanel key={result.identity.mint} mint={result.identity.mint} /> : null}
+        {!isFixture && result.provenance.mode === 'live' && result.provenance.cluster === 'mainnet-beta' && result.identity ? <VenuesPanel key={result.identity.mint} mint={result.identity.mint} deployEnabled={deployEnabled} /> : null}
         <div id="inspection-evidence" tabIndex={-1}><EvidenceDrawer provenance={result.provenance} /></div>
         <div id="reports">{reportsEnabled && activeRequest ? <ReportActions request={activeRequest} /> : <div className="guest-export-note"><ArrowDownToLine size={16} /><p><strong>Your observation, ready to take away.</strong> Export JSON or CSV above. Cloud reports are not enabled on this deployment.</p><span>No sign-in needed</span></div>}</div>
         <details className="limitations"><summary><Info size={15} /><span>What this observation can and cannot tell you</span><ChevronDown size={16} /></summary><ul>{result.limitations.map(limitation => <li key={limitation}>{limitation}</li>)}<li>Decoded token data does not verify an investment, asset backing or legal eligibility. An export is an observation receipt, not an attestation.</li></ul></details>

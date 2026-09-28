@@ -34,10 +34,12 @@ export function translate(error: unknown, label: string): RpcError {
 }
 
 /** Abort includes body streaming. The entire read, including its one retry, has one deadline. */
-export function createBoundedTransport(config: RpcConfig): RpcTransport {
+/** The inspection plane's reads. Other planes pass their own, equally explicit, allowlist. */
+export const READ_METHODS: readonly string[] = ['getAccountInfo', 'getTokenAccountsByOwner', 'getBlockTime'];
+export function createBoundedTransport(config: RpcConfig, methods: readonly string[] = READ_METHODS): RpcTransport {
   return async <TResponse>({ payload, signal }: Parameters<RpcTransport>[0]): Promise<RpcResponse<TResponse>> => {
     const method = (payload as { method?: string }).method ?? '';
-    if (!['getAccountInfo', 'getTokenAccountsByOwner', 'getBlockTime'].includes(method)) throw new RpcError('provider-failure', 'Unsupported RPC method.');
+    if (!methods.includes(method)) throw new RpcError('provider-failure', 'Unsupported RPC method.');
     const controller = new AbortController();
     const abort = () => controller.abort();
     signal?.addEventListener('abort', abort, { once: true });
