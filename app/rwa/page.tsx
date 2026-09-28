@@ -1,4 +1,5 @@
 import { LensExperience } from '@/components/landing/lens-experience';
+import { addressSchema } from '@/lib/rwa/schema';
 
 export const dynamic = 'force-dynamic';
 export const metadata = {
@@ -7,6 +8,9 @@ export const metadata = {
   alternates: { canonical: '/rwa' },
 };
 
-export default function RwaPage() {
-  return <LensExperience compact />;
+/** `/rwa?mint=<address>` opens the inspector on that mint; anything else falls back to the default example. */
+export default async function RwaPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  const { mint } = await searchParams;
+  const requested = addressSchema.safeParse(typeof mint === 'string' ? mint : '');
+  return <LensExperience compact initialMint={requested.success ? requested.data : undefined} />;
 }

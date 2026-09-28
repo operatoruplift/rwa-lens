@@ -4,7 +4,7 @@ import { Brand } from '@/components/rwa/brand';
 import styles from './resources.module.css';
 
 export function ResourceShell({ active, eyebrow, title, description, children }: {
-  active: 'demo' | 'technical' | 'pitch';
+  active: 'demo' | 'technical' | 'pitch' | 'yield';
   eyebrow: string;
   title: string;
   description: string;
@@ -16,6 +16,7 @@ export function ResourceShell({ active, eyebrow, title, description, children }:
       <header className={styles.header}>
         <Link href="/" aria-label="RWA Lens home"><Brand light /></Link>
         <nav aria-label="Resource navigation">
+          <Link href="/yield" aria-current={active === 'yield' ? 'page' : undefined}>Yield</Link>
           <Link href="/demo" aria-current={active === 'demo' ? 'page' : undefined}>Demo</Link>
           <Link href="/technical" aria-current={active === 'technical' ? 'page' : undefined}>Technical</Link>
           <Link href="/pitch" aria-current={active === 'pitch' ? 'page' : undefined}>Pitch</Link>
