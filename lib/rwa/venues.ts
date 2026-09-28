@@ -10,6 +10,8 @@ import { z } from 'zod';
 export const METEORA_DLMM_HOST = 'dlmm.datapi.meteora.ag';
 export const METEORA_DLMM_API = `https://${METEORA_DLMM_HOST}`;
 export const METEORA_SOURCE_LABEL = 'Meteora DLMM data API';
+/** Mainnet USDC. Deploy is offered only on pools that pair the inspected token with it. */
+export const USDC_MINT_ADDRESS = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
 /** Pools below this total value locked are counted but not listed: their rates are noise. */
 export const MIN_LISTED_TVL_USD = 100;
 export const MAX_LISTED_POOLS = 5;
@@ -48,6 +50,8 @@ const nonNegative = z.number().finite().min(0);
 export const venuePoolSchema = z.object({
   address: z.string().min(32).max(64),
   pair: z.string().max(120),
+  /** The inspected token's symbol as the pool lists it. */
+  tokenSymbol: z.string().max(40),
   /** The other token in the pool, from the inspected mint's point of view. */
   counterSymbol: z.string().max(40),
   counterMint: z.string().min(32).max(64),
@@ -131,10 +135,11 @@ export function normalizeVenues(mint: string, rows: unknown[], fetchedAt: string
   return {
     state: 'ok', ...base,
     pools: listed.slice(0, MAX_LISTED_POOLS).map(pool => {
-      const counter = pool.token_x.address === mint ? pool.token_y : pool.token_x;
+      const [token, counter] = pool.token_x.address === mint ? [pool.token_x, pool.token_y] : [pool.token_y, pool.token_x];
       return {
         address: pool.address,
         pair: pool.name,
+        tokenSymbol: token.symbol,
         counterSymbol: counter.symbol,
         counterMint: counter.address,
         counterVerified: counter.is_verified === true,

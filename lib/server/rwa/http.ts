@@ -35,3 +35,9 @@ export async function readBoundedJson(request: Request, maxBytes = 4096): Promis
     return JSON.parse(Buffer.concat(chunks).toString('utf8'));
   } finally { clearTimeout(timer); }
 }
+
+/** A browser request from this site: the configured app origin when one is set, otherwise the request's own. */
+export function hasSameOrigin(request: Request, configured: string | null): boolean {
+  const expected = configured ?? requestOrigin(request);
+  return !!expected && request.headers.get('origin') === expected;
+}

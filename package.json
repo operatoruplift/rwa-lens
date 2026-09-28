@@ -9,7 +9,8 @@
     "lint": "eslint .",
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "test:e2e:deploy": "playwright test -c playwright.deploy.config.ts"
   },
   "dependencies": {
     "@solana-mobile/wallet-standard-mobile": "^0.6.0",
@@ -32,6 +33,7 @@
     "@types/node": "^24.13.5",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "axe-core": "4.13.0",
     "eslint": "^9",
     "eslint-config-next": "16.3.5",
     "tailwindcss": "^4",

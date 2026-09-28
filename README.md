@@ -14,11 +14,14 @@ transfer controls.
 [Capability matrix](docs/rwa-capability-matrix.md) ·
 [Two-minute demo](docs/rwa-demo-script.md)
 
-**Read-only by design.** The app reads public chain state and guarantees it
-never signs or submits transactions, moves assets, mints, settles, lends or takes
-custody. Optional wallet **message** signing authenticates saved-report
-ownership only. Saving a report is a database write; guest inspection and
-JSON/CSV export require no wallet.
+**Read-only by default.** Inspection reads public chain state and never signs
+or submits transactions, moves assets, mints, settles, lends or takes custody.
+Optional wallet **message** signing authenticates saved-report ownership only.
+Saving a report is a database write; guest inspection and JSON/CSV export require
+no wallet. One optional action, [deploy](docs/yield-deploy.md), is off unless the
+operator sets `RWA_DEPLOY_ENABLED`: it builds and simulates a single transaction
+that the user's own wallet reviews, signs and sends. The server never signs,
+holds keys or takes custody, and the public deployment runs with it off.
 
 ## Visual identity
 
@@ -75,6 +78,22 @@ A **reserve badge** says whether the attribution source links the issuer's own
 reserve reports. For USDY it links Ondo's USDY page, which publishes daily and
 monthly third-party reserve attestations. RWA Lens links those reports; it does not
 read, audit or verify them, and a token without a recorded link says so plainly.
+
+## Deploy into a pool (optional, operator-enabled)
+
+With `RWA_DEPLOY_ENABLED=true`, a listed pool that pairs the token with USDC offers
+**Deploy USDC**: Jupiter swaps half the budget into the token and a Meteora DLMM
+Spot deposit places the swap's guaranteed minimum plus the other half across 69
+bins around the pool price, in one v0 transaction whose only signer is the user's
+wallet. The server refuses unsafe cases (hooked or fee-charging mints, stale pool
+prices, oversized price impact, and any Jupiter step beyond its direct swap and
+creating the wallet's own token accounts), refuses a route that would write to
+any other token account the wallet holds, and simulates the whole transaction
+against mainnet, checking the simulated balances against the preview, before the
+wallet sees it. The DLMM instructions
+are hand-encoded and pinned byte for byte to Meteora's official SDK; live mainnet
+simulations succeeded for USDY (SPL Token) and METAx, TSLAx and QQQx (Token-2022).
+Details, checks and evidence: [docs/yield-deploy.md](docs/yield-deploy.md).
 
 ## Accounting and controls
 
@@ -197,6 +216,9 @@ optional remote registry and NAV adapters cannot supply invented fiat values.
 | `POST /api/rwa/auth` | Optional exact-origin wallet message authentication and sign-out; durable single-use challenge required. |
 | `GET/POST /api/rwa/reports` | Optional session-owned reports; the server re-inspects instead of trusting uploaded observations. |
 | `GET /api/rwa/reports/[reportId]` | Session-owner lookup; another owner's opaque ID returns 404. |
+| `GET /api/rwa/venues` | Meteora DLMM pools holding the exact mint; third-party market data, never part of an observation. |
+| `POST /api/rwa/deploy` | Only with `RWA_DEPLOY_ENABLED`: same-origin, rate-limited; returns an unsigned, simulated v0 transaction for the caller's wallet, or a plain refusal. |
+| `GET /api/rwa/deploy/status` | Only with `RWA_DEPLOY_ENABLED`: confirmation for a submitted signature and its last valid block height. |
 
 ```json
 {"mode":"live","cluster":"mainnet-beta","mint":"A1KLoBrKBde8Ty9qtNQUtq3C2ortoC3u7twggz7sEto6"}

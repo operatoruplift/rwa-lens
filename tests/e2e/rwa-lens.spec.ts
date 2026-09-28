@@ -17,10 +17,10 @@ const screenshotDir = path.resolve('test-results/screenshots');
 const venuesFixture = {
   state: 'ok', mint: VALID_MINT, source: 'Meteora DLMM data API', fetchedAt: '2026-09-28T12:00:00.000Z', matched: 3, belowFloor: 1,
   pools: [
-    { address: '4dLtt8WQEjkZCiRrNJA5XRqqDBsoymdBxN54dz7pbDie', pair: 'USDY-USDC', counterSymbol: 'USDC', counterMint: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', counterVerified: true,
+    { address: '4dLtt8WQEjkZCiRrNJA5XRqqDBsoymdBxN54dz7pbDie', pair: 'USDY-USDC', tokenSymbol: 'USDY', counterSymbol: 'USDC', counterMint: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', counterVerified: true,
       tvlUsd: 1742.86, volume24hUsd: 717.92, fees24hUsd: 0.1327, feeTvl24hPct: 0.0076, feeApyPct: 2.818, farmApyPct: null, binStep: 1, baseFeePct: 0.01,
       meteoraUrl: 'https://app.meteora.ag/dlmm/4dLtt8WQEjkZCiRrNJA5XRqqDBsoymdBxN54dz7pbDie' },
-    { address: 'BDpP98gnA9cVN4ATYh6F76nDHw4hXxDpzSt7ZiGUxxLQ', pair: 'USDY-SOL', counterSymbol: 'SOL', counterMint: 'So11111111111111111111111111111111111111112', counterVerified: true,
+    { address: 'BDpP98gnA9cVN4ATYh6F76nDHw4hXxDpzSt7ZiGUxxLQ', pair: 'USDY-SOL', tokenSymbol: 'USDY', counterSymbol: 'SOL', counterMint: 'So11111111111111111111111111111111111111112', counterVerified: true,
       tvlUsd: 250, volume24hUsd: 12, fees24hUsd: 0.02, feeTvl24hPct: 0.008, feeApyPct: 2.96, farmApyPct: null, binStep: 10, baseFeePct: 0.1,
       meteoraUrl: 'https://app.meteora.ag/dlmm/BDpP98gnA9cVN4ATYh6F76nDHw4hXxDpzSt7ZiGUxxLQ' },
   ],
@@ -294,6 +294,8 @@ test.describe('RWA Lens mainnet product', () => {
     await expect(venues.getByRole('link', { name: 'Open the USDY-USDC pool on Meteora' })).toHaveAttribute('href', 'https://app.meteora.ag/dlmm/4dLtt8WQEjkZCiRrNJA5XRqqDBsoymdBxN54dz7pbDie');
     await expect(venues).toContainText('1 smaller pool under $100 TVL not listed');
     await expect(venues).toContainText('not included in exports or saved reports');
+    // Deploy is operator-gated; with the flag off no pool offers it.
+    await expect(venues.getByRole('button', { name: /Deploy USDC/ })).toHaveCount(0);
     const download = page.waitForEvent('download');
     await page.getByRole('button', { name: 'Export JSON', exact: true }).click();
     const receipt = await readFile((await (await download).path())!, 'utf8');

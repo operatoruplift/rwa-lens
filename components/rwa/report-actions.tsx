@@ -6,23 +6,12 @@ import { ArrowDownToLine, LockKeyhole, X } from 'lucide-react';
 import { z } from 'zod';
 import { inspectResultSchema, addressSchema, reportIdSchema } from '@/lib/rwa/schema';
 import type { InspectRequest } from '@/lib/rwa/types';
+import { discoverWallets, type Wallet, type WalletAccount } from '@/lib/client/wallet-standard';
 import { Callout } from './primitives';
 
-type WalletAccount = { address: string; features?: readonly string[]; chains?: readonly string[] };
-type Wallet = { name: string; accounts: readonly WalletAccount[]; features: Record<string, unknown> };
 type Phase = 'idle' | 'connecting' | 'signing' | 'saving' | 'listing';
-const registeredWallets = new Set<Wallet>();
-let discoveryReady = false;
-// Wallet Standard's app-ready / register-wallet exchange. Only message signing is requested.
-function wallets(): Wallet[] {
-  if (!discoveryReady) {
-    discoveryReady = true;
-    const api = Object.freeze({ register: (...newWallets: Wallet[]) => { newWallets.forEach(wallet => registeredWallets.add(wallet)); return () => newWallets.forEach(wallet => registeredWallets.delete(wallet)); } });
-    window.addEventListener('wallet-standard:register-wallet', event => { const callback = (event as CustomEvent<(value: typeof api) => void>).detail; if (typeof callback === 'function') callback(api); });
-    window.dispatchEvent(new CustomEvent('wallet-standard:app-ready', { detail: api }));
-  }
-  return [...registeredWallets].filter(wallet => 'solana:signMessage' in wallet.features && 'standard:connect' in wallet.features);
-}
+// Only message signing is requested.
+const wallets = () => discoverWallets(['solana:signMessage', 'standard:connect']);
 const reportSchema = z.object({ id: reportIdSchema, mint: z.string(), createdAt: z.string(), mode: z.string(), contentHash: z.string() }).passthrough();
 type SavedReport = z.infer<typeof reportSchema>;
 async function responseBody(response: Response) { return await response.json().catch(() => ({})) as Record<string, unknown>; }

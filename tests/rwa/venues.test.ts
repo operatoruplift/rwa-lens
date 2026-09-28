@@ -41,11 +41,11 @@ describe('Meteora venue normalization', () => {
     if (result.state !== 'ok') throw new Error('expected pools');
     expect(result.pools.map(item => item.pair)).toEqual(['USDY-USDC', 'SOL-USDY']);
     expect(result.pools[0]).toEqual({
-      address: '4dLtt8WQEjkZCiRrNJA5XRqqDBsoymdBxN54dz7pbDie', pair: 'USDY-USDC', counterSymbol: 'USDC', counterMint: USDC, counterVerified: true,
+      address: '4dLtt8WQEjkZCiRrNJA5XRqqDBsoymdBxN54dz7pbDie', pair: 'USDY-USDC', tokenSymbol: 'USDY', counterSymbol: 'USDC', counterMint: USDC, counterVerified: true,
       tvlUsd: 1742.86, volume24hUsd: 717.92, fees24hUsd: 0.1327, feeTvl24hPct: 0.0076, feeApyPct: 2.818, farmApyPct: null,
       binStep: 1, baseFeePct: 0.01, meteoraUrl: 'https://app.meteora.ag/dlmm/4dLtt8WQEjkZCiRrNJA5XRqqDBsoymdBxN54dz7pbDie',
     });
-    expect(result.pools[1]).toMatchObject({ counterSymbol: 'SOL', counterMint: SOL, farmApyPct: 3.2 });
+    expect(result.pools[1]).toMatchObject({ tokenSymbol: 'USDY', counterSymbol: 'SOL', counterMint: SOL, farmApyPct: 3.2 });
     expect(venuesResponseSchema.parse(result)).toEqual(result);
   });
 

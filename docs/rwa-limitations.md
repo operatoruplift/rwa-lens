@@ -2,10 +2,18 @@
 
 ## Read-only product
 
-RWA Lens inspects public Solana data. It has no transaction signer, asset-transfer,
-settlement, custody, lending, minting or burning path. Optional wallet message
-signing proves control of an address for report ownership; a saved report is a
-database write. Guest inspection and local export require neither.
+RWA Lens inspects public Solana data. Inspection has no transaction signer,
+asset-transfer, settlement, custody, lending, minting or burning path. Optional
+wallet message signing proves control of an address for report ownership; a saved
+report is a database write. Guest inspection and local export require neither.
+
+The one exception is operator-enabled and off by default: with
+`RWA_DEPLOY_ENABLED`, the server builds and simulates a swap-and-deposit
+transaction that the user's own wallet reviews, signs and sends. RWA Lens holds no
+keys and never signs. See [yield-deploy.md](yield-deploy.md) for its checks and its
+limits: USDC-paired Meteora DLMM pools only, no transfer-hook or transfer-fee
+tokens, no withdrawals or rebalancing, fixed Spot shape and width, and no
+investment advice.
 
 A successful decode is not verification of asset backing, compliance, KYC,
 accreditation, sanctions status, redemption rights or investment performance.
