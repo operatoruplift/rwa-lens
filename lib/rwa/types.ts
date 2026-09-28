@@ -150,6 +150,8 @@ export type RegistryAsset = {
   assetClass?: string;
   documentationUrl?: string;
   reserveProofUrl?: string;
+  /** What the linked reserve source contains, in the registry's words. Never a verification. */
+  reserveProofNote?: string;
   jurisdiction?: string;
   redemption?: string;
   source: string;

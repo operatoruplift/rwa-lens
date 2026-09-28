@@ -114,7 +114,7 @@ const observedAddress = z.string().min(1).max(64); // Synthetic identities are l
 const timestampSchema = z.string().datetime();
 export const registryAssetSchema = z.object({
   issuer: z.string().max(200).optional(), assetClass: z.string().max(120).optional(),
-  documentationUrl: metadataUriSchema.optional(), reserveProofUrl: metadataUriSchema.optional(),
+  documentationUrl: metadataUriSchema.optional(), reserveProofUrl: metadataUriSchema.optional(), reserveProofNote: z.string().max(300).optional(),
   jurisdiction: z.string().max(120).optional(), redemption: z.string().max(2000).optional(),
   source: z.string().max(2048), fetchedAt: timestampSchema, stale: z.boolean().optional(),
 });

@@ -5,7 +5,7 @@ import { databaseConfig } from './session';
 
 type Bucket = { count: number; resetAt: number };
 const WINDOW_SECONDS = 60;
-const LIMITS: Record<string, number> = { inspect: 30, fixture: 120, metadata: 20, reports: 30, auth: 10 };
+const LIMITS: Record<string, number> = { inspect: 30, fixture: 120, metadata: 20, reports: 30, auth: 10, venues: 30 };
 const MAX_TRACKED_KEYS = 5000;
 const buckets = new Map<string, Bucket>();
 

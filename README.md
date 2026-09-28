@@ -58,6 +58,24 @@ mint uses **legacy SPL Token**. A clearly labelled synthetic treasury receipt
 separately demonstrates Token-2022 scheduled display multipliers. Issuer descriptions
 are attribution, not independent verification of backing or legal rights.
 
+## Where the token trades, and who attests its reserves
+
+After a live mainnet inspection, a separate panel lists the **Meteora DLMM pools**
+that hold the exact inspected mint: pair, TVL, 24-hour volume and fees, Meteora's
+fee APY, bin step and base fee, with a link to each pool. The server reads
+Meteora's public data API (`dlmm.datapi.meteora.ag`) through the same DNS-pinned,
+redirect-free, size-bounded HTTPS reader used for issuer metadata, keeps only pools
+whose own token list contains the mint (the upstream search also matches names),
+drops blacklisted pools, lists at most five with at least $100 TVL, and caches each
+mint for 60 seconds. These figures are third-party market data: they are never
+part of the observation, its JSON/CSV export or a saved report, and past fees do
+not predict returns.
+
+A **reserve badge** says whether the attribution source links the issuer's own
+reserve reports. For USDY it links Ondo's USDY page, which publishes daily and
+monthly third-party reserve attestations. RWA Lens links those reports; it does not
+read, audit or verify them, and a token without a recorded link says so plainly.
+
 ## Accounting and controls
 
 Raw amounts and supply stay as decimal strings / `BigInt`. Public accounts are

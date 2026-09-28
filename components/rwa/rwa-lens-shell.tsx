@@ -10,6 +10,8 @@ import type { Cluster, InspectRequest, InspectResult } from '@/lib/rwa/types';
 import { Callout, StatusPill } from './primitives';
 import { BalanceCard, EvidenceDrawer, ExtensionInventory, IdentityCard, RegistryPanel, TransferReadinessCard } from './result-panels';
 import { ReportActions } from './report-actions';
+import { ReserveAttestationBadge } from './reserve-badge';
+import { VenuesPanel } from './venues-panel';
 
 type Scenario = 'before' | 'at' | 'after';
 type FixtureId = Extract<InspectRequest, { mode: 'fixture' }>['fixtureId'];
@@ -151,6 +153,7 @@ export function RwaLensShell({ cluster, reportsEnabled, fixturesEnabled = false,
         <div className="observation-bar"><div className="observation-label"><span className={`observation-dot ${isFixture ? 'synthetic' : result.status === 'verified' ? 'live' : ''}`} /><strong>{isFixture ? 'Test fixture' : result.provenance.mode === 'recorded' ? 'Recorded observation' : 'Live observation'}</strong>{!isFixture || result.status !== 'verified' ? <StatusPill status={result.status} /> : <span className="muted-tag">Offline data</span>}</div><span className="observation-detail">{isFixture ? 'No RPC call · not a real issuer or holding' : `${result.provenance.rpcProvider}${result.provenance.slot ? ` · slot ${result.provenance.slot}` : ''}`}</span><div id="inspection-export" tabIndex={-1} className="export-buttons"><button type="button" onClick={() => void exportReceipt('json')} disabled={loading} aria-label="Export JSON"><ArrowDownToLine size={14} />JSON</button><button type="button" onClick={() => void exportReceipt('csv')} disabled={loading} aria-label="Export CSV"><ArrowDownToLine size={14} />CSV</button></div></div>
         {exportError ? <Callout tone="amber">{exportError}</Callout> : null}
         {liveAsset ? <div className="issuer-attribution"><span className="asset-monogram">{liveAsset.symbol.slice(0, 1)}</span><div><strong>{liveAsset.name} <span>{liveAsset.symbol}</span></strong><p>{result.registry?.assetClass ?? liveAsset.category} · Issuer attribution: {result.registry?.issuer ?? liveAsset.issuer}</p></div><a href={liveAsset.addressSourceUrl} target="_blank" rel="noreferrer noopener">Official address source <ArrowUpRight size={14} /></a><p className="attribution-note">{result.registry ? `Issuer documentation retrieved ${result.registry.fetchedAt}. ` : ''}Attribution does not establish backing, eligibility or redemption rights.</p></div> : null}
+        {result.registry && !isFixture ? <ReserveAttestationBadge registry={result.registry} /> : null}
         {result.warnings.filter(warning => !isFixture || !/illustrative|fixture data|not a real issuer/i.test(warning)).length ? <div className="result-warnings">{result.warnings.filter(warning => !isFixture || !/illustrative|fixture data|not a real issuer/i.test(warning)).map(warning => <Callout key={warning} tone="amber">{warning}</Callout>)}</div> : null}
         <div id="inspection-identity" tabIndex={-1} className="primary-results">
           {result.identity ? <IdentityCard identity={result.identity} metadataUri={metadataUri(result)} synthetic={isFixture} cluster={result.provenance.cluster} /> : null}
@@ -158,6 +161,7 @@ export function RwaLensShell({ cluster, reportsEnabled, fixturesEnabled = false,
         </div>
         <div id="inspection-controls" tabIndex={-1} className="control-results"><ExtensionInventory extensions={result.extensions} synthetic={isFixture} />{result.transferReadiness ? <TransferReadinessCard readiness={result.transferReadiness} synthetic={isFixture} /> : null}</div>
         <RegistryPanel registry={result.registry} />
+        {!isFixture && result.provenance.mode === 'live' && result.provenance.cluster === 'mainnet-beta' && result.identity ? <VenuesPanel key={result.identity.mint} mint={result.identity.mint} /> : null}
         <div id="inspection-evidence" tabIndex={-1}><EvidenceDrawer provenance={result.provenance} /></div>
         <div id="reports">{reportsEnabled && activeRequest ? <ReportActions request={activeRequest} /> : <div className="guest-export-note"><ArrowDownToLine size={16} /><p><strong>Your observation, ready to take away.</strong> Export JSON or CSV above. Cloud reports are not enabled on this deployment.</p><span>No sign-in needed</span></div>}</div>
         <details className="limitations"><summary><Info size={15} /><span>What this observation can and cannot tell you</span><ChevronDown size={16} /></summary><ul>{result.limitations.map(limitation => <li key={limitation}>{limitation}</li>)}<li>Decoded token data does not verify an investment, asset backing or legal eligibility. An export is an observation receipt, not an attestation.</li></ul></details>

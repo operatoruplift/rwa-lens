@@ -79,7 +79,7 @@ export function EvidenceDrawer({ provenance }: { provenance: Provenance }) {
 }
 
 
-function publicHttpsLink(value: string | undefined): string | undefined {
+export function publicHttpsLink(value: string | undefined): string | undefined {
   if (!value) return undefined;
   try {
     const url = new URL(value);

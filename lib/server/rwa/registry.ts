@@ -9,7 +9,7 @@ export interface RwaRegistryAdapter { getAsset(mint: string, signal: AbortSignal
 export interface NavAdapter { getNav(mint: string, signal: AbortSignal): Promise<{ value: string; currency: string; asOf: string; source: string } | null> }
 const registryBodySchema = z.object({
   issuer: z.string().max(200).optional(), assetClass: z.string().max(120).optional(),
-  documentationUrl: metadataUriSchema.optional(), reserveProofUrl: metadataUriSchema.optional(),
+  documentationUrl: metadataUriSchema.optional(), reserveProofUrl: metadataUriSchema.optional(), reserveProofNote: z.string().max(300).optional(),
   jurisdiction: z.string().max(120).optional(), redemption: z.string().max(2000).optional(),
 });
 const STALE_AFTER_MS = 24 * 60 * 60 * 1000;
@@ -31,7 +31,9 @@ export function getRegistryAdapter(): RwaRegistryAdapter | null {
 /** Official-source attribution is separate from on-chain decoding and is never backing verification. */
 export async function lookupRegistry(mint: string, cluster?: Cluster): Promise<RegistryAsset | null> {
   const curated = liveAssets.find(asset => asset.mint === mint && asset.cluster === cluster);
-  const fallback = curated ? registryAssetSchema.parse({ issuer: curated.issuer, assetClass: curated.category, documentationUrl: curated.addressSourceUrl, source: curated.addressSourceUrl, fetchedAt: curated.retrievedAtUtc, stale: Date.now() - Date.parse(curated.retrievedAtUtc) > STALE_AFTER_MS }) : null;
+  const fallback = curated ? registryAssetSchema.parse({ issuer: curated.issuer, assetClass: curated.category, documentationUrl: curated.addressSourceUrl,
+    ...(curated.reserveProofUrl ? { reserveProofUrl: curated.reserveProofUrl, reserveProofNote: curated.reserveProofNote } : {}),
+    source: curated.addressSourceUrl, fetchedAt: curated.retrievedAtUtc, stale: Date.now() - Date.parse(curated.retrievedAtUtc) > STALE_AFTER_MS }) : null;
   const adapter = getRegistryAdapter();
   if (!adapter) return fallback;
   const controller = new AbortController();
