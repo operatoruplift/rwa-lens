@@ -14,6 +14,17 @@ const token2022Observation = inspectResultSchema.parse(token2022Evidence.result)
 const VALID_MINT = mintObservation.identity!.mint;
 const OWNER = holderObservation.balances!.owner!;
 const screenshotDir = path.resolve('test-results/screenshots');
+const venuesFixture = {
+  state: 'ok', mint: VALID_MINT, source: 'Meteora DLMM data API', fetchedAt: '2026-09-28T12:00:00.000Z', matched: 3, belowFloor: 1,
+  pools: [
+    { address: '4dLtt8WQEjkZCiRrNJA5XRqqDBsoymdBxN54dz7pbDie', pair: 'USDY-USDC', counterSymbol: 'USDC', counterMint: 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v', counterVerified: true,
+      tvlUsd: 1742.86, volume24hUsd: 717.92, fees24hUsd: 0.1327, feeTvl24hPct: 0.0076, feeApyPct: 2.818, farmApyPct: null, binStep: 1, baseFeePct: 0.01,
+      meteoraUrl: 'https://app.meteora.ag/dlmm/4dLtt8WQEjkZCiRrNJA5XRqqDBsoymdBxN54dz7pbDie' },
+    { address: 'BDpP98gnA9cVN4ATYh6F76nDHw4hXxDpzSt7ZiGUxxLQ', pair: 'USDY-SOL', counterSymbol: 'SOL', counterMint: 'So11111111111111111111111111111111111111112', counterVerified: true,
+      tvlUsd: 250, volume24hUsd: 12, fees24hUsd: 0.02, feeTvl24hPct: 0.008, feeApyPct: 2.96, farmApyPct: null, binStep: 10, baseFeePct: 0.1,
+      meteoraUrl: 'https://app.meteora.ag/dlmm/BDpP98gnA9cVN4ATYh6F76nDHw4hXxDpzSt7ZiGUxxLQ' },
+  ],
+};
 
 async function ready(page: Page) {
   await expect(page.getByText('Live observation', { exact: true })).toBeVisible();
@@ -29,6 +40,7 @@ async function inspectHolder(page: Page) {
 test.describe('RWA Lens mainnet product', () => {
   test.beforeEach(async ({ page }) => {
     await page.route('**/api/rwa/inspect', route => route.fulfill({ json: route.request().postDataJSON().owner ? holderObservation : mintObservation }));
+    await page.route('**/api/rwa/venues?**', route => route.fulfill({ json: venuesFixture }));
   });
 
   test('both entry routes load a mainnet observation and expose no offline controls', async ({ page }) => {
@@ -261,6 +273,42 @@ test.describe('RWA Lens mainnet product', () => {
     await expect(panel).toContainText('2026-09-15T00:00:00.000Z');
     await expect(panel).toContainText('does not verify backing');
     await expect(panel.getByRole('link', { name: 'Open registry source' })).toHaveAttribute('href', 'https://docs.ondo.finance/addresses');
+  });
+
+  test('Meteora venues and the reserve badge stay outside the observation and its export', async ({ page }) => {
+    const response = structuredClone(mintObservation);
+    response.registry = { ...response.registry!, reserveProofUrl: 'https://ondo.finance/usdy', reserveProofNote: 'Ondo’s USDY page links daily and monthly third-party reserve attestation reports.' };
+    await page.route('**/api/rwa/inspect', route => route.fulfill({ json: response }));
+    const venuesRequest = page.waitForRequest(request => request.url().includes('/api/rwa/venues'));
+    await page.goto('/rwa');
+    await ready(page);
+    expect(Object.fromEntries(new URL((await venuesRequest).url()).searchParams)).toEqual({ mint: VALID_MINT, cluster: 'mainnet-beta' });
+    const badge = page.locator('.reserve-badge');
+    await expect(badge).toHaveAttribute('data-reserve-state', 'linked');
+    await expect(badge.getByRole('link', { name: /Issuer reserve reports/ })).toHaveAttribute('href', 'https://ondo.finance/usdy');
+    await expect(badge).toContainText('does not read or verify');
+    const venues = page.getByRole('region', { name: 'Liquidity venues on Meteora' });
+    await expect(venues).toHaveAttribute('data-venues-state', 'ok');
+    await expect(venues).toContainText('2 of 3 pools listed');
+    await expect(venues.locator('[data-pool="4dLtt8WQEjkZCiRrNJA5XRqqDBsoymdBxN54dz7pbDie"]')).toContainText('$1,743');
+    await expect(venues.getByRole('link', { name: 'Open the USDY-USDC pool on Meteora' })).toHaveAttribute('href', 'https://app.meteora.ag/dlmm/4dLtt8WQEjkZCiRrNJA5XRqqDBsoymdBxN54dz7pbDie');
+    await expect(venues).toContainText('1 smaller pool under $100 TVL not listed');
+    await expect(venues).toContainText('not included in exports or saved reports');
+    const download = page.waitForEvent('download');
+    await page.getByRole('button', { name: 'Export JSON', exact: true }).click();
+    const receipt = await readFile((await (await download).path())!, 'utf8');
+    expect(receipt).not.toMatch(/meteora|dlmm|4dLtt8WQEjkZCiRrNJA5XRqqDBsoymdBxN54dz7pbDie/i);
+  });
+
+  test('a venue outage leaves the observation intact and states that no attestation is on record', async ({ page }) => {
+    await page.route('**/api/rwa/venues?**', route => route.fulfill({ status: 503, json: { state: 'unavailable', reason: 'Meteora’s data API could not be reached. Inspection results are unaffected.' } }));
+    await page.goto('/rwa');
+    await ready(page);
+    const venues = page.getByRole('region', { name: 'Liquidity venues on Meteora' });
+    await expect(venues).toHaveAttribute('data-venues-state', 'unavailable');
+    await expect(venues).toContainText('Inspection results are unaffected.');
+    await expect(page.locator('.identity-card')).toContainText(VALID_MINT);
+    await expect(page.locator('.reserve-badge')).toHaveAttribute('data-reserve-state', 'none');
   });
 
   for (const width of [360, 390, 768, 1440]) {

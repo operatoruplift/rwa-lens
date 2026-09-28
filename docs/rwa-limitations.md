@@ -12,6 +12,22 @@ accreditation, sanctions status, redemption rights or investment performance.
 The official issuer manifest is attribution, separate from the observed mint.
 A content hash detects changes to a known JSON payload; it is not an attestation.
 
+## Third-party venue data and reserve links
+
+- Liquidity venues come from Meteora's public DLMM data API, read by the server
+  with a fixed host allowlist. TVL, volume, fees and fee APY are Meteora's figures,
+  rounded for display; fee APY annualizes the last 24 hours of fees. They can be
+  stale, incomplete or wrong, cover Meteora DLMM pools only, and do not predict
+  returns. A DLMM position earns only inside its price bins and can end holding a
+  different token mix (impermanent loss).
+- Pools under $100 TVL are counted but not listed. Blacklisted pools and pools
+  that only match by name are excluded. Devnet inspections show no venues.
+- Venue data is fetched after the inspection, is not stored in the observation,
+  export or report, and never changes readiness or any other verdict.
+- The reserve badge links the issuer's published reserve reports when the
+  attribution source records one. RWA Lens does not fetch, parse, audit or verify
+  those reports, and cannot tell whether they are current or sufficient.
+
 ## Accounting
 
 - Exact public raw units and supply use decimal strings / BigInt. Standard

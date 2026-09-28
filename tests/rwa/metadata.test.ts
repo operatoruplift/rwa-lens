@@ -112,6 +112,13 @@ describe('curated issuer attribution', () => {
     expect(retrievalFields).toEqual(['retrievedAtUtc']);
     expect(() => new Date(asset.retrievedAtUtc).toISOString()).not.toThrow();
   });
+  it('carries the issuer reserve-report link and note the manifest records, and nothing else about reserves', async () => {
+    vi.stubEnv('RWA_REGISTRY_URL', '');
+    const record = await lookupRegistry(asset.mint, 'mainnet-beta');
+    expect(asset.reserveProofUrl).toBe('https://ondo.finance/usdy');
+    expect(record).toMatchObject({ reserveProofUrl: asset.reserveProofUrl, reserveProofNote: asset.reserveProofNote });
+    expect(Object.keys(record!).filter(key => /reserve/i.test(key)).sort()).toEqual(['reserveProofNote', 'reserveProofUrl']);
+  });
   it('states no attribution for a mint the manifest does not list', async () => {
     vi.stubEnv('RWA_REGISTRY_URL', '');
     expect(await lookupRegistry('A1KLoBrKBde8Ty9qtNQUtq3C2ortoC3u7twggz7sEto7', 'mainnet-beta')).toBeNull();
