@@ -14,6 +14,8 @@ export type MetadataUriPolicy =
   | { state: 'blocked' | 'not-configured'; reason: string };
 const TIMEOUT_MS = 5000;
 const MAX_BYTES = 128 * 1024;
+/** The largest cap a caller may ask for. */
+const MAX_CALLER_BYTES = 2 * 1024 * 1024;
 const CACHE_TTL_MS = 60_000;
 const MAX_CACHE_ENTRIES = 500;
 const blocked = new BlockList();
@@ -55,7 +57,8 @@ const defaults: Dependencies = { resolve: hostname => lookup(hostname, { all: tr
 
 /** The HTTPS connection uses the approved DNS result, preserving TLS hostname verification.
  * A second resolver call cannot rebind the host to a private address. No redirect is followed. */
-async function load(uri: string, deps: Dependencies, schema: z.ZodType<Record<string, unknown>> = metadataBodySchema): Promise<MetadataOutcome> {
+async function load(uri: string, deps: Dependencies, schema: z.ZodType<Record<string, unknown>> = metadataBodySchema, maxBytes = MAX_BYTES): Promise<MetadataOutcome> {
+  const tooLarge = `The document exceeds ${Math.round(maxBytes / 1024)} KB.`;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
   try {
@@ -86,13 +89,13 @@ async function load(uri: string, deps: Dependencies, schema: z.ZodType<Record<st
           response.destroy(); finish({ state: 'blocked', reason: 'Only a JSON content type is accepted.' }); return;
         }
         const length = Number(response.headers['content-length']);
-        if (Number.isFinite(length) && length > MAX_BYTES) {
-          response.destroy(); finish({ state: 'blocked', reason: 'The metadata document exceeds 128 KB.' }); return;
+        if (Number.isFinite(length) && length > maxBytes) {
+          response.destroy(); finish({ state: 'blocked', reason: tooLarge }); return;
         }
         let total = 0; const chunks: Buffer[] = [];
         response.on('data', (chunk: Buffer) => {
           total += chunk.length;
-          if (total > MAX_BYTES) { response.destroy(); finish({ state: 'blocked', reason: 'The metadata document exceeds 128 KB.' }); }
+          if (total > maxBytes) { response.destroy(); finish({ state: 'blocked', reason: tooLarge }); }
           else chunks.push(Buffer.from(chunk));
         });
         response.on('error', () => finish({ state: 'failed', reason: 'The metadata document could not be read.' }));
@@ -127,9 +130,12 @@ export function createMetadataFetcher(deps: Dependencies = defaults) {
 }
 export const fetchMetadata = createMetadataFetcher();
 
-/** Optional registry adapters use the same DNS-pinned, bounded HTTPS policy. */
-export async function fetchAllowedJson(uri: string, allowed: string[], schema: z.ZodType<Record<string, unknown>>): Promise<MetadataOutcome> {
+/**
+ * Optional registry adapters use the same DNS-pinned, bounded HTTPS policy. A
+ * caller that reads a known large catalog may raise the size cap for that call.
+ */
+export async function fetchAllowedJson(uri: string, allowed: string[], schema: z.ZodType<Record<string, unknown>>, limits: { maxBytes?: number } = {}): Promise<MetadataOutcome> {
   const parsed = metadataUriSchema.safeParse(uri);
   if (!parsed.success || !isHostAllowed(parsed.data, allowed)) return { state: 'blocked', reason: 'The HTTPS host policy rejected this URI.' };
-  return load(parsed.data, defaults, schema);
+  return load(parsed.data, defaults, schema, Math.min(limits.maxBytes ?? MAX_BYTES, MAX_CALLER_BYTES));
 }

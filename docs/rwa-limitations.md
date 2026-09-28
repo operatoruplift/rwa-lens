@@ -22,6 +22,13 @@ A content hash detects changes to a known JSON payload; it is not an attestation
 
 ## Third-party venue data and reserve links
 
+- The yield screener joins three sources: Meteora's pool search, the xStocks public
+  API's catalog and market sessions, and RWA Lens's own Ondo attribution. It covers
+  Meteora DLMM pools only, lists at most five pools per token, and a snapshot can be
+  up to an hour old (it says when it is refreshing). Market session is the
+  issuer's report for the underlying share; the token itself may trade on chain at
+  any hour. A pool that pairs two listed assets appears under each.
+
 - Liquidity venues come from Meteora's public DLMM data API, read by the server
   with a fixed host allowlist. TVL, volume, fees and fee APY are Meteora's figures,
   rounded for display; fee APY annualizes the last 24 hours of fees. They can be

@@ -9,6 +9,7 @@ transfer controls.
 
 [Open the app](https://rwalensonsolana.vercel.app) ·
 [Inspector](https://rwalensonsolana.vercel.app/rwa) ·
+[Yield](https://rwalensonsolana.vercel.app/yield) ·
 [Brand kit](https://rwalensonsolana.vercel.app/brand-kit) ·
 [Verification evidence](docs/rwa-demo-evidence.md) ·
 [Capability matrix](docs/rwa-capability-matrix.md) ·
@@ -78,6 +79,22 @@ A **reserve badge** says whether the attribution source links the issuer's own
 reserve reports. For USDY it links Ondo's USDY page, which publishes daily and
 monthly third-party reserve attestations. RWA Lens links those reports; it does not
 read, audit or verify them, and a token without a recorded link says so plainly.
+
+## Yield opportunities across tokenized assets
+
+[`/yield`](https://rwalensonsolana.vercel.app/yield) lists every Meteora DLMM pool
+with at least $100 TVL that holds Ondo USDY or any xStock with a Solana
+deployment (about 1,000 tokens checked), with TVL, 24-hour volume and fees,
+Meteora's fee APY, bin step and the issuer's reported market session. Filters for
+issuer, pair and minimum liquidity live in the URL, so a view can be shared, and
+each row links to the inspector (`/rwa?mint=<address>` opens it on that token) and
+to the pool on Meteora. The server builds one snapshot from the xStocks public API
+(catalog cached for six hours) and Meteora's filtered pool search (about 55
+bounded, DNS-pinned requests per refresh, 80 on a cold start), keeps it fresh for
+10 minutes and serves it stale for up to an hour while it refreshes; the CDN
+caches the response for five minutes. One-day fee annualisations above
+1,000% are shown as "over 1,000%". It is third-party market data: never part of an
+inspection, and not evidence of backing or advice.
 
 ## Deploy into a pool (optional, operator-enabled)
 
@@ -217,6 +234,7 @@ optional remote registry and NAV adapters cannot supply invented fiat values.
 | `GET/POST /api/rwa/reports` | Optional session-owned reports; the server re-inspects instead of trusting uploaded observations. |
 | `GET /api/rwa/reports/[reportId]` | Session-owner lookup; another owner's opaque ID returns 404. |
 | `GET /api/rwa/venues` | Meteora DLMM pools holding the exact mint; third-party market data, never part of an observation. |
+| `GET /api/rwa/screener` | Snapshot of pools holding known tokenized assets (xStocks catalog, Ondo attribution); no parameters, CDN-cacheable. |
 | `POST /api/rwa/deploy` | Only with `RWA_DEPLOY_ENABLED`: same-origin, rate-limited; returns an unsigned, simulated v0 transaction for the caller's wallet, or a plain refusal. |
 | `GET /api/rwa/deploy/status` | Only with `RWA_DEPLOY_ENABLED`: confirmation for a submitted signature and its last valid block height. |
 

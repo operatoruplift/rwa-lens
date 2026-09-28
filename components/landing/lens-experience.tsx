@@ -16,6 +16,7 @@ function Header({ reportsEnabled }: { reportsEnabled: boolean }) {
     <header className={styles.header}>
       <Link href="/" className={styles.homeLink} aria-label="RWA Lens home"><Brand light /></Link>
       <nav className={styles.navigation} aria-label="Main navigation">
+        <Link href="/yield" className={styles.desktopLink}>Yield</Link>
         <Link href="/demo" className={styles.desktopLink}>Demo</Link>
         <Link href="/technical" className={styles.desktopLink}>Technical</Link>
         <Link href="/pitch" className={styles.desktopLink}>Pitch</Link>
@@ -148,7 +149,7 @@ function Footer({ deploy }: { deploy: boolean }) {
         <div className={styles.footerTop}>
           <Link href="/" aria-label="RWA Lens home"><Brand light /></Link>
           <p>Clarity for real-world tokens.</p>
-          <div><Link href="/demo">Demo <ArrowUpRight size={14} /></Link><Link href="/technical">Technical <ArrowUpRight size={14} /></Link><Link href="/pitch">Pitch <ArrowUpRight size={14} /></Link><Link href="/brand-kit">Brand kit <ArrowUpRight size={14} /></Link><a href={sourceUrl} target="_blank" rel="noreferrer noopener">Source <ArrowUpRight size={14} /></a></div>
+          <div><Link href="/yield">Yield <ArrowUpRight size={14} /></Link><Link href="/demo">Demo <ArrowUpRight size={14} /></Link><Link href="/technical">Technical <ArrowUpRight size={14} /></Link><Link href="/pitch">Pitch <ArrowUpRight size={14} /></Link><Link href="/brand-kit">Brand kit <ArrowUpRight size={14} /></Link><a href={sourceUrl} target="_blank" rel="noreferrer noopener">Source <ArrowUpRight size={14} /></a></div>
         </div>
         <div className={styles.footerBottom}><span>OBSERVATIONS, NOT ATTESTATIONS.</span><p>RWA Lens does not establish asset backing, legal compliance or investment performance. {deploy ? 'Inspection never signs or moves assets; the optional deploy action asks your own wallet to sign one transaction you review first.' : 'No transaction signing or asset movement.'} Optional report sign-in uses a message, never a transaction.</p><span>RWA LENS / SOLANA</span></div>
       </footer>
@@ -156,7 +157,7 @@ function Footer({ deploy }: { deploy: boolean }) {
   );
 }
 
-export function LensExperience({ compact = false }: { compact?: boolean }) {
+export function LensExperience({ compact = false, initialMint }: { compact?: boolean; initialMint?: string }) {
   const cluster = process.env.RWA_CLUSTER === 'devnet' ? 'devnet' : 'mainnet-beta';
   const reportsEnabled = repositoryState() === 'ready' && sessionsConfigured();
   const deploy = deployEnabled();
@@ -173,7 +174,7 @@ export function LensExperience({ compact = false }: { compact?: boolean }) {
             <div><p className={styles.sectionLabel}>01 / THE INSPECTOR</p>{compact ? <h1 id="page-title">The evidence,<br /><span>in focus.</span></h1> : <h2 id="inspection-title">The evidence,<br /><span>in focus.</span></h2>}</div>
             <div><p>Start with a mint address. Read its identity, understand its controls, and trace the numbers to their source. Add a public wallet to inspect a holder&rsquo;s balance.</p><span><span className={styles.statusDot} />SOLANA {cluster === 'mainnet-beta' ? 'MAINNET' : 'DEVNET'} <span aria-hidden="true">/</span> NO WALLET CONNECTION</span></div>
           </div>
-          <RwaLensShell cluster={cluster} reportsEnabled={reportsEnabled} fixturesEnabled={fixturesEnabled()} deployEnabled={deploy} />
+          <RwaLensShell cluster={cluster} reportsEnabled={reportsEnabled} fixturesEnabled={fixturesEnabled()} deployEnabled={deploy} initialMint={initialMint} />
         </section>
         <Method immersive={!compact} />
         {compact ? null : <Resources />}

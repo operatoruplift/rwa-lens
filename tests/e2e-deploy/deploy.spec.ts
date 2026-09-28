@@ -4,6 +4,7 @@ import bs58 from 'bs58';
 import { expect, test, type Page } from '@playwright/test';
 import { inspectResultSchema } from '../../lib/rwa/schema';
 import evidence from '../../docs/evidence/live-observations.json';
+import { screenerFixture, TSLAX } from '../e2e/yield-fixture';
 
 // Archived mainnet payloads replayed inside browser interception only.
 const mintObservation = inspectResultSchema.parse(evidence.observations[0].result);
@@ -181,6 +182,21 @@ test.describe('operator-enabled deploy', () => {
     await mkdirScreens();
     await page.screenshot({ path: path.join(screenshotDir, 'deploy-review-390.png'), fullPage: false });
     await runAxe(page);
+  });
+
+  test('the yield screener offers deploy on USDC pools and previews the chosen one', async ({ page }) => {
+    await installWallet(page);
+    await page.route('**/api/rwa/screener', route => route.fulfill({ json: screenerFixture }));
+    let body: unknown = null;
+    await page.route('**/api/rwa/deploy', route => { body = route.request().postDataJSON(); return route.fulfill({ status: 422, json: { state: 'refused', code: 'insufficient-usdc', message: 'This wallet holds 0 USDC in its main USDC account; the deploy needs 10 USDC.' } }); });
+    await page.goto('/yield');
+    await expect(page.getByRole('button', { name: /Deploy USDC/ })).toHaveCount(2);
+    await page.getByRole('button', { name: 'Deploy USDC into the TSLAx-USDC pool' }).click();
+    const dialog = page.getByRole('dialog', { name: 'Deploy USDC into TSLAx-USDC' });
+    await dialog.getByRole('button', { name: 'Connect Test Wallet' }).click();
+    await dialog.getByRole('button', { name: 'Preview deploy' }).click();
+    await expect(dialog.getByRole('alert')).toContainText('the deploy needs 10 USDC');
+    expect(body).toEqual({ mint: TSLAX, pool: 'BCZLEgknvcyCsJ9ERRN38U4gBTNn4ftU11fEtV3XHnK2', owner: WALLET, amount: '10', slippageBps: 50 });
   });
 
   test('the landing copy says inspection stays read-only while deploy is enabled', async ({ page }) => {
