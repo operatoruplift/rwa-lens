@@ -1,0 +1,260 @@
+{
+  "recordedOn": "2026-09-30",
+  "ui": "Production build of the refreshed RWA Lens workspace",
+  "apiOrigin": "https://rwalensonsolana.vercel.app",
+  "network": "mainnet-beta",
+  "inspectedMint": "A1KLoBrKBde8Ty9qtNQUtq3C2ortoC3u7twggz7sEto6",
+  "primaryCaptureStartedAt": "2026-09-30T11:04:01.600Z",
+  "completedScenes": 13,
+  "browserErrors": [],
+  "captureFailure": null,
+  "actualBackendReads": [
+    {
+      "path": "/api/rwa/inspect",
+      "status": 200,
+      "mode": "live",
+      "fetchedAt": "2026-09-30T11:04:08.919Z",
+      "mint": "A1KLoBrKBde8Ty9qtNQUtq3C2ortoC3u7twggz7sEto6"
+    },
+    {
+      "path": "/api/rwa/venues",
+      "status": 200,
+      "mode": "ok",
+      "fetchedAt": "2026-09-30T11:04:09.393Z",
+      "mint": null
+    },
+    {
+      "path": "/api/rwa/inspect",
+      "status": 200,
+      "mode": "live",
+      "fetchedAt": "2026-09-30T11:04:25.470Z",
+      "mint": "A1KLoBrKBde8Ty9qtNQUtq3C2ortoC3u7twggz7sEto6"
+    },
+    {
+      "path": "/api/rwa/venues",
+      "status": 200,
+      "mode": "ok",
+      "fetchedAt": "2026-09-30T11:04:09.393Z",
+      "mint": null
+    },
+    {
+      "path": "/api/rwa/screener",
+      "status": 200,
+      "mode": "ok",
+      "fetchedAt": "2026-09-30T10:52:51.728Z",
+      "mint": null
+    },
+    {
+      "path": "/api/rwa/inspect",
+      "status": 200,
+      "mode": "live",
+      "fetchedAt": "2026-09-30T11:05:24.753Z",
+      "mint": "A1KLoBrKBde8Ty9qtNQUtq3C2ortoC3u7twggz7sEto6"
+    },
+    {
+      "path": "/api/rwa/venues",
+      "status": 200,
+      "mode": "ok",
+      "fetchedAt": "2026-09-30T11:05:25.206Z",
+      "mint": null
+    },
+    {
+      "path": "/api/rwa/screener",
+      "status": 200,
+      "mode": "ok",
+      "fetchedAt": "2026-09-30T11:05:15.585Z",
+      "mint": null
+    },
+    {
+      "path": "/api/rwa/inspect",
+      "status": 200,
+      "mode": "live",
+      "fetchedAt": "2026-09-30T11:05:46.353Z",
+      "mint": "A1KLoBrKBde8Ty9qtNQUtq3C2ortoC3u7twggz7sEto6"
+    },
+    {
+      "path": "/api/rwa/venues",
+      "status": 200,
+      "mode": "ok",
+      "fetchedAt": "2026-09-30T11:05:46.759Z",
+      "mint": null
+    },
+    {
+      "path": "/api/rwa/inspect",
+      "status": 200,
+      "mode": "live",
+      "fetchedAt": "2026-09-30T11:05:46.353Z",
+      "mint": "A1KLoBrKBde8Ty9qtNQUtq3C2ortoC3u7twggz7sEto6"
+    },
+    {
+      "path": "/api/rwa/venues",
+      "status": 200,
+      "mode": "ok",
+      "fetchedAt": "2026-09-30T11:05:46.759Z",
+      "mint": null
+    }
+  ],
+  "downloads": [
+    {
+      "name": "rwa-lens-A1KLoBrKBde8Ty9qtNQUtq3C2ortoC3u7twggz7sEto6.json",
+      "bytes": 4044,
+      "sha256": "227247a1701935504f691f2de90815e208546e7513d166cfa3cd8e898921c674"
+    },
+    {
+      "name": "rwa-lens-A1KLoBrKBde8Ty9qtNQUtq3C2ortoC3u7twggz7sEto6.csv",
+      "bytes": 2762,
+      "sha256": "2e8df102c14feabfaa17ea4a546eebc5f1a1a88af7ebc9b7849dd0e24b491646"
+    }
+  ],
+  "captureLedgerSha256": "15bb7345bd043d82278cc85c47918bcd74957bb68f58af20156cabd71d8d9ffe",
+  "sourceRecordings": [
+    {
+      "file": "journey.webm",
+      "sha256": "f0f1f8ed966ba137d1529cfd2206f1cdedb7042025586efe4f627b6c1a52d68b"
+    },
+    {
+      "file": "alternate-take.webm",
+      "sha256": "0c75c6f0858bd87a6745813aa91d046b1a51ca29a4520586a357abd34ee9ed89"
+    }
+  ],
+  "edit": "Two genuine recordings of the same refreshed UI. Only verified decoded ranges are used; recorded frames are held at native speed. The closing reuses the animated hero. No response fabrication, wallet signature, or transaction.",
+  "audio": {
+    "provider": "Runway",
+    "preset": "James",
+    "type": "Generated generic preset",
+    "speed": 1,
+    "fullIntegratedLUFS": -16.15,
+    "fullTruePeakDbTP": -1.48,
+    "overviewIntegratedLUFS": -16.45,
+    "overviewTruePeakDbTP": -1.49,
+    "fullLastWordEndSeconds": 88.84,
+    "overviewLastWordEndSeconds": 32.64
+  },
+  "captions": {
+    "transcriber": "faster-whisper",
+    "scriptSimilarity": 0.9364705882352942,
+    "authoredTimedWords": 215,
+    "alignedCaptionWords": 215,
+    "fullDisplayCues": 64,
+    "overviewDisplayCues": 25,
+    "displayNormalization": "Spelled acronyms are displayed as RWA, USDY and CSV; adjacent split acronym cues are merged without changing their spoken interval.",
+    "nativePlaybackChecks": [
+      {
+        "seconds": 0.5,
+        "text": "A token balance tells"
+      },
+      {
+        "seconds": 46.6,
+        "text": "as JSON or CSV."
+      },
+      {
+        "seconds": 88.5,
+        "text": "Clearer vision."
+      }
+    ],
+    "delivery": "Selectable WebVTT tracks; captions enabled by default in the app."
+  },
+  "verification": {
+    "visualChaptersReviewed": 13,
+    "fullVideoAndAudioDecoded": true,
+    "overviewVideoAndAudioDecoded": true,
+    "exportContentHashChecked": true,
+    "humanListeningClaimed": false
+  },
+  "files": [
+    {
+      "file": "public/demo/rwa-lens-narration.mp3",
+      "bytes": 1428628,
+      "sha256": "88c367fa6aff64f67010b68a1639fcf15473f56cfb784f5ea81556644de74f69",
+      "media": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "mp3",
+            "codec_type": "audio",
+            "sample_rate": "44100",
+            "duration": "89.211066"
+          }
+        ],
+        "format": {
+          "duration": "89.211066"
+        }
+      }
+    },
+    {
+      "file": "public/demo/rwa-lens-overview.mp4",
+      "bytes": 5767945,
+      "sha256": "33ff4f34d2cd01a81ced85af4a14eb7642401c4e97e9f2f83abb76ddce65cf8b",
+      "media": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "h264",
+            "codec_type": "video",
+            "width": 1920,
+            "height": 1080,
+            "duration": "33.800000"
+          },
+          {
+            "codec_name": "aac",
+            "codec_type": "audio",
+            "sample_rate": "48000",
+            "duration": "33.889000"
+          }
+        ],
+        "format": {
+          "duration": "33.889000"
+        }
+      }
+    },
+    {
+      "file": "public/demo/rwa-lens-overview.vtt",
+      "bytes": 1319,
+      "sha256": "68d51dad2341ffc55166a480290ed1b3bc0e2738e9ab9b2b8c27bc23e59d2f0a"
+    },
+    {
+      "file": "public/demo/rwa-lens-transcript.txt",
+      "bytes": 1252,
+      "sha256": "fcae288aedaf629f551c27c10ab0c07e58e7d6c7ab74644c0148a73cfb293abe"
+    },
+    {
+      "file": "public/demo/rwa-lens-walkthrough-poster.jpg",
+      "bytes": 185153,
+      "sha256": "9e43eb22179b03d3b60c5b16b6fa28e43dc420475d78a6b63bca029943f8775c"
+    },
+    {
+      "file": "public/demo/rwa-lens-walkthrough.mp4",
+      "bytes": 11479521,
+      "sha256": "d1d334473a704317a62fc77cb8665d4be7b6612c3aeb483835c21838af32d002",
+      "media": {
+        "programs": [],
+        "stream_groups": [],
+        "streams": [
+          {
+            "codec_name": "h264",
+            "codec_type": "video",
+            "width": 1920,
+            "height": 1080,
+            "duration": "89.998698"
+          },
+          {
+            "codec_name": "aac",
+            "codec_type": "audio",
+            "sample_rate": "48000",
+            "duration": "90.089000"
+          }
+        ],
+        "format": {
+          "duration": "90.089000"
+        }
+      }
+    },
+    {
+      "file": "public/demo/rwa-lens-walkthrough.vtt",
+      "bytes": 3415,
+      "sha256": "5728d2db9370a4e688a0f20381dbe5eb2619e38b176081500d1dc2c316aa293d"
+    }
+  ]
+}

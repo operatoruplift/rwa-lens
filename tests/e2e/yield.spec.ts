@@ -15,7 +15,7 @@ test.describe('yield screener (deploy flag off)', () => {
 
   test('lists pools, keeps filters in the URL and links each token to the inspector', async ({ page }) => {
     await page.goto('/yield');
-    await expect(page.getByRole('heading', { name: 'Where tokenized assets earn fees.' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Yield opportunities', exact: true })).toBeVisible();
     await expect(page.getByText('4 of 4 pools · 3 assets with a listed pool of 1,075 checked')).toBeVisible();
     await expect(rows(page)).toHaveCount(4);
     await expect(rows(page).first()).toContainText('NVDAx-SOL');

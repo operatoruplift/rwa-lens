@@ -34,6 +34,7 @@ async function inspectHolder(page: Page) {
   await ready(page);
   await page.getByLabel(/wallet address/i).fill(OWNER);
   await page.getByRole('button', { name: 'Inspect', exact: true }).click();
+  await page.getByRole('tab', { name: 'Balances', exact: true }).click();
   await expect(page.getByTestId('raw-balance')).toHaveText(holderObservation.balances!.display.rawAmount);
 }
 
@@ -53,6 +54,7 @@ test.describe('RWA Lens mainnet product', () => {
       await ready(page);
       await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
       await expect(page.locator('.identity-card')).toContainText(VALID_MINT);
+      if (route === '/rwa') await page.getByRole('tab', { name: 'Balances', exact: true }).click();
       await expect(page.getByRole('heading', { name: 'Add a wallet. See the full picture.' })).toBeVisible();
       await expect(page.getByTestId('raw-balance')).toHaveCount(0);
       expect(await page.locator('body').innerText()).not.toMatch(/\b(simulation|example|public rehearsal|sample|illustrative)\b/i);
@@ -64,6 +66,7 @@ test.describe('RWA Lens mainnet product', () => {
   test('source evidence includes the original slots, provider and observation time', async ({ page }) => {
     await page.goto('/rwa');
     await ready(page);
+    await page.getByRole('tab', { name: 'Evidence', exact: true }).click();
     await page.locator('#evidence > summary').click();
     await expect(page.getByRole('region', { name: 'RPC sources' })).toBeVisible();
     await expect(page.locator('#evidence .evidence-body')).toContainText(mintObservation.provenance.slot!);
@@ -75,6 +78,7 @@ test.describe('RWA Lens mainnet product', () => {
     await page.goto('/rwa');
     await ready(page);
     await expect(page.getByText(/cannot carry Token-2022 extensions/i).first()).toBeVisible();
+    await page.getByRole('tab', { name: 'Controls', exact: true }).click();
     await expect(page.getByText('No Token-2022 extensions were found on this mint.')).toBeVisible();
     await expect(page.getByTestId('raw-balance')).toHaveCount(0);
   });
@@ -104,6 +108,7 @@ test.describe('RWA Lens mainnet product', () => {
     const request = page.waitForRequest(request => request.url().includes('/api/rwa/inspect'));
     await page.getByRole('button', { name: 'Inspect', exact: true }).click();
     expect((await request).postDataJSON()).toEqual({ mode: 'live', cluster: 'mainnet-beta', mint: VALID_MINT, owner: OWNER });
+    await page.getByRole('tab', { name: 'Balances', exact: true }).click();
     await expect(page.getByTestId('raw-balance')).toHaveText(holderObservation.balances!.display.rawAmount);
     await page.locator('.account-details > summary').click();
     await expect(page.locator('.account-details')).toContainText(OWNER);
@@ -117,8 +122,10 @@ test.describe('RWA Lens mainnet product', () => {
     await page.getByLabel('Mint address', { exact: true }).fill(token2022Observation.identity!.mint);
     await page.getByLabel(/wallet address/i).fill(token2022Observation.balances!.owner!);
     await page.getByRole('button', { name: 'Inspect', exact: true }).click();
+    await page.getByRole('tab', { name: 'Controls', exact: true }).click();
     await expect(page.getByRole('heading', { name: 'PermanentDelegate', exact: true })).toBeVisible();
     await expect(page.getByRole('heading', { name: 'ScaledUiAmountConfig', exact: true })).toBeVisible();
+    await page.getByRole('tab', { name: 'Balances', exact: true }).click();
     await expect(page.getByText('Partial public balance', { exact: true })).toBeVisible();
     await expect(page.getByText(/not a complete wallet balance/)).toBeVisible();
     await expect(page.getByTestId('raw-balance')).toHaveText(token2022Observation.balances!.display.rawAmount);
@@ -155,6 +162,7 @@ test.describe('RWA Lens mainnet product', () => {
   test('disabled cloud reports leave guest JSON and CSV exports available', async ({ page }) => {
     await page.goto('/rwa');
     await ready(page);
+    await page.getByRole('tab', { name: 'Evidence', exact: true }).click();
     await expect(page.getByRole('button', { name: 'Save this report' })).toHaveCount(0);
     await expect(page.getByText(/cloud reports are not enabled on this deployment/i)).toBeVisible();
     await expect(page.getByRole('button', { name: 'Export JSON' })).toBeEnabled();
@@ -179,6 +187,7 @@ test.describe('RWA Lens mainnet product', () => {
     await page.getByRole('button', { name: 'Inspect', exact: true }).click();
     await expect(page.getByText('Inspection unavailable.', { exact: true })).toBeVisible();
     await expect(page.getByText(/previous observation remains below with its original timestamp/)).toBeVisible();
+    await page.getByRole('tab', { name: 'Evidence', exact: true }).click();
     await page.locator('#evidence > summary').click();
     await expect(page.locator('#evidence')).toContainText(mintObservation.provenance.fetchedAt);
     await expect(page.getByRole('button', { name: 'Export JSON' })).toBeEnabled();
@@ -287,6 +296,7 @@ test.describe('RWA Lens mainnet product', () => {
     await expect(badge).toHaveAttribute('data-reserve-state', 'linked');
     await expect(badge.getByRole('link', { name: /Issuer reserve reports/ })).toHaveAttribute('href', 'https://ondo.finance/usdy');
     await expect(badge).toContainText('does not read or verify');
+    await page.getByRole('tab', { name: 'Liquidity', exact: true }).click();
     const venues = page.getByRole('region', { name: 'Liquidity venues on Meteora' });
     await expect(venues).toHaveAttribute('data-venues-state', 'ok');
     await expect(venues).toContainText('2 of 3 pools listed');
@@ -306,9 +316,11 @@ test.describe('RWA Lens mainnet product', () => {
     await page.route('**/api/rwa/venues?**', route => route.fulfill({ status: 503, json: { state: 'unavailable', reason: 'Meteora’s data API could not be reached. Inspection results are unaffected.' } }));
     await page.goto('/rwa');
     await ready(page);
+    await page.getByRole('tab', { name: 'Liquidity', exact: true }).click();
     const venues = page.getByRole('region', { name: 'Liquidity venues on Meteora' });
     await expect(venues).toHaveAttribute('data-venues-state', 'unavailable');
     await expect(venues).toContainText('Inspection results are unaffected.');
+    await page.getByRole('tab', { name: 'Overview', exact: true }).click();
     await expect(page.locator('.identity-card')).toContainText(VALID_MINT);
     await expect(page.locator('.reserve-badge')).toHaveAttribute('data-reserve-state', 'none');
   });
@@ -331,7 +343,7 @@ test.describe('RWA Lens mainnet product', () => {
     await page.goto('/rwa');
     await ready(page);
     await page.keyboard.press('Tab');
-    await expect(page.getByRole('link', { name: 'Skip to inspection' })).toBeFocused();
+    await expect(page.getByRole('link', { name: 'Skip to inspector' })).toBeFocused();
     await page.getByLabel('Mint address', { exact: true }).focus();
     expect(await page.getByLabel('Mint address', { exact: true }).evaluate(element => getComputedStyle(element).outlineStyle)).not.toBe('none');
     await page.keyboard.press('Tab');
@@ -343,12 +355,12 @@ test.describe('RWA Lens mainnet product', () => {
     await page.goto('/rwa');
     await inspectHolder(page);
     expect(await page.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches)).toBe(true);
-    expect(await page.locator('.inspection-results').evaluate(element => getComputedStyle(element).transitionDuration)).toBe('1e-05s');
+    await expect(page.locator('.inspection-results')).toHaveCSS('transition-duration', '0s');
   });
 
   test('brand kit serves every advertised asset and stays reachable from the product', async ({ page }) => {
     await page.goto('/rwa');
-    await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link', { name: 'Brand kit' }).click();
+    await page.getByRole('navigation', { name: 'Resources', exact: true }).getByRole('link', { name: 'Brand kit', exact: true }).click();
     await expect(page).toHaveURL(/\/brand-kit$/);
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(/Clarity,\s*by design\./);
     await page.evaluate(async () => {
@@ -376,7 +388,8 @@ test.describe('RWA Lens mainnet product', () => {
         expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1)).toBe(false);
       }
       await page.goto('/');
-      await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link', { name: 'Inspect', exact: true }).click();
+      await page.getByRole('navigation', { name: 'Main navigation' }).getByRole('link', { name: 'Open app', exact: true }).click();
+      await expect(page).toHaveURL(/\/rwa$/);
       await expect(page.getByLabel('Mint address', { exact: true })).toBeVisible();
       await ready(page);
     });

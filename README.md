@@ -9,6 +9,7 @@ transfer controls.
 
 [Open the app](https://rwalensonsolana.vercel.app) ·
 [Inspector](https://rwalensonsolana.vercel.app/rwa) ·
+[Watchlist](https://rwalensonsolana.vercel.app/watchlist) ·
 [Yield](https://rwalensonsolana.vercel.app/yield) ·
 [Guided demo](https://rwalensonsolana.vercel.app/demo) ·
 [Technical breakdown](https://rwalensonsolana.vercel.app/technical) ·
@@ -16,7 +17,7 @@ transfer controls.
 [Brand kit](https://rwalensonsolana.vercel.app/brand-kit) ·
 [Verification evidence](docs/rwa-demo-evidence.md) ·
 [Capability matrix](docs/rwa-capability-matrix.md) ·
-[Two-minute demo](docs/rwa-demo-script.md)
+[Presenter walkthrough](public/presentation/rwa-lens-demo-guide.md)
 
 **Read-only by default.** Inspection reads public chain state and never signs
 or submits transactions, moves assets, mints, settles, lends or takes custody.

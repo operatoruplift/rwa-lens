@@ -1,0 +1,18 @@
+.demo { margin-bottom:62px; }
+.heading { display:flex; align-items:flex-end; justify-content:space-between; gap:20px; margin-bottom:25px; }
+.heading p { font:10px ui-monospace,monospace; letter-spacing:1.5px; color:#5b6751; }
+.heading h2 { margin:15px 0 0; font-size:clamp(25px,3vw,40px); line-height:1.15; font-weight:450; letter-spacing:-1.5px; }
+.heading > span { font:10px ui-monospace,monospace; white-space:nowrap; color:#626c59; }
+.frame { padding:8px; border:1px solid #ced5c0; border-radius:14px; background:#172018; box-shadow:0 18px 55px #1b2b1010; }
+.frame video { width:100%; aspect-ratio:16/9; display:block; border-radius:8px; background:#172018; }
+.detail { display:grid; grid-template-columns:1fr 1fr; align-items:start; gap:35px; margin-top:22px; }
+.detail > p { font-size:12px; line-height:1.8; color:#606959; max-width:64ch; }
+.links { display:flex; flex-wrap:wrap; align-items:center; justify-content:flex-end; gap:6px 18px; }
+.links a { display:inline-flex; align-items:center; justify-content:center; gap:7px; min-height:44px; font-size:11px; }
+.links .launch { border-radius:30px; padding:0 18px; background:#172018; color:#ecf3e5; }
+.links a:hover { text-decoration:underline; text-underline-offset:4px; }
+.overview { border-top:1px solid #cdd4c2; border-bottom:1px solid #cdd4c2; margin-top:28px; padding:8px 0; }
+.overview summary { min-height:48px; align-content:center; font-size:13px; font-weight:500; }
+.overview summary span { float:right; font:9px/48px ui-monospace,monospace; letter-spacing:1px; color:#626c59; }
+.overview[open] summary { margin-bottom:15px; }
+@media(max-width:800px) { .heading { align-items:start; flex-direction:column; gap:12px; } .detail { grid-template-columns:1fr; gap:14px; } .links { justify-content:flex-start; } .frame { padding:4px; border-radius:9px; } .demo { margin-bottom:42px; } }

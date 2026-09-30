@@ -1,0 +1,14 @@
+.sections { margin-top:22px; }
+.tabs { display:flex; gap:5px; overflow-x:auto; padding:5px; border:1px solid var(--line); border-radius:11px; background:#e9ede1; scrollbar-width:thin; }
+.tabs button { display:flex; align-items:center; justify-content:center; gap:8px; flex:1; min-width:115px; padding:11px 16px; border:1px solid transparent; border-radius:7px; color:var(--navy-soft); font-size:12px; font-weight:550; transition:background .16s,color .16s; }
+.tabs button:hover { background:#f7f9f1; }
+.tabs button[aria-selected='true'] { background:white; border-color:#d9dfce; color:#253c1b; box-shadow:0 1px 3px #1b321010; }
+.panel { padding-top:21px; min-width:0; }
+.panel[hidden] { display:none; }
+.panel > :first-child { margin-top:0; }
+.panel :global(.balance-column) { max-width:800px; margin-inline:auto; }
+.panel :global(.empty-balance) { min-height:300px; }
+.panel :global(.control-results) { margin-top:0; }
+.panel :global(.issuer-attribution) { margin-bottom:18px; }
+@media(max-width:600px) { .tabs { gap:2px; } .tabs button { min-width:0; padding:10px 4px; font-size:10.5px; gap:6px; } .tabs button svg { display:none; } .panel { padding-top:16px; } }
+@media(prefers-reduced-motion:reduce) { .tabs button { transition:none; } }

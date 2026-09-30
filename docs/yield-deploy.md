@@ -31,9 +31,11 @@ extension case.
 
 The server refuses, with a plain reason, when:
 
-- the pool is not in the venues listing for the mint (exact mint, not blacklisted,
-  at least $100 TVL, top five), is not a DLMM LbPair, is disabled, or does not
-  pair the token with USDC;
+- the selected pool's direct Meteora lookup does not match its exact address,
+  inspected mint and USDC pair, is blacklisted, or has less than $100 TVL;
+  on-chain checks also reject a pool that is not a DLMM LbPair or is disabled.
+  The inspector displays five pools, while eligible pools selected from the
+  yield screener use this same direct lookup without that display limit;
 - the token's program does not match the pool's record, or the mint runs an active
   transfer hook, charges a transfer fee, is paused, non-transferable, or starts new
   accounts frozen;

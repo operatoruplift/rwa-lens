@@ -1,0 +1,21 @@
+{
+  "video": "rwa-lens-walkthrough.mp4",
+  "scenes": [
+    {
+      "from": 4.75,
+      "duration": 8
+    },
+    {
+      "from": 17.35,
+      "duration": 5.6
+    },
+    {
+      "from": 23.2,
+      "duration": 9
+    },
+    {
+      "from": 78.8,
+      "duration": 11.2
+    }
+  ]
+}

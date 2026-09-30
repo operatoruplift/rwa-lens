@@ -4,6 +4,7 @@ import { ArrowUpRight, Download } from 'lucide-react';
 import { RwaLensShell } from '@/components/rwa/rwa-lens-shell';
 import { ResourceShell } from '@/components/resources/resource-shell';
 import { DemoGuide } from '@/components/resources/demo-guide';
+import { DemoVideo } from '@/components/resources/demo-video';
 import styles from '@/components/resources/resources.module.css';
 
 export const metadata: Metadata = { title: 'Product demo — RWA Lens', description: 'Follow a complete live Solana token inspection, from mint identity and public balances to controls and downloadable evidence.', alternates: { canonical: '/demo' } };
@@ -12,6 +13,7 @@ export default function DemoPage() {
   return (
     <ResourceShell active="demo" eyebrow="THE PRODUCT / IN ACTION" title="From address to insight." description="A complete walkthrough of the lens. Follow four chapters, inspect a real Solana mint, and leave with a receipt you can independently review.">
       <div className={styles.content}>
+        <DemoVideo />
         <DemoGuide />
         <div className={styles.section}><p className={styles.label}>THE LIVE WORKSPACE</p><h2>Your evidence starts here.</h2><p>The inspector below makes actual mainnet reads. Start with the listed USDY mint, or enter a mint of your own. Every observation keeps its source and time.</p></div>
       </div>

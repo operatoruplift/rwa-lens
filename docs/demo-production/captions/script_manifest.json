@@ -1,0 +1,52 @@
+{
+  "blocks": [
+    {
+      "id": 1,
+      "vo_line": "A token balance tells you how much you hold. It doesn't tell you the whole story."
+    },
+    {
+      "id": 2,
+      "vo_line": "R W A Lens brings the details together, so you can understand real-world tokens on Solana before taking the next step."
+    },
+    {
+      "id": 3,
+      "vo_line": "Let's open the app and look at U S D Y. The inspector reads the mint directly from Solana mainnet. There's no wallet to connect."
+    },
+    {
+      "id": 4,
+      "vo_line": "Start with Overview to check the full address and token program. Then move between Balances, Controls, Liquidity, and Evidence."
+    },
+    {
+      "id": 5,
+      "vo_line": "The controls explain who can mint or freeze tokens, alongside restrictions the inspector can observe."
+    },
+    {
+      "id": 6,
+      "vo_line": "Open Evidence to see when the data was read and the context behind each call."
+    },
+    {
+      "id": 7,
+      "vo_line": "Then download the observation as JSON or C S V. It's a record you can keep, review, or bring into your own workflow."
+    },
+    {
+      "id": 8,
+      "vo_line": "Next, open Yield. Filter tokenized-asset pools by issuer, pair, or liquidity, then jump straight from a pool to its token inspection."
+    },
+    {
+      "id": 9,
+      "vo_line": "Save tokens to your Watchlist to find them again on this device."
+    },
+    {
+      "id": 10,
+      "vo_line": "Pool activity comes from market-data sources. Historical fees aren't a promise of future returns. Issuer reserve links take you to the issuer's own reports."
+    },
+    {
+      "id": 11,
+      "vo_line": "That's the idea: a clearer path from discovery to understanding, with the evidence close at hand."
+    },
+    {
+      "id": 12,
+      "vo_line": "R W A Lens. Real assets. Clearer vision."
+    }
+  ]
+}

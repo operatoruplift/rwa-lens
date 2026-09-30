@@ -1,0 +1,435 @@
+{
+  "baseUrl": "http://127.0.0.1:3302",
+  "apiBaseUrl": "https://rwalensonsolana.vercel.app",
+  "viewport": {
+    "width": 1440,
+    "height": 900
+  },
+  "prepare": [
+    {
+      "type": "goto",
+      "path": "/"
+    },
+    {
+      "type": "wait",
+      "target": {
+        "role": "heading",
+        "name": "Real assets.",
+        "exact": false
+      }
+    },
+    {
+      "type": "hold",
+      "seconds": 4
+    }
+  ],
+  "scenes": [
+    {
+      "id": "hero",
+      "label": "A clearer starting point",
+      "actions": [
+        {
+          "type": "hold",
+          "seconds": 14
+        }
+      ]
+    },
+    {
+      "id": "inspector",
+      "label": "Live mainnet inspection",
+      "actions": [
+        {
+          "type": "goto",
+          "path": "/rwa"
+        },
+        {
+          "type": "wait",
+          "target": {
+            "role": "tab",
+            "name": "Overview"
+          }
+        },
+        {
+          "type": "mainnet",
+          "mint": "A1KLoBrKBde8Ty9qtNQUtq3C2ortoC3u7twggz7sEto6"
+        },
+        {
+          "type": "hold",
+          "seconds": 12
+        }
+      ]
+    },
+    {
+      "id": "overview",
+      "label": "Token identity",
+      "actions": [
+        {
+          "type": "scroll",
+          "target": {
+            "role": "tablist",
+            "name": "Inspection sections"
+          },
+          "offset": 100
+        },
+        {
+          "type": "hold",
+          "seconds": 5
+        }
+      ]
+    },
+    {
+      "id": "tabs",
+      "label": "Navigate the observation",
+      "actions": [
+        {
+          "type": "click",
+          "target": {
+            "role": "tab",
+            "name": "Balances"
+          }
+        },
+        {
+          "type": "hold",
+          "seconds": 1.2
+        },
+        {
+          "type": "click",
+          "target": {
+            "role": "tab",
+            "name": "Controls"
+          }
+        },
+        {
+          "type": "hold",
+          "seconds": 1
+        },
+        {
+          "type": "click",
+          "target": {
+            "role": "tab",
+            "name": "Liquidity"
+          }
+        },
+        {
+          "type": "hold",
+          "seconds": 1
+        },
+        {
+          "type": "click",
+          "target": {
+            "role": "tab",
+            "name": "Evidence"
+          }
+        },
+        {
+          "type": "hold",
+          "seconds": 1.5
+        }
+      ]
+    },
+    {
+      "id": "controls",
+      "label": "Who holds the controls",
+      "actions": [
+        {
+          "type": "click",
+          "target": {
+            "role": "tab",
+            "name": "Controls"
+          }
+        },
+        {
+          "type": "scroll",
+          "target": {
+            "role": "tablist",
+            "name": "Inspection sections"
+          },
+          "offset": 100
+        },
+        {
+          "type": "hold",
+          "seconds": 7
+        }
+      ]
+    },
+    {
+      "id": "evidence",
+      "label": "Sources, time and context",
+      "actions": [
+        {
+          "type": "click",
+          "target": {
+            "role": "tab",
+            "name": "Evidence"
+          }
+        },
+        {
+          "type": "click",
+          "target": {
+            "text": "Every observation has a source."
+          }
+        },
+        {
+          "type": "scroll",
+          "target": {
+            "text": "Every observation has a source."
+          },
+          "offset": 110
+        },
+        {
+          "type": "hold",
+          "seconds": 6
+        }
+      ]
+    },
+    {
+      "id": "exports",
+      "label": "Take the observation with you",
+      "actions": [
+        {
+          "type": "scroll",
+          "target": {
+            "role": "button",
+            "name": "Export JSON"
+          },
+          "offset": 130
+        },
+        {
+          "type": "download",
+          "target": {
+            "role": "button",
+            "name": "Export JSON"
+          }
+        },
+        {
+          "type": "hold",
+          "seconds": 1.5
+        },
+        {
+          "type": "download",
+          "target": {
+            "role": "button",
+            "name": "Export CSV"
+          }
+        },
+        {
+          "type": "hold",
+          "seconds": 7
+        }
+      ]
+    },
+    {
+      "id": "yield",
+      "label": "Find a pool",
+      "actions": [
+        {
+          "type": "click",
+          "target": {
+            "role": "link",
+            "name": "Yield"
+          }
+        },
+        {
+          "type": "wait",
+          "target": {
+            "role": "link",
+            "name": "Inspect",
+            "index": 0
+          }
+        },
+        {
+          "type": "hold",
+          "seconds": 1.5
+        },
+        {
+          "type": "click",
+          "target": {
+            "role": "radio",
+            "name": "Ondo"
+          }
+        },
+        {
+          "type": "hold",
+          "seconds": 1.4
+        },
+        {
+          "type": "click",
+          "target": {
+            "role": "radio",
+            "name": "USDC only"
+          }
+        },
+        {
+          "type": "hold",
+          "seconds": 1.2
+        },
+        {
+          "type": "click",
+          "target": {
+            "role": "radio",
+            "name": "$1,000+"
+          }
+        },
+        {
+          "type": "hold",
+          "seconds": 3
+        }
+      ]
+    },
+    {
+      "id": "pool-inspection",
+      "label": "From discovery to inspection",
+      "actions": [
+        {
+          "type": "click",
+          "target": {
+            "role": "link",
+            "name": "Inspect USDY",
+            "index": 0
+          }
+        },
+        {
+          "type": "wait",
+          "target": {
+            "role": "tab",
+            "name": "Overview"
+          }
+        },
+        {
+          "type": "mainnet",
+          "mint": "A1KLoBrKBde8Ty9qtNQUtq3C2ortoC3u7twggz7sEto6"
+        },
+        {
+          "type": "hold",
+          "seconds": 4
+        }
+      ]
+    },
+    {
+      "id": "watchlist",
+      "label": "Saved on this device",
+      "actions": [
+        {
+          "type": "click",
+          "target": {
+            "role": "button",
+            "name": "Save to watchlist"
+          }
+        },
+        {
+          "type": "hold",
+          "seconds": 1
+        },
+        {
+          "type": "click",
+          "target": {
+            "role": "link",
+            "name": "Watchlist"
+          }
+        },
+        {
+          "type": "wait",
+          "target": {
+            "role": "link",
+            "name": "Open inspector"
+          }
+        },
+        {
+          "type": "hold",
+          "seconds": 6
+        }
+      ]
+    },
+    {
+      "id": "market-context",
+      "label": "Understand the source",
+      "actions": [
+        {
+          "type": "goto",
+          "path": "/yield?issuer=Ondo&pair=usdc&tvl=1000"
+        },
+        {
+          "type": "wait",
+          "target": {
+            "role": "link",
+            "name": "Inspect USDY",
+            "index": 0
+          }
+        },
+        {
+          "type": "hold",
+          "seconds": 8
+        }
+      ]
+    },
+    {
+      "id": "issuer-source",
+      "label": "Follow the issuer report",
+      "actions": [
+        {
+          "type": "click",
+          "target": {
+            "role": "link",
+            "name": "Inspector"
+          }
+        },
+        {
+          "type": "wait",
+          "target": {
+            "role": "tab",
+            "name": "Overview"
+          }
+        },
+        {
+          "type": "mainnet",
+          "mint": "A1KLoBrKBde8Ty9qtNQUtq3C2ortoC3u7twggz7sEto6"
+        },
+        {
+          "type": "scroll",
+          "target": {
+            "role": "link",
+            "name": "Issuer reserve reports"
+          },
+          "offset": 300
+        },
+        {
+          "type": "hover",
+          "target": {
+            "role": "link",
+            "name": "Issuer reserve reports"
+          }
+        },
+        {
+          "type": "hold",
+          "seconds": 5
+        }
+      ]
+    },
+    {
+      "id": "closing",
+      "label": "Real assets. Clearer vision.",
+      "actions": [
+        {
+          "type": "click",
+          "target": {
+            "role": "link",
+            "name": "RWA Lens home",
+            "index": 0
+          }
+        },
+        {
+          "type": "wait",
+          "target": {
+            "role": "heading",
+            "name": "Real assets.",
+            "exact": false
+          }
+        },
+        {
+          "type": "hold",
+          "seconds": 12
+        }
+      ]
+    }
+  ]
+}

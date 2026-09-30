@@ -1,0 +1,28 @@
+{
+  "provider": "Runway",
+  "model": "eleven_multilingual_v2",
+  "voice": "James",
+  "speed": 1,
+  "languageCode": "en",
+  "artifact": {
+    "file": "public/demo/rwa-lens-narration.mp3",
+    "bytes": 1428628,
+    "sha256": "88c367fa6aff64f67010b68a1639fcf15473f56cfb784f5ea81556644de74f69",
+    "durationSeconds": 89.211066,
+    "codec": "mp3",
+    "channels": 1,
+    "sampleRate": 44100
+  },
+  "verification": {
+    "peakDb": -1.4,
+    "meanDb": -20.6,
+    "transcriptSimilarity": 0.9364705882352942,
+    "authoredWords": 215,
+    "timedWords": 215,
+    "captionWords": 215,
+    "cueCount": 66,
+    "lastSpokenWordEndSeconds": 88.84,
+    "audioTailSeconds": 0.371066,
+    "listening": "Opening and ending preview emitted for review; automated timing, peak and transcript checks passed. Human listening not claimed."
+  }
+}

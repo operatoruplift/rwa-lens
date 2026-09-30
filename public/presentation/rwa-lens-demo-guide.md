@@ -3,10 +3,22 @@
 A take-away script for the guided demo at
 [rwalensonsolana.vercel.app/demo](https://rwalensonsolana.vercel.app/demo).
 It follows the four chapters on that page — Identity, Balance, Controls,
-Evidence — then continues into the yield screener and mobile distribution.
+Evidence — then continues into the app workspace, yield screener, device
+watchlist and mobile distribution.
 Budget nine to eleven minutes, plus three for questions.
 
 **Read the token. Understand the asset.**
+
+## Watch the narrated tour
+
+The [demo page](https://rwalensonsolana.vercel.app/demo) opens with the narrated
+product walkthrough and selectable English captions. Use it before the live
+walkthrough, or share the
+[MP4](https://rwalensonsolana.vercel.app/demo/rwa-lens-walkthrough.mp4).
+The matching [caption track](https://rwalensonsolana.vercel.app/demo/rwa-lens-walkthrough.vtt)
+and [transcript](https://rwalensonsolana.vercel.app/demo/rwa-lens-transcript.txt)
+are available separately. The recording shows real app interactions and public
+mainnet reads; its market figures describe the recording time.
 
 ## Before you present
 
@@ -25,6 +37,20 @@ Budget nine to eleven minutes, plus three for questions.
 
 Before presenting, `node scripts/verify-live.mjs` performs one explicit public
 mainnet read and writes its receipt, so you know the provider path is warm.
+
+## Navigate the app workspace
+
+Choose **Open app** from the landing page, or open
+[`/rwa`](https://rwalensonsolana.vercel.app/rwa). The workspace navigation links
+**Inspector**, **Yield** and **Watchlist**. The inspector has five sections:
+**Overview**, **Balances**, **Controls**, **Liquidity** and **Evidence**.
+Switching sections keeps the mint, wallet input and current observation in
+place. Use the arrow keys, Home or End while a section tab has focus, or use
+browser Back and Forward to revisit sections.
+
+The four chapters on `/demo` use an inline inspector. In the app workspace,
+select the corresponding section tab before presenting each result below.
+Select Liquidity to continue the market discussion after Evidence.
 
 ## 01 · Identity — start at the source
 
@@ -106,7 +132,8 @@ reviewer can check the page against the file.
 
 ## Continue · Follow the market
 
-**Show:** the reserve badge beside issuer attribution, then open `/yield`.
+**Show:** issuer attribution and the reserve badge, then choose **Yield** in
+the workspace navigation or open `/yield`.
 
 **Say:** "The mint tells us what is on chain. The reserve link takes us to the
 issuer's reports. The yield view shows where supported tokenized assets trade
@@ -130,6 +157,24 @@ deposit, runs a mainnet preflight check, and shows amounts, range and costs
 before the user's wallet signs and sends. The server never holds signing keys.
 A funded send with a real wallet remains required before public activation.
 Do not describe an unsigned preview as a completed deposit.
+
+## Continue · Save a token for the next look
+
+1. Open a mainnet token in **Inspector** and choose **Save to watchlist**. The
+   control changes to **Saved on this device**.
+2. Choose **Watchlist** in the workspace navigation. The saved card keeps the
+   full mint address, available name and symbol, and save date.
+3. Reload the page to show that the entry stays in this browser. Choose
+   **Open inspector** on the card to request a fresh observation of that mint.
+4. On the Watchlist page, paste an address into **Add a Solana mint**, then
+   choose **Save mint**. Saving an existing address does not duplicate it.
+   **Remove** deletes that mint from this device's list.
+
+The list holds up to 20 public mint addresses. It stores no inspected owner
+field, balances or receipts, and needs no wallet connection. Changes appear in
+other tabs on the same site. Clearing browser data clears the list; the page
+explains when device storage is unavailable. Cloud report storage remains off
+on the public deployment.
 
 ## Continue · Bring the lens to mobile
 
@@ -171,4 +216,5 @@ a rounded display conversion, next to the exact raw units.
   reliability and security model.
 - `/pitch` — the presentation kit.
 - `/yield` — tokenized-asset liquidity discovery and exact-mint inspector links.
-- `/rwa` — the compact inspector, for a direct second look.
+- `/rwa` — the inspector workspace, with five sections for a direct second look.
+- `/watchlist` — public mint addresses saved on this device.

@@ -36,14 +36,14 @@
     {
       "name": "rwa-lens-demo-guide.md",
       "url": "/presentation/rwa-lens-demo-guide.md",
-      "bytes": 8746,
-      "sha256": "b97e751bb72b7789fffd7290a0651ba5acf0329032b9e6d7d701e8d8813eacfd"
+      "bytes": 11256,
+      "sha256": "787121d5cc7ebfbaf1fd61b5a13dcde97f53844698686ecd1c25610c5e8b87bb"
     },
     {
       "name": "rwa-lens-technical-breakdown.md",
       "url": "/presentation/rwa-lens-technical-breakdown.md",
-      "bytes": 9122,
-      "sha256": "c13f10b8965aa5ac8f43634c677e592a4b54d4be04c9a0a0a0db16932a05426a"
+      "bytes": 10565,
+      "sha256": "a708bf56ec4ad9b5407f90b1da89358573aea44bc1521342c7e1aefe5336fd29"
     },
     {
       "name": "Inter-OFL.txt",

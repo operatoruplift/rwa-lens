@@ -1,0 +1,9 @@
+{
+  "provider": "Runway",
+  "name": "James",
+  "model": "eleven_multilingual_v2",
+  "speed": 1,
+  "languageCode": "en",
+  "type": "Built-in generic preset",
+  "provenance": "Generated narration; no human speaker or personal voice clone is claimed."
+}

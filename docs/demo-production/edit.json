@@ -1,0 +1,87 @@
+{
+  "video": "journey.webm",
+  "narration": "rwa-lens-narration.mp3",
+  "scenes": [
+    {
+      "id": "hero",
+      "from": 9.043,
+      "sourceDuration": 13.2,
+      "duration": 13.2
+    },
+    {
+      "id": "inspector",
+      "from": 25.722,
+      "sourceDuration": 10.1,
+      "duration": 10.1
+    },
+    {
+      "id": "overview",
+      "from": 37.428,
+      "sourceDuration": 3.56,
+      "duration": 3.56
+    },
+    {
+      "id": "tabs",
+      "from": 43.803,
+      "sourceDuration": 5.059,
+      "duration": 5.94
+    },
+    {
+      "id": "controls",
+      "from": 48.864,
+      "sourceDuration": 6.22,
+      "duration": 6.22
+    },
+    {
+      "id": "evidence",
+      "from": 56.979,
+      "sourceDuration": 5.34,
+      "duration": 5.34
+    },
+    {
+      "id": "exports",
+      "from": 64.474,
+      "sourceDuration": 8.72,
+      "duration": 8.72
+    },
+    {
+      "id": "yield",
+      "from": 74.168,
+      "sourceDuration": 7.12,
+      "duration": 7.12
+    },
+    {
+      "id": "pool-inspection",
+      "from": 82.826,
+      "sourceDuration": 3.34,
+      "duration": 3.34
+    },
+    {
+      "id": "watchlist",
+      "from": 85.347,
+      "sourceDuration": 4.28,
+      "duration": 4.28,
+      "video": "alternate-take.webm"
+    },
+    {
+      "id": "market-context",
+      "from": 95.3,
+      "sourceDuration": 7,
+      "duration": 7.0,
+      "video": "alternate-take.webm"
+    },
+    {
+      "id": "issuer-source",
+      "from": 105.1,
+      "sourceDuration": 0.8,
+      "duration": 4.08,
+      "video": "alternate-take.webm"
+    },
+    {
+      "id": "closing",
+      "from": 9.043,
+      "sourceDuration": 11.1,
+      "duration": 11.1
+    }
+  ]
+}

@@ -22,7 +22,7 @@ function Header({ reportsEnabled }: { reportsEnabled: boolean }) {
         <Link href="/pitch" className={styles.desktopLink}>Pitch</Link>
         {reportsEnabled ? <a href="#reports" className={styles.desktopLink}>Reports</a> : null}
         <Link href="/brand-kit">Brand kit</Link>
-        <a href="#inspect" className={styles.headerCta}>Inspect <ArrowUpRight size={16} /></a>
+        <Link href="/rwa" className={styles.headerCta}>Open app <ArrowUpRight size={16} /></Link>
       </nav>
     </header>
   );
@@ -49,7 +49,7 @@ function Hero({ cluster, deploy }: { cluster: 'mainnet-beta' | 'devnet'; deploy:
         <h1 id="page-title" className={styles.heroTitle}>Real assets.<br /><span>Clearer vision.</span></h1>
         <p className={styles.heroDescription}>Look beyond the ticker. Understand your token&rsquo;s identity, the balance behind the number, and who holds the controls.</p>
         <div className={styles.heroActions}>
-          <a href="#inspect" className={styles.primaryCta}>Inspect a token <ArrowUpRight size={19} /></a>
+          <Link href="/rwa" className={styles.primaryCta}>Open the app <ArrowUpRight size={19} /></Link>
           <a href="#how-it-works" className={styles.secondaryCta}>Explore the lens <ArrowDown size={16} /></a>
         </div>
       </div>

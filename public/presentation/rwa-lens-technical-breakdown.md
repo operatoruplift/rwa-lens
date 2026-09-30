@@ -162,6 +162,31 @@ on-device wallet verification and dApp Store publishing remain separate release
 steps; the source is not a claim of a published mobile app or completed phone
 validation.
 
+## 10 · Workspace — keep an inspection in context
+
+[`Inspector`](https://rwalensonsolana.vercel.app/rwa),
+[`Yield`](https://rwalensonsolana.vercel.app/yield) and
+[`Watchlist`](https://rwalensonsolana.vercel.app/watchlist) share the workspace
+navigation. The inspector separates Overview, Balances, Controls, Liquidity and
+Evidence into keyboard-accessible tabs. Changing sections updates the URL and
+supports browser history while retaining the mint, wallet input and loaded
+observation. Panels stay mounted, so open disclosures and the evidence receipt
+remain intact; hidden panels leave the active interaction flow.
+
+The device watchlist holds up to 20 mint addresses. Its versioned storage
+contract validates decoded 32-byte addresses and permits only the mint,
+optional name and symbol, and save time. Saving a duplicate preserves the
+existing entry. The inspector's save action uses the observed mainnet mint;
+opening a saved card requests a fresh inspection.
+
+Browser-local storage and storage events synchronize the list across tabs on
+the same origin. A stable server snapshot keeps hydration independent of
+browser storage. Unavailable storage is disclosed, and malformed saved data
+requires an explicit clear before replacement. The list contains no inspected
+owner field, balances or receipts and clears with browser data. Source:
+`lib/rwa/watchlist.ts`, `components/app/watchlist.tsx` and
+`components/app/inspection-tabs.tsx`.
+
 ## Primary references
 
 - [Ondo mint addresses](https://docs.ondo.finance/addresses)

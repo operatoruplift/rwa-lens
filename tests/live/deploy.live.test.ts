@@ -3,7 +3,7 @@ import { getBase64Encoder, getCompiledTransactionMessageDecoder, getTransactionD
 import { buildDeploy } from '@/lib/server/rwa/deploy/build';
 import { createDeployChain } from '@/lib/server/rwa/deploy/chain';
 import { createJupiter } from '@/lib/server/rwa/deploy/jupiter';
-import { readVenues } from '@/lib/server/rwa/venues';
+import { readSelectedPool } from '@/lib/server/rwa/deploy/venue';
 
 /**
  * Live mainnet check, skipped unless RWA_LIVE_DEPLOY_OWNER names a funded
@@ -21,12 +21,12 @@ const POOLS = [
 
 describe.skipIf(!owner)('deploy against mainnet (simulation only)', () => {
   // Built per test: a skipped suite is still collected, and the chain needs RPC configuration.
-  const deps = () => ({ chain: createDeployChain(), jupiter: createJupiter(), venues: readVenues, now: Date.now, priorityMicroLamports: 100_000n });
+  const deps = (pool: string) => ({ chain: createDeployChain(), jupiter: createJupiter(), venues: (mint: string) => readSelectedPool(mint, pool), now: Date.now, priorityMicroLamports: 100_000n });
   // Jupiter's keyless tier allows a few requests per second; each build makes two.
   beforeEach(() => new Promise<void>(resolve => setTimeout(resolve, 4000)));
   for (const target of POOLS) {
     it(`builds and simulates ${target.label}`, async () => {
-      const result = await buildDeploy({ mint: target.mint, pool: target.pool, owner, amount: '10', slippageBps: 100 }, deps());
+      const result = await buildDeploy({ mint: target.mint, pool: target.pool, owner, amount: '10', slippageBps: 100 }, deps(target.pool));
       console.log(target.label, JSON.stringify(result.state === 'ready' ? { ...result, transaction: `${result.transaction.length} base64 chars` } : result, null, 1));
       expect(result.state).toBe('ready');
       if (result.state !== 'ready') return;

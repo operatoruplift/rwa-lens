@@ -70,6 +70,7 @@ async function openDeploy(page: Page, screenshot?: string) {
   await page.route('**/api/rwa/inspect', route => route.fulfill({ json: mintObservation }));
   await page.route('**/api/rwa/venues?**', route => route.fulfill({ json: venues }));
   await page.goto('/rwa');
+  await page.getByRole('tab', { name: 'Liquidity', exact: true }).click();
   const panel = page.getByRole('region', { name: 'Liquidity venues on Meteora' });
   await expect(panel).toHaveAttribute('data-venues-state', 'ok');
   // Only the USDC pair offers deploy.

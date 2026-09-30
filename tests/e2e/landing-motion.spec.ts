@@ -89,7 +89,7 @@ test.describe('Native landing motion', () => {
     }
   });
 
-  test('PageDown and native anchors retain keyboard navigation, including the compact inspector', async ({ page }) => {
+  test('PageDown and native anchors retain keyboard navigation, including the app workspace', async ({ page }) => {
     await page.goto('/');
     await page.keyboard.press('PageDown');
     await expect.poll(() => page.evaluate(() => scrollY)).toBeGreaterThan(200);
@@ -107,17 +107,16 @@ test.describe('Native landing motion', () => {
 
     await page.route('**/api/rwa/inspect', route => route.fulfill({ json: seededObservation }));
     await page.goto('/rwa');
-    await expect(page.locator('[data-motion]')).toHaveAttribute('data-motion', 'static');
+    await expect(page.getByRole('navigation', { name: 'Workspace navigation' })).toBeVisible();
+    await expect(page.locator('[data-motion="active"]')).toHaveCount(0);
     await expect(page.locator('[data-motion-scene]')).toHaveCount(0);
     await page.keyboard.press('Tab');
-    await expect(page.getByRole('link', { name: 'Skip to inspection' })).toBeFocused();
+    await expect(page.getByRole('link', { name: 'Skip to inspector' })).toBeFocused();
     await page.keyboard.press('Enter');
     await expect(page.locator('#inspect')).toBeFocused();
     await page.keyboard.press('Tab');
     await expect(page.getByLabel('Mint address', { exact: true })).toBeFocused();
-    // /rwa is the compact inspector; the full result panels, and the raw-balance
-    // readout with them, live on /demo. Assert what this surface shows: the
-    // observation loaded and its identity is on screen after a keyboard-only walk.
+    // The app workspace opens its identity overview after a keyboard-only walk.
     await expect(page.getByText('Inspection unavailable', { exact: false })).toHaveCount(0);
     await expect(page.getByText(seededObservation.registry!.assetClass!, { exact: false }).first()).toBeVisible();
   });

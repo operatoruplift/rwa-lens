@@ -1,0 +1,255 @@
+1
+00:00:00,000 --> 00:00:01,040
+A token balance tells
+
+2
+00:00:01,040 --> 00:00:01,700
+you how much you
+
+3
+00:00:01,700 --> 00:00:01,980
+hold.
+
+4
+00:00:02,620 --> 00:00:03,360
+It doesn't tell you
+
+5
+00:00:03,360 --> 00:00:04,080
+the whole story.
+
+6
+00:00:04,900 --> 00:00:06,200
+RWA Lens
+
+7
+00:00:06,200 --> 00:00:07,660
+brings the details together,
+
+8
+00:00:07,660 --> 00:00:08,880
+so you can understand
+
+9
+00:00:08,880 --> 00:00:10,500
+real-world tokens on Solana
+
+10
+00:00:10,500 --> 00:00:11,840
+before taking the next
+
+11
+00:00:11,840 --> 00:00:12,180
+step.
+
+12
+00:00:13,380 --> 00:00:14,560
+Let's open the app
+
+13
+00:00:14,560 --> 00:00:15,920
+and look at USDY.
+
+14
+00:00:17,460 --> 00:00:18,620
+The inspector reads the
+
+15
+00:00:18,620 --> 00:00:19,920
+mint directly from Solana
+
+16
+00:00:19,920 --> 00:00:20,320
+mainnet.
+
+17
+00:00:21,020 --> 00:00:22,140
+There's no wallet to
+
+18
+00:00:22,140 --> 00:00:22,380
+connect.
+
+19
+00:00:23,300 --> 00:00:24,900
+Start with Overview to
+
+20
+00:00:24,900 --> 00:00:25,860
+check the full address
+
+21
+00:00:25,860 --> 00:00:26,860
+and token program.
+
+22
+00:00:26,860 --> 00:00:29,300
+Then move between Balances,
+
+23
+00:00:29,760 --> 00:00:30,080
+Controls,
+
+24
+00:00:30,580 --> 00:00:31,700
+Liquidity, and Evidence.
+
+25
+00:00:32,800 --> 00:00:34,360
+The controls explain who
+
+26
+00:00:34,360 --> 00:00:35,160
+can mint or freeze
+
+27
+00:00:35,160 --> 00:00:36,900
+tokens, alongside restrictions
+
+28
+00:00:36,900 --> 00:00:38,100
+the inspector can observe.
+
+29
+00:00:39,020 --> 00:00:40,400
+Open Evidence to see
+
+30
+00:00:40,400 --> 00:00:41,180
+when the data was
+
+31
+00:00:41,180 --> 00:00:42,320
+read and the context
+
+32
+00:00:42,320 --> 00:00:43,240
+behind each call.
+
+33
+00:00:44,360 --> 00:00:46,160
+Then download the observation
+
+34
+00:00:46,160 --> 00:00:47,560
+as JSON or CSV.
+
+35
+00:00:48,820 --> 00:00:49,660
+It's a record you
+
+36
+00:00:49,660 --> 00:00:51,160
+can keep, review, or
+
+37
+00:00:51,160 --> 00:00:51,980
+bring into your own
+
+38
+00:00:51,980 --> 00:00:52,320
+workflow.
+
+39
+00:00:53,080 --> 00:00:53,660
+Next,
+
+40
+00:00:54,140 --> 00:00:54,700
+open Yield.
+
+41
+00:00:54,700 --> 00:00:57,800
+Filter tokenized-asset pools by
+
+42
+00:00:57,800 --> 00:00:58,220
+issuer,
+
+43
+00:00:58,660 --> 00:00:59,660
+pair, or liquidity,
+
+44
+00:01:00,200 --> 00:01:01,320
+then jump straight from
+
+45
+00:01:01,320 --> 00:01:02,060
+a pool to its
+
+46
+00:01:02,060 --> 00:01:02,780
+token inspection.
+
+47
+00:01:03,540 --> 00:01:04,800
+Save tokens to your
+
+48
+00:01:04,800 --> 00:01:06,060
+Watchlist to find them
+
+49
+00:01:06,060 --> 00:01:06,900
+again on this device.
+
+50
+00:01:07,820 --> 00:01:09,180
+Pool activity comes from
+
+51
+00:01:09,180 --> 00:01:10,240
+market-data sources.
+
+52
+00:01:11,140 --> 00:01:12,740
+Historical fees aren't a
+
+53
+00:01:12,740 --> 00:01:13,960
+promise of future returns.
+
+54
+00:01:14,820 --> 00:01:16,460
+Issuer reserve links take
+
+55
+00:01:16,460 --> 00:01:17,440
+you to the issuer's
+
+56
+00:01:17,440 --> 00:01:18,120
+own reports.
+
+57
+00:01:18,900 --> 00:01:19,820
+That's the idea:
+
+58
+00:01:20,360 --> 00:01:21,460
+a clearer path from
+
+59
+00:01:21,460 --> 00:01:23,060
+discovery to understanding, with
+
+60
+00:01:23,060 --> 00:01:23,960
+the evidence close at
+
+61
+00:01:23,960 --> 00:01:24,180
+hand.
+
+62
+00:01:25,200 --> 00:01:26,560
+RWA Lens.
+
+63
+00:01:27,020 --> 00:01:27,700
+Real assets.
+
+64
+00:01:28,160 --> 00:01:28,840
+Clearer vision.

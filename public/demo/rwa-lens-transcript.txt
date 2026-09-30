@@ -1,0 +1,23 @@
+A token balance tells you how much you hold. It doesn't tell you the whole story.
+
+RWA Lens brings the details together, so you can understand real-world tokens on Solana before taking the next step.
+
+Let's open the app and look at USDY. The inspector reads the mint directly from Solana mainnet. There's no wallet to connect.
+
+Start with Overview to check the full address and token program. Then move between Balances, Controls, Liquidity, and Evidence.
+
+The controls explain who can mint or freeze tokens, alongside restrictions the inspector can observe.
+
+Open Evidence to see when the data was read and the context behind each call.
+
+Then download the observation as JSON or CSV. It's a record you can keep, review, or bring into your own workflow.
+
+Next, open Yield. Filter tokenized-asset pools by issuer, pair, or liquidity, then jump straight from a pool to its token inspection.
+
+Save tokens to your Watchlist to find them again on this device.
+
+Pool activity comes from market-data sources. Historical fees aren't a promise of future returns. Issuer reserve links take you to the issuer's own reports.
+
+That's the idea: a clearer path from discovery to understanding, with the evidence close at hand.
+
+RWA Lens. Real assets. Clearer vision.
