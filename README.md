@@ -1,6 +1,6 @@
 # RWA Lens
 
-> **In 20 seconds.** RWA Lens reads a Solana Token-2022 mint with the official decoders, reconciles raw and displayed balances (ScaledUiAmount, fees, frozen state), and lists who can transfer, freeze, or burn. Try it: [rwalensonsolana.vercel.app/rwa](https://rwalensonsolana.vercel.app/rwa) with Ondo USDY as the live example. Built by Matt ([RVAClassic](https://x.com/operatoruplift), Operator Uplift) for the Solana Foundation **Tokenized Real-World Assets** sprint, September 2026. Real today: live mainnet reads, JSON/CSV receipts, installable PWA, Seeker Android shell, wallet sign-in through Mobile Wallet Adapter. Cloud report storage is a deployment-configured capability: a deployment that supplies its own database, session secret and exact origin serves owner-scoped saved reports, and the public deployment serves the guest path, where inspection and receipts need no account. Everything below is verification detail; nothing claims traction or audits that have not happened.
+> **In 20 seconds.** RWA Lens reads Solana SPL Token and Token-2022 mints with the official decoders, reconciles raw and displayed balances (ScaledUiAmount, fees, frozen state), and lists who can transfer, freeze, or burn. Try it: [rwalensonsolana.vercel.app/rwa](https://rwalensonsolana.vercel.app/rwa) opens Ondo USDY on mainnet. Built by Matt ([RVAClassic](https://x.com/operatoruplift), Operator Uplift) for the Solana Foundation **Tokenized Real-World Assets** sprint, September 2026. Real today: live mainnet reads, JSON/CSV receipts, yield discovery, reserve-report links, installable PWA, Seeker Android shell source, and Mobile Wallet Adapter support. Cloud report storage is a deployment-configured capability: a deployment that supplies its own database, session secret and exact origin serves owner-scoped saved reports, and the public deployment serves the guest path, where inspection and receipts need no account. Everything below is verification detail; nothing claims traction or audits that have not happened.
 
 **Real assets. Clearer vision.** RWA Lens helps wallet builders, issuers,
 fund administrators, custodians and treasury operators inspect a Solana mint,
@@ -10,6 +10,9 @@ transfer controls.
 [Open the app](https://rwalensonsolana.vercel.app) ·
 [Inspector](https://rwalensonsolana.vercel.app/rwa) ·
 [Yield](https://rwalensonsolana.vercel.app/yield) ·
+[Guided demo](https://rwalensonsolana.vercel.app/demo) ·
+[Technical breakdown](https://rwalensonsolana.vercel.app/technical) ·
+[Pitch deck](https://rwalensonsolana.vercel.app/pitch) ·
 [Brand kit](https://rwalensonsolana.vercel.app/brand-kit) ·
 [Verification evidence](docs/rwa-demo-evidence.md) ·
 [Capability matrix](docs/rwa-capability-matrix.md) ·
@@ -55,12 +58,14 @@ multiplier, account states and source evidence together. Its Solana contribution
 is Token-2022-aware accounting using the official decoders. Plain SPL Token is
 also supported; neither program ownership nor metadata proves an asset is an RWA.
 
-The curated live example is **Ondo USDY**, an officially attributed non-stock
+The curated asset is **Ondo USDY**, an officially attributed non-stock
 Treasury-linked note on Solana. The checked-in [source manifest](lib/rwa/live-assets.json)
 records the exact mint, network, issuer sources and retrieval date. USDY's observed
-mint uses **legacy SPL Token**. A clearly labelled synthetic treasury receipt
-separately demonstrates Token-2022 scheduled display multipliers. Issuer descriptions
-are attribution, not independent verification of backing or legal rights.
+mint uses **legacy SPL Token**. Production opens a live mainnet inspection and
+rejects offline fixture requests. Scheduled Token-2022 display multipliers are
+covered separately by deterministic tests and an explicitly enabled devnet test
+mode. Issuer descriptions are attribution, not independent verification of
+backing or legal rights.
 
 ## Where the token trades, and who attests its reserves
 
@@ -82,17 +87,21 @@ read, audit or verify them, and a token without a recorded link says so plainly.
 
 ## Yield opportunities across tokenized assets
 
-[`/yield`](https://rwalensonsolana.vercel.app/yield) lists every Meteora DLMM pool
+[`/yield`](https://rwalensonsolana.vercel.app/yield) discovers Meteora DLMM pools
 with at least $100 TVL that holds Ondo USDY or any xStock with a Solana
 deployment (about 1,000 tokens checked), with TVL, 24-hour volume and fees,
 Meteora's fee APY, bin step and the issuer's reported market session. Filters for
 issuer, pair and minimum liquidity live in the URL, so a view can be shared, and
 each row links to the inspector (`/rwa?mint=<address>` opens it on that token) and
-to the pool on Meteora. The server builds one snapshot from the xStocks public API
-(catalog cached for six hours) and Meteora's filtered pool search (about 55
-bounded, DNS-pinned requests per refresh, 80 on a cold start), keeps it fresh for
-10 minutes and serves it stale for up to an hour while it refreshes; the CDN
-caches the response for five minutes. One-day fee annualisations above
+to the pool on Meteora. The server refreshes the xStocks public catalog and
+Meteora's filtered pool search together. Pool queries are paginated with bounded,
+DNS-pinned requests; if completeness cannot be established within the limits,
+the refresh fails rather than silently dropping pools. The inspector's five-pool
+display limit does not apply to the screener. A snapshot stays fresh for
+10 minutes and can be served with a stale label for up to an hour while it
+refreshes. Issuer identities can survive a temporary catalog outage, but market
+session flags become unknown after ten minutes. Responses bypass browser/CDN
+caching so those flags cannot acquire a new apparent age. One-day fee annualisations above
 1,000% are shown as "over 1,000%". It is third-party market data: never part of an
 inspection, and not evidence of backing or advice.
 
@@ -151,8 +160,8 @@ npm run dev
 # http://127.0.0.1:3000 — /rwa remains a supported deep link
 ```
 
-Fixtures work without any credentials. To enable live reads, copy `.env.example`
-to `.env.local` and configure the server:
+The app defaults to mainnet with fixtures disabled. Copy `.env.example` to
+`.env.local` to configure an operator-managed RPC endpoint:
 
 ```dotenv
 RWA_CLUSTER=mainnet-beta
@@ -162,6 +171,8 @@ RWA_RPC_URL=https://api.mainnet-beta.solana.com
 The public RPC can rate-limit; use an operator-managed provider for sustained
 traffic. A browser cannot supply an RPC URL. Only the operator's configured
 network is supported and no silent network fallback occurs.
+For isolated development only, `RWA_CLUSTER=devnet` together with
+`RWA_FIXTURES_ENABLED=true` exposes the clearly marked offline test scenarios.
 
 ## Verify
 
@@ -171,10 +182,13 @@ npm run typecheck
 npm test
 npm run build
 npm run test:e2e
+npm run test:e2e:deploy
 ```
 
 Playwright launches `next start` against the production build on port 3300.
-The deterministic suite uses fixtures/mocked failures and requires no secrets.
+The deterministic suite uses mocked mainnet responses and requires no secrets.
+The separate deploy suite runs on port 3301 with a mocked wallet and mocked
+transaction responses; it never signs or sends funds.
 Landing checks cover desktop/mobile scrolling, anchor focus, dynamic reduced
 motion, and marketing content plus fragment links that stay usable with
 JavaScript turned off in the browser.
@@ -189,8 +203,9 @@ node scripts/verify-live.mjs
 RWA_VERIFY_BASE_URL=http://127.0.0.1:3300 node scripts/verify-live.mjs
 ```
 
-This reads the official non-stock mint, a declared public owner and the synthetic
-boundary examples, and writes `docs/evidence/live-observations.json`. It sends no
+This reads the official non-stock mint and a declared public owner, checks that
+production rejects offline test data, and writes
+`docs/evidence/live-observations.json`. It sends no
 transaction. GitHub's `Verify RWA Lens` workflow runs deterministic checks on
 pushes and pull requests. `Explicit hosted read verification` is manually invoked
 and uses no wallet/provider credentials. Current measured results are in the
@@ -201,7 +216,6 @@ evidence document; historical counts are not current verification.
 ```mermaid
 flowchart LR
   UI[Landing + inspector] --> API[Validated inspect API]
-  API --> Fixture[Server-known synthetic scenarios]
   API --> RPC[Bounded server-only Solana RPC]
   RPC --> Mint[Mint + embedded metadata and pointer evidence]
   RPC --> Clock[Clock sysvar / labelled estimate]
@@ -213,7 +227,6 @@ flowchart LR
   Raw --> Display
   Controls --> Result[Validated observation + provenance]
   Display --> Result
-  Fixture --> Result
   Result --> UI
   UI --> Export[Local JSON / CSV receipt]
   UI -. optional message auth .-> Reports[Owner-scoped database report]
@@ -234,7 +247,7 @@ optional remote registry and NAV adapters cannot supply invented fiat values.
 | `GET/POST /api/rwa/reports` | Optional session-owned reports; the server re-inspects instead of trusting uploaded observations. |
 | `GET /api/rwa/reports/[reportId]` | Session-owner lookup; another owner's opaque ID returns 404. |
 | `GET /api/rwa/venues` | Meteora DLMM pools holding the exact mint; third-party market data, never part of an observation. |
-| `GET /api/rwa/screener` | Snapshot of pools holding known tokenized assets (xStocks catalog, Ondo attribution); no parameters, CDN-cacheable. |
+| `GET /api/rwa/screener` | Server-cached snapshot of pools holding known tokenized assets (xStocks catalog, Ondo attribution); no parameters, HTTP no-store. |
 | `POST /api/rwa/deploy` | Only with `RWA_DEPLOY_ENABLED`: same-origin, rate-limited; returns an unsigned, simulated v0 transaction for the caller's wallet, or a plain refusal. |
 | `GET /api/rwa/deploy/status` | Only with `RWA_DEPLOY_ENABLED`: confirmation for a submitted signature and its last valid block height. |
 
@@ -242,11 +255,8 @@ optional remote registry and NAV adapters cannot supply invented fiat values.
 {"mode":"live","cluster":"mainnet-beta","mint":"A1KLoBrKBde8Ty9qtNQUtq3C2ortoC3u7twggz7sEto6"}
 ```
 
-```json
-{"mode":"fixture","fixtureId":"treasury-scaled","scenario":"before"}
-```
-
-Fixture requests cannot override balances, identity, timestamps or provenance.
+Development fixture requests cannot override balances, identity, timestamps or
+provenance, and production rejects them with 403.
 Malformed input returns 400; missing accounts 404; a non-mint account 422;
 a provider failure is reported honestly as a structured `unavailable` state
 with the matching 5xx status, so a caller can always tell a failed read from an

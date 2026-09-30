@@ -8,8 +8,8 @@ export const dynamic = 'force-dynamic';
 
 /**
  * Public market data: Meteora DLMM pools holding known tokenized assets. The
- * same snapshot serves everyone, so the CDN may cache it; a stale snapshot is
- * served while the refresh runs after the response.
+ * store caches and coalesces reads; response caches must not extend the
+ * lifetime of issuer market status. Refresh stale snapshots after responding.
  */
 export async function GET(request: Request) {
   const noStore = { 'cache-control': 'no-store' };
@@ -22,6 +22,6 @@ export async function GET(request: Request) {
   if (refresh) after(refresh);
   return NextResponse.json(response, {
     status: response.state === 'ok' ? 200 : 503,
-    headers: response.state === 'ok' ? { 'cache-control': 'public, s-maxage=300, stale-while-revalidate=3600' } : noStore,
+    headers: noStore,
   });
 }

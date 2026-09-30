@@ -13,8 +13,9 @@ is the take-away copy of
 4. **Explain** — typed result, per-call evidence, honest partial states, local receipt export.
 
 The browser calls the application API. Provider credentials and metadata
-retrieval stay on the server. The product has no transaction-signing, custody or
-asset-transfer path.
+retrieval stay on the server. Inspection and export require no wallet and never
+sign or move assets. A separate, operator-enabled deploy flow lets a user review
+and sign a transaction in their own wallet; it is off on the public deployment.
 
 ## 02 · Capabilities — from raw bytes to useful context
 
@@ -105,6 +106,61 @@ separately.
 | Confidential-transfer detection | The capability is reported; an encrypted amount stays unknown and is never counted as zero. |
 | Transfer control explanations | Observed controls are explained; recipient eligibility and execution success are established elsewhere. |
 | Optional private report architecture | A deployment that supplies its own database, session secret and exact origin serves owner-scoped saved reports; the guest path serves inspection and receipts with no account. |
+
+## 07 · Market context — connect the token to its market
+
+[`/yield`](https://rwalensonsolana.vercel.app/yield) combines the xStocks asset
+catalog and curated Ondo attribution with Meteora DLMM pools. Filters for issuer,
+pair and minimum liquidity are shareable in the URL. Each row opens the exact
+mint in `/rwa?mint=<address>` and links to the pool on Meteora.
+
+TVL, volume, fees and issuer-reported market sessions retain their third-party
+source. Historical fee APY does not promise a future return. The server bounds
+upstream requests and caches snapshots; freshness and availability remain
+visible. Pool figures never enter an inspection record, JSON/CSV receipt or
+saved report.
+
+The reserve badge links issuer-published reserve reports where attribution
+records a source. For USDY, it points to [Ondo's USDY page](https://ondo.finance/usdy).
+RWA Lens does not read, audit or verify those reports. A missing source link is
+reported directly.
+
+| Endpoint | Purpose |
+| --- | --- |
+| `GET /api/rwa/venues?mint=<address>` | Listed Meteora DLMM pools for the exact inspected mint. |
+| `GET /api/rwa/screener` | Cached tokenized-asset pool snapshot, including source and freshness fields. |
+
+## 08 · Optional wallet action — your review, your wallet
+
+Deploy USDC is available only when an operator enables `RWA_DEPLOY_ENABLED` on
+mainnet. The public deployment keeps it off. An eligible USDC-paired pool can
+receive one unsigned transaction that swaps half the USDC budget through Jupiter
+and deposits the guaranteed minimum output with the remaining USDC into a
+Meteora DLMM position.
+
+`POST /api/rwa/deploy` validates the mint and pool, accepted instructions, spend
+bounds and price impact, then runs a mainnet preflight check. The review shows
+amounts, range, rent and network fee. The wallet is the only signer and sends
+only after user approval. `GET /api/rwa/deploy/status` reads confirmation; an
+expired preview must be rebuilt. The server holds no signing key and takes no
+custody. These routes return 404 when the feature is off.
+
+The code and automated wallet-flow coverage are present. A funded send with a
+real wallet remains an activation gate; a successful preflight does not establish
+an executed deposit. Range exposure, price movement and loss remain possible.
+Position management happens on Meteora.
+
+## 09 · Mobile distribution — the same lens, within reach
+
+The site is installable as a PWA. Public static assets are cached and offline
+navigation shows a connection notice. Live inspections, authentication and
+reports never enter the service-worker cache.
+
+The `android/` Web Shell wraps the inspector for Android and Solana Seeker.
+Mobile Wallet Adapter is available on enabled wallet surfaces. Release signing,
+on-device wallet verification and dApp Store publishing remain separate release
+steps; the source is not a claim of a published mobile app or completed phone
+validation.
 
 ## Primary references
 

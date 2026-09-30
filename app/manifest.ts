@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
     id: '/',
     name: 'RWA Lens — real assets, clearer vision',
     short_name: 'RWA Lens',
-    description: 'Inspect a Solana Token-2022 mint, reconcile raw and displayed balances, and understand on-chain controls. Public, read-only.',
+    description: 'Inspect Solana tokens, reconcile raw and displayed balances, understand on-chain controls, and explore liquidity pools.',
     start_url: '/rwa',
     scope: '/',
     display: 'standalone',
@@ -21,7 +21,7 @@ export default function manifest(): MetadataRoute.Manifest {
     ],
     shortcuts: [
       { name: 'Inspect a token', url: '/rwa', description: 'Open the mint inspector.' },
-      { name: 'See the demo', url: '/demo', description: 'Walk through a synthetic observation.' },
+      { name: 'See the demo', url: '/demo', description: 'Walk through a live mainnet inspection.' },
     ],
   };
 }

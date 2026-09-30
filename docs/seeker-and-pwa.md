@@ -1,12 +1,12 @@
 # Seeker and PWA readiness
 
-This branch makes RWA Lens run as an installed app on Android, iOS and the Solana Seeker, and ships the Android shell the Solana Mobile hackathon and dApp Store need. Everything below was lint-, type- and build-checked; the on-device steps still need a phone.
+RWA Lens includes an installable PWA and the Android shell source for Solana Seeker. The web build and browser journeys are checked; a release APK, device testing and dApp Store submission remain separate steps.
 
 ## What changed
 
 - `app/manifest.ts` (served at `/manifest.webmanifest`), `public/icons/icon-192.png`, `icon-512.png` and `icon-maskable-512.png` rendered from `app/icon.svg`, so the site is installable on Android, iOS and desktop.
 - `app/layout.tsx` exports `viewport` with `viewportFit: 'cover'` and a `themeColor`, plus Apple web-app metadata; `app/globals.css` pads `body` with `env(safe-area-inset-*)` so the inspector clears notches and gesture bars.
-- `public/sw.js` caches hashed Next chunks, icons and brand assets and serves an offline notice for navigations. RPC reads, metadata, saved reports and sign-in never enter Cache Storage. `components/app/mobile-support.tsx` registers it in production.
+- `public/sw.js` caches build-addressed Next chunks, refreshes icons and brand assets from the network, and serves an offline notice for navigations. Cached assets remain available offline. RPC reads, metadata, saved reports and sign-in never enter Cache Storage. `components/app/mobile-support.tsx` registers it in production.
 - The same component registers the Solana Mobile Wallet Adapter. `components/rwa/report-actions.tsx` discovers wallets through the standard `app-ready` / `register-wallet` exchange, so **Mobile Wallet Adapter** now appears in the *Save this report* sign-in dialog on Android and Seeker with no change to the message-signing flow.
 - `next.config.ts` allows `ws://localhost:*` in `connect-src` (the MWA handoff) and declares `worker-src` and `manifest-src`.
 - Inter is now self-hosted from `app/fonts/` (SIL OFL, licence alongside) instead of fetched from Google Fonts at build time, which removes the app's only third-party request and lets it build offline.
@@ -16,8 +16,8 @@ This branch makes RWA Lens run as an installed app on Android, iOS and the Solan
 
 1. Open https://rwalensonsolana.vercel.app in Chrome on Android or Seeker. Use the browser menu → **Install app**, or the in-page install control where one exists. On iPhone use Safari → Share → **Add to Home Screen**.
 2. Launch from the home screen. The app should open full-screen with the status bar in the theme colour and content clear of the notch and gesture bar.
-3. Wallet: Inspect any mint on `/rwa`, then tap **Save this report**. The sign-in dialog lists **Mobile Wallet Adapter** on Android and Seeker; choosing it connects through the phone's wallet and requests one message signature, never a transaction.
-4. Offline: turn on airplane mode and relaunch. Static assets and the shell load from cache; live data shows its normal unavailable state rather than a browser error.
+3. Public deployment: inspect a mint on `/rwa`, open `/yield`, and export a JSON/CSV receipt. These flows need no wallet. On a deployment with cloud reports configured and enabled, **Save this report** opens the sign-in dialog; **Mobile Wallet Adapter** on Android and Seeker requests a message signature for authentication. The separately enabled yield-deploy action has its own transaction review and wallet signing flow.
+4. Offline: after the service worker has installed, turn on airplane mode and relaunch. Navigation shows the offline notice with a link back to the inspector. Live inspection needs a connection; an old observation is not substituted for a fresh read.
 
 Mobile Wallet Adapter registers itself only on Android in a secure context (or inside the Web Shell). Desktop, iOS and in-wallet browsers keep their injected wallets; nothing changes for them.
 

@@ -282,7 +282,7 @@ function checkBalances(simulated: ReadonlyMap<string, { lamports: bigint; data: 
   const tokenAfter = token ? tokenAmount(token.data) : 0n;
   const solSpent = owner ? before.ownerLamports - owner.lamports : -1n;
   if (usdcSpent < swapIn || usdcSpent > context.budget || tokenAfter < before.tokenHeld || solSpent < 0n || solSpent > rent + maxFee(deps) + 10_000n) {
-    refuse('balance-mismatch', 'The simulated balances did not match this preview. If your balances just changed, build it again. Nothing was offered to your wallet.');
+    refuse('balance-mismatch', 'The mainnet preflight balances did not match this preview. If your balances just changed, build it again. Nothing was offered to your wallet.');
   }
 }
 

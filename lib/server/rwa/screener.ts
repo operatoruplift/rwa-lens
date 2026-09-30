@@ -3,7 +3,7 @@ import { z } from 'zod';
 import bs58 from 'bs58';
 import liveAssets from '@/lib/rwa/live-assets.json';
 import { screenerResponseSchema, type ScreenerAsset, type ScreenerResponse } from '@/lib/rwa/screener';
-import { METEORA_DLMM_API, METEORA_DLMM_HOST, MIN_LISTED_TVL_USD, normalizeVenues } from '@/lib/rwa/venues';
+import { METEORA_DLMM_API, METEORA_DLMM_HOST, MIN_LISTED_TVL_USD, normalizeVenuePools } from '@/lib/rwa/venues';
 import { fetchAllowedJson, type MetadataOutcome } from './metadata-fetch';
 
 export const XSTOCKS_HOST = 'api.xstocks.fi';
@@ -16,11 +16,15 @@ const XSTOCKS_MAX_BYTES = 1024 * 1024;
 /** Mints per Meteora filter: forty keep each URL under the fetch policy's 2,048 characters. */
 const MINTS_PER_QUERY = 40;
 const POOLS_PER_QUERY = 200;
+const MAX_POOL_PAGES = 25;
+const MAX_POOL_ROWS = 10_000;
 const MAX_POOL_BYTES = 512 * 1024;
 const CONCURRENCY = 6;
 const FRESH_MS = 10 * 60_000;
 const MAX_AGE_MS = 60 * 60_000;
-const CATALOG_TTL_MS = 6 * 60 * 60_000;
+
+/** A bounded scan must fail explicitly instead of advertising partial coverage. */
+class IncompleteCoverageError extends Error {}
 
 const isMint = (value: string) => { try { return /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(value) && bs58.decode(value).length === 32; } catch { return false; } };
 
@@ -66,7 +70,10 @@ async function readXStocks(deps: Dependencies): Promise<ScreenerAsset[]> {
   for (let first = 1; first <= XSTOCKS_MAX_PAGES; first += XSTOCKS_PAGES_AT_ONCE) {
     const pages = Array.from({ length: Math.min(XSTOCKS_PAGES_AT_ONCE, XSTOCKS_MAX_PAGES - first + 1) }, (_, offset) => first + offset);
     const bodies = await Promise.all(pages.map(async page => {
-      const outcome = await deps.fetchJson(`https://${XSTOCKS_HOST}/api/v2/public/assets?network=Solana&pageSize=${XSTOCKS_PAGE_SIZE}&page=${page}`, [XSTOCKS_HOST], xStocksPageSchema, { maxBytes: XSTOCKS_MAX_BYTES });
+      const readPage = () => deps.fetchJson(`https://${XSTOCKS_HOST}/api/v2/public/assets?network=Solana&pageSize=${XSTOCKS_PAGE_SIZE}&page=${page}`, [XSTOCKS_HOST], xStocksPageSchema, { maxBytes: XSTOCKS_MAX_BYTES });
+      let outcome = await readPage();
+      // One retry retains the fetcher's five-second deadline per attempt; policy blocks are final.
+      if (outcome.state === 'failed') outcome = await readPage();
       if (outcome.state !== 'ok') throw new Error('xStocks catalog unavailable');
       return xStocksPageSchema.parse(outcome.body);
     }));
@@ -75,7 +82,7 @@ async function readXStocks(deps: Dependencies): Promise<ScreenerAsset[]> {
       if (!body.page.hasNextPage) return assets;
     }
   }
-  return assets;
+  throw new IncompleteCoverageError('The issuer catalog exceeds the bounded scan.');
 }
 
 async function mapLimited<T, R>(items: readonly T[], limit: number, task: (item: T) => Promise<R>): Promise<R[]> {
@@ -100,20 +107,39 @@ async function readPools(mints: readonly string[], deps: Dependencies): Promise<
   const chunks: string[][] = [];
   for (let index = 0; index < mints.length; index += MINTS_PER_QUERY) chunks.push(mints.slice(index, index + MINTS_PER_QUERY));
   const queries = chunks.flatMap(chunk => [poolsQuery('token_x', chunk), poolsQuery('token_y', chunk)]);
+  let totalRows = 0;
   const pages = await mapLimited(queries, CONCURRENCY, async query => {
-    const outcome = await deps.fetchJson(query, [METEORA_DLMM_HOST], poolPageSchema, { maxBytes: MAX_POOL_BYTES });
-    if (outcome.state !== 'ok') throw new Error('Meteora pools unavailable');
-    return poolPageSchema.parse(outcome.body).data;
+    const rows: unknown[] = [];
+    for (let page = 1; page <= MAX_POOL_PAGES; page++) {
+      const url = new URL(query);
+      url.searchParams.set('page', String(page));
+      const outcome = await deps.fetchJson(url.href, [METEORA_DLMM_HOST], poolPageSchema, { maxBytes: MAX_POOL_BYTES });
+      if (outcome.state !== 'ok') throw new Error('Meteora pools unavailable');
+      const body = poolPageSchema.parse(outcome.body);
+      totalRows += body.data.length;
+      if (body.total > MAX_POOL_PAGES * POOLS_PER_QUERY || totalRows > MAX_POOL_ROWS) throw new IncompleteCoverageError('The pool list exceeds the bounded scan.');
+      rows.push(...body.data);
+      if (rows.length >= body.total) return rows;
+      if (body.data.length < POOLS_PER_QUERY) throw new IncompleteCoverageError('The pool page sequence is incomplete.');
+    }
+    throw new IncompleteCoverageError('The pool list exceeds the bounded scan.');
   });
   return pages.flat();
 }
 
 const tokenMints = (row: unknown): string[] => {
+  if (!row || typeof row !== 'object') return [];
   const pool = row as { token_x?: { address?: unknown }; token_y?: { address?: unknown } };
   return [pool.token_x?.address, pool.token_y?.address].filter((value): value is string => typeof value === 'string');
 };
 
-type Snapshot = { at: number; value: Extract<ScreenerResponse, { state: 'ok' }> };
+type Snapshot = { at: number; issuerObservedAt: number; value: Extract<ScreenerResponse, { state: 'ok' }> };
+
+/** Fresh pool data never renews an issuer's older open/closed/halted observation. */
+function snapshotValue(snapshot: Snapshot, now: number): Snapshot['value'] {
+  return now - snapshot.issuerObservedAt < FRESH_MS ? snapshot.value
+    : { ...snapshot.value, assets: snapshot.value.assets.map(asset => ({ ...asset, market: null })) };
+}
 
 export function createScreenerStore(deps: Dependencies = defaults) {
   let snapshot: Snapshot | null = null;
@@ -122,10 +148,10 @@ export function createScreenerStore(deps: Dependencies = defaults) {
 
   async function build(): Promise<Snapshot> {
     const at = deps.now();
-    if (!catalog || at - catalog.at > CATALOG_TTL_MS) {
-      try { catalog = { at, assets: [...curatedAssets(), ...await readXStocks(deps)] }; }
-      catch (error) { if (!catalog) throw error; }
-    }
+    // Observe trading status each refresh. If the issuer is unavailable, retain
+    // known identities with their original observation time; reads expire flags.
+    try { catalog = { at, assets: [...curatedAssets(), ...await readXStocks(deps)] }; }
+    catch (error) { if (!catalog || error instanceof IncompleteCoverageError) throw error; }
     const assets = catalog.assets;
     const known = new Set(assets.map(asset => asset.mint));
     const rows = await readPools([...known], deps);
@@ -133,16 +159,18 @@ export function createScreenerStore(deps: Dependencies = defaults) {
     for (const row of rows) for (const mint of tokenMints(row)) if (known.has(mint)) byMint.set(mint, [...(byMint.get(mint) ?? []), row]);
     const fetchedAt = new Date(at).toISOString();
     const pools = [...byMint].flatMap(([mint, group]) => {
-      const venues = normalizeVenues(mint, [...new Map(group.map(row => [(row as { address?: string }).address, row])).values()], fetchedAt);
-      return venues.state === 'ok' ? venues.pools.map(pool => ({ ...pool, mint })) : [];
+      return normalizeVenuePools(mint, [...new Map(group.map(row => [(row as { address?: string }).address, row])).values()]).pools.map(pool => ({ ...pool, mint }));
     });
     const listed = new Set(pools.map(pool => pool.mint));
     const value = screenerResponseSchema.parse({ state: 'ok', fetchedAt, assets: assets.filter(asset => listed.has(asset.mint)), pools, catalogSize: assets.length, stale: false });
-    return { at, value: value as Snapshot['value'] };
+    return { at, issuerObservedAt: catalog.at, value: value as Snapshot['value'] };
   }
 
   function refresh(): Promise<Snapshot> {
-    inflight ??= build().then(fresh => { snapshot = fresh; return fresh; }).finally(() => { inflight = null; });
+    inflight ??= build().then(fresh => { snapshot = fresh; return fresh; }).catch(error => {
+      if (error instanceof IncompleteCoverageError) snapshot = null;
+      throw error;
+    }).finally(() => { inflight = null; });
     return inflight;
   }
 
@@ -150,10 +178,10 @@ export function createScreenerStore(deps: Dependencies = defaults) {
     /** A fresh snapshot, a stale one plus the refresh to run after responding, or unavailable. */
     async read(): Promise<{ response: ScreenerResponse; refresh?: () => Promise<unknown> }> {
       const now = deps.now();
-      if (snapshot && now - snapshot.at < FRESH_MS) return { response: snapshot.value };
-      if (snapshot && now - snapshot.at < MAX_AGE_MS) return { response: { ...snapshot.value, stale: true }, refresh: () => refresh().catch(() => undefined) };
-      try { return { response: (await refresh()).value }; }
-      catch { return { response: { state: 'unavailable', reason: 'The pool or issuer data could not be read. Try again shortly.' } }; }
+      if (snapshot && now - snapshot.at < FRESH_MS) return { response: snapshotValue(snapshot, now) };
+      if (snapshot && now - snapshot.at < MAX_AGE_MS) return { response: { ...snapshotValue(snapshot, now), stale: true }, refresh: () => refresh().catch(() => undefined) };
+      try { return { response: snapshotValue(await refresh(), deps.now()) }; }
+      catch (error) { return { response: { state: 'unavailable', reason: error instanceof IncompleteCoverageError ? 'The complete pool or issuer list could not be read within the scan limits. Try again shortly.' : 'The pool or issuer data could not be read. Try again shortly.' } }; }
     },
   };
 }

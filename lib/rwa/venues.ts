@@ -119,7 +119,7 @@ const clampNonNegative = (value: number | undefined) => (value === undefined || 
  * Keeps only pools whose own token list contains the exact mint (the upstream
  * query also matches names), drops blacklisted pools, and orders by TVL.
  */
-export function normalizeVenues(mint: string, rows: unknown[], fetchedAt: string): Extract<VenuesResponse, { state: 'ok' | 'none' }> {
+export function normalizeVenuePools(mint: string, rows: unknown[]): { pools: VenuePool[]; matched: number; belowFloor: number } {
   const pools: UpstreamPool[] = [];
   for (const row of rows) {
     const parsed = upstreamPoolSchema.safeParse(row);
@@ -130,11 +130,9 @@ export function normalizeVenues(mint: string, rows: unknown[], fetchedAt: string
   }
   pools.sort((a, b) => clampNonNegative(b.tvl) - clampNonNegative(a.tvl));
   const listed = pools.filter(pool => clampNonNegative(pool.tvl) >= MIN_LISTED_TVL_USD);
-  const base = { mint, source: METEORA_SOURCE_LABEL, fetchedAt, matched: pools.length, belowFloor: pools.length - listed.length } as const;
-  if (!listed.length) return { state: 'none', ...base };
   return {
-    state: 'ok', ...base,
-    pools: listed.slice(0, MAX_LISTED_POOLS).map(pool => {
+    matched: pools.length, belowFloor: pools.length - listed.length,
+    pools: listed.map(pool => {
       const [token, counter] = pool.token_x.address === mint ? [pool.token_x, pool.token_y] : [pool.token_y, pool.token_x];
       return {
         address: pool.address,
@@ -155,4 +153,13 @@ export function normalizeVenues(mint: string, rows: unknown[], fetchedAt: string
       };
     }),
   };
+}
+
+/** The inspector shows its five largest pools; the screener uses the uncapped normalization above. */
+export function normalizeVenues(mint: string, rows: unknown[], fetchedAt: string): Extract<VenuesResponse, { state: 'ok' | 'none' }> {
+  const normalized = normalizeVenuePools(mint, rows);
+  const base = { mint, source: METEORA_SOURCE_LABEL, fetchedAt, matched: normalized.matched, belowFloor: normalized.belowFloor } as const;
+  return normalized.pools.length
+    ? { state: 'ok', ...base, pools: normalized.pools.slice(0, MAX_LISTED_POOLS) }
+    : { state: 'none', ...base };
 }

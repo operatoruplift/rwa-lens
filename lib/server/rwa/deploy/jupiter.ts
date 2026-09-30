@@ -123,7 +123,7 @@ export function acceptSwapInstructions(body: unknown, expected: ExpectedAccounts
   const parsed = swapInstructionsSchema.safeParse(body);
   if (!parsed.success) throw new JupiterError('rejected', 'Jupiter returned instructions in an unexpected shape.');
   const plan = parsed.data;
-  if (plan.simulationError) throw new JupiterError('rejected', 'Jupiter could not simulate this swap for the wallet.');
+  if (plan.simulationError) throw new JupiterError('rejected', 'Jupiter could not complete the swap preflight for this wallet.');
   if (plan.swapInstruction.programId !== JUPITER_PROGRAM) throw new JupiterError('rejected', 'The swap did not use Jupiter’s program.');
   if (plan.cleanupInstruction) throw new JupiterError('rejected', 'The swap included a cleanup step this deploy never needs.');
   if (plan.setupInstructions.some(instruction => !createsExpectedAccount(instruction, expected))) throw new JupiterError('rejected', 'The swap included a setup step other than creating this wallet’s token accounts.');

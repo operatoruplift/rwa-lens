@@ -103,7 +103,7 @@ test.describe('operator-enabled deploy', () => {
     await expect(dialog).toContainText('1.1410 – 1.1488 USDC per USDY');
     await expect(dialog).toContainText('0.0419 SOL position rent');
     await expect(dialog).toContainText('plus 0.00149 SOL for new token accounts and about 0.00006 SOL in network fees');
-    await expect(dialog).toContainText('Simulated successfully against mainnet');
+    await expect(dialog).toContainText('Mainnet preflight check passed');
     await expect(dialog).toContainText(/Preview valid for \d+s/);
     await expect(dialog.getByText(/away from the swap price/)).toHaveCount(0);
     await mkdirScreens();
@@ -176,7 +176,7 @@ test.describe('operator-enabled deploy', () => {
     const dialog = await openDeploy(page);
     await dialog.getByRole('button', { name: 'Connect Test Wallet' }).click();
     await dialog.getByRole('button', { name: 'Preview deploy' }).click();
-    await expect(dialog).toContainText('Simulated successfully against mainnet');
+    await expect(dialog).toContainText('Mainnet preflight check passed');
     const box = await dialog.boundingBox();
     expect(box!.width).toBeLessThanOrEqual(390 - 32 + 1);
     await mkdirScreens();

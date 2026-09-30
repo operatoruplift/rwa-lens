@@ -1,7 +1,11 @@
 # RWA Lens capability matrix
 
-Evidence date: **19 September 2026 UTC / 20 September 2026 local**. This matrix
-reports the highest state established by the linked evidence, not a blanket
+Core evidence date: **19 September 2026 UTC / 20 September 2026 local**, with
+subsequent capability rows added as features shipped. Historical receipts below
+retain their original scope and counts. See the
+[30 September release record](rwa-release-2026-09-30.md) for current verification
+after the Claude changes. This matrix reports the highest state established by
+each linked receipt, not a blanket
 completion badge. In particular, a live RPC read served locally is
 `live-read-verified`, not `hosted-verified`.
 
@@ -21,7 +25,7 @@ State vocabulary:
 [Verification evidence](rwa-demo-evidence.md) contains exact observations and test
 scope. [Setup](../README.md), [limitations](rwa-limitations.md),
 [demo script](rwa-demo-script.md), and [deployment/rollback](rwa-deployment.md)
-provide the operating instructions. The final application commit is
+provide the operating instructions. The historical application commit was
 `a3e1b386fa762bb87ae894dab47cae7ca6c64b94`. Full lint, typecheck, production build,
 **220 unit/integration tests**, and **20 production browser tests** passed locally
 and in [GitHub CI](https://github.com/operatoruplift/rwa-lens/actions/runs/35460995007).
@@ -73,7 +77,8 @@ for exact deployment identity, slots, hashes and screenshot links.
 | Production deployment and rollback | Existing Vercel identity, `docs/rwa-deployment.md` | Existing alias preserved | Existing project environment | Local production server/browser run passed | Ready production deployment recorded | 20 hosted tests plus unmocked USDY/owner/export journey | `hosted-verified` | Ready deployment dpl_5dhCMrvc3RRWR83vDPYT6QP1FrCV; production aliases verified; prior Ready rollback target documented |
 | Documentation, evidence and judge walkthrough | README, this matrix, evidence, limitations, demo/deployment documents | Checked-in setup and two-minute script | Configuration names documented, no secret values | Links and stored receipts reviewed | Real non-stock and DB evidence distinguished from fixtures | Screenshot and walkthrough instructions present | `hosted-verified` | Release receipts, CI links and hosted screenshots recorded; no hackathon submission made |
 
-The required release and hosted-verification gates are complete. Unsupported data
+The historical release and hosted-verification gates below were completed within
+their recorded scope. Unsupported data
 layouts and the external-URI policy remain explicitly scoped above. Optional
 reports, wallet sign-in, remote registry and NAV remain `disabled-optional` until
 their own enabled journeys are verified. No result here certifies asset backing,

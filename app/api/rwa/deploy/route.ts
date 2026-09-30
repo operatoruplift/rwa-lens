@@ -4,10 +4,10 @@ import { deployEnabled, deployPriorityMicroLamports } from '@/lib/server/rwa/con
 import { buildDeploy } from '@/lib/server/rwa/deploy/build';
 import { createDeployChain } from '@/lib/server/rwa/deploy/chain';
 import { createJupiter } from '@/lib/server/rwa/deploy/jupiter';
+import { readSelectedPool } from '@/lib/server/rwa/deploy/venue';
 import { hasSameOrigin, readBoundedJson } from '@/lib/server/rwa/http';
 import { rateLimit } from '@/lib/server/rwa/rate-limit';
 import { configuredOrigin } from '@/lib/server/rwa/session';
-import { readVenues } from '@/lib/server/rwa/venues';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -33,7 +33,7 @@ export async function POST(request: Request) {
   try { chain = createDeployChain(); }
   catch { return reply({ state: 'unavailable', message: 'Deploy is not configured on this deployment.' }); }
   try {
-    return reply(await buildDeploy(parsed.data, { chain, jupiter: createJupiter(), venues: readVenues, now: Date.now, priorityMicroLamports: deployPriorityMicroLamports() }));
+    return reply(await buildDeploy(parsed.data, { chain, jupiter: createJupiter(), venues: mint => readSelectedPool(mint, parsed.data.pool), now: Date.now, priorityMicroLamports: deployPriorityMicroLamports() }));
   } catch {
     // Anything the builder does not already translate stays behind the same redacted envelope.
     return reply({ state: 'unavailable', message: 'The deploy preview failed unexpectedly. Nothing was offered to your wallet. Try again shortly.' });

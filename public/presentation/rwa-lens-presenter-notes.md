@@ -2,11 +2,11 @@
 
 Mainnet / September 2026
 
-Audience: Solana ecosystem reviewers, wallet teams, issuers and treasury operators. Suggested duration: 7–9 minutes, plus 3–4 minutes for the live walkthrough.
+Audience: Solana ecosystem reviewers, wallet teams, issuers and treasury operators. Suggested duration: 7–9 minutes, plus 5–6 minutes for the live walkthrough.
 
 ## Presenting the deck
 
-Open rwa-lens-pitch.html locally or from /presentation/rwa-lens-pitch.html. Use arrow keys, Page Up / Page Down, wheel, vertical swipe or the visible controls. Horizontal swipe also advances. N opens the current speaker note; Escape closes it. Home and End jump to the first and last slide. The HTML includes its font and artwork and works offline; outbound product and source links require connectivity. The PDF is a shareable fixed-layout copy. The PPTX keeps typography, geometry and diagrams editable; its optical artwork remains a raster image. Install the included Inter font for consistent PowerPoint typography.
+Open rwa-lens-pitch.html locally or from /presentation/rwa-lens-pitch.html. Use arrow keys, Page Up / Page Down, wheel, vertical swipe or the visible controls. Horizontal swipe also advances. N opens the current speaker note; Escape closes it. Home and End jump to the first and last slide. The HTML includes its font and artwork and works offline; outbound product and source links require connectivity. The PDF is a shareable fixed-layout copy. The PPTX keeps typography, geometry and diagrams editable; its optical artwork remains a raster image. PowerPoint uses Inter; install it locally for consistent typography.
 
 ## Five-minute live walkthrough
 
@@ -16,13 +16,15 @@ Open rwa-lens-pitch.html locally or from /presentation/rwa-lens-pitch.html. Use 
 4. Open evidence: show observation time, network, commitment and per-read context slots.
 5. Optionally enter a public owner address supplied by the audience. Explain returned public accounts and preserve partial or unavailable states.
 6. Download JSON and CSV. Open the files and show the connection between the UI and the saved record.
-7. Open /technical to discuss exact raw accounting, display conversion and Token-2022 extension handling.
+7. Follow the reserve badge to the issuer source. Open /yield, filter the pool view and follow an exact-mint link back to the inspector. Keep market figures separate from the exported chain observation.
+8. Explain the installable PWA and Android/Seeker source. On-device verification and store publishing remain pending.
+9. Open /technical to discuss accounting, market-data boundaries and the optional wallet action. Deploy USDC is off on the public deployment; a mainnet preflight is not an executed deposit.
 
 If an upstream read fails, keep the error visible and explain the bounded request behavior. Retry when appropriate; do not present another source of data as a successful live read. Never imply that the USDY mint contains Token-2022 extensions.
 
 ## 01 — Real assets. Clearer vision.
 
-Open with the product, not a market statistic. RWA Lens gives teams a clear view of the public Solana token data behind an asset: its identity, units, display conversion and observable controls. The live product is a read-only inspector on Solana mainnet. This is an invitation to use it and shape the next integrations.
+RWA Lens helps teams inspect the public Solana state behind a token, discover its liquidity and carry the evidence into their workflow. The live mainnet product combines a read-only inspector, a tokenized-asset yield screener and local receipts. It is also installable as a PWA. Invite the audience to use the product and shape the next integrations.
 
 ## 02 — A balance is only the beginning.
 
@@ -34,11 +36,11 @@ The initial audience is wallet builders, token issuers, custodians and treasury 
 
 ## 04 — From address to understanding.
 
-Enter a mint and optionally a public owner address. The server validates inputs and reads the configured Solana network. The result separates identity, balances, extensions, readiness and source evidence. Export JSON for the complete structured record or CSV for tabular review. Guest inspection and local exports require no wallet. RWA Lens does not sign or submit transactions.
+Enter a mint and optionally a public owner address. The server validates inputs and reads the configured Solana network. The result separates identity, balances, extensions, readiness and source evidence. Export JSON for the complete structured record or CSV for tabular review. Inspection and local exports require no wallet and never sign or move assets. The separate operator-enabled USDC deploy flow is off on the public deployment; it prepares a transaction for the user to review, sign and send in their own wallet.
 
 ## 05 — Follow USDY on mainnet.
 
-Open https://rwalensonsolana.vercel.app/demo and run the USDY inspection. The official mint is A1KLoBrKBde8Ty9qtNQUtq3C2ortoC3u7twggz7sEto6. Confirm the full mint address and legacy SPL Token program. Review identity, authorities, evidence and export. Explain that USDY’s legacy SPL program is separate from the product’s Token-2022 support. Issuer descriptions provide attribution; they do not independently establish backing, legal rights, eligibility or investment performance. Keep the live result visible if the provider reports an unavailable or partial observation.
+Open https://rwalensonsolana.vercel.app/demo and run the USDY inspection. The official mint is A1KLoBrKBde8Ty9qtNQUtq3C2ortoC3u7twggz7sEto6. Confirm the full mint address and legacy SPL Token program. Review identity, authorities, evidence and export. Explain that USDY’s legacy SPL program is separate from the product’s Token-2022 support. Issuer descriptions provide attribution; they do not independently establish backing, legal rights, eligibility or investment performance. Keep the live result visible if the provider reports an unavailable or partial observation. After exporting, open the issuer reserve link and /yield. Filter by issuer, pair and liquidity; follow a row back to the exact mint in the inspector. Market figures remain separate from the chain observation and historical fees do not promise future returns.
 
 ## 06 — Exact underneath. Clear on the surface.
 
@@ -50,11 +52,11 @@ The extension inventory explains observable configuration instead of collapsing 
 
 ## 08 — Every conclusion has a path back.
 
-The Next.js interface calls a validated server route. Bounded Solana RPC reads retrieve mint data, Clock and optional owner accounts. Official Solana codecs drive token and extension decoding. The result preserves source information, observation time, per-read context slots and incomplete states. Requests have timeout, retry and size bounds. Metadata retrieval is explicit and allowlisted, with private-address rejection and pinned connections. Secrets stay on the server. The separate reads do not form an atomic snapshot.
+The Next.js interface calls a validated server route. Bounded Solana RPC reads retrieve mint data, Clock and optional owner accounts. Official Solana codecs drive token and extension decoding. The result preserves source information, observation time, per-read context slots and incomplete states. Requests have timeout, retry and size bounds. Metadata retrieval is explicit and allowlisted, with private-address rejection and pinned connections. Secrets stay on the server. The separate reads do not form an atomic snapshot. A separate market-data pipeline reads the xStocks catalog and Meteora pools through bounded HTTPS requests. Cached snapshots expose their freshness. Reserve badges link recorded issuer reports without treating them as verified backing. The optional deploy pipeline prepares an unsigned Jupiter swap plus Meteora deposit, applies instruction and spend checks and runs a mainnet preflight before wallet review. It is off in the public deployment.
 
-## 09 — More context. Less guesswork.
+## 09 — Know the token. See the market.
 
-The differentiation is the combination: amount reconciliation, controls explained in context and a portable observation. This is complementary to block explorers, issuer documentation and wallet interfaces. We are not claiming that other products cannot provide these features. The product’s focus is making the investigation easier to complete and easier to discuss across teams.
+The live yield screener shows Meteora DLMM pools holding supported tokenized assets, with TVL, volume, fees and issuer-reported market status. Filters live in the URL and each row opens the exact mint in the inspector. Reserve badges link issuer-published reports; RWA Lens does not read, audit or verify those reports. Market data remains outside the token observation and its exported receipt. Historical fee APY is not a promised return. The PWA is installable; Android and Seeker Web Shell source is included, while release signing, real-device verification and store publishing remain pending.
 
 ## 10 — Start with clarity. Build into workflows.
 
@@ -62,7 +64,7 @@ This slide describes a proposed business model, not shipped commercial features 
 
 ## 11 — A useful product now. A deliberate next step.
 
-The current product supports public mainnet token inspection and local evidence exports. Engineering verification covers accounting, decoders, request validation, failure states, keyboard and responsive UI paths. The next step is partner workflow validation. Monitoring, shared retained history and productized external integrations are roadmap items. These are priorities, not dated delivery commitments. Production RPC availability remains an operational dependency.
+The current public product supports mainnet token inspection, tokenized-asset pool discovery, issuer reserve links, local evidence exports and an installable PWA. Engineering verification covers accounting, decoders, request validation, failure states, keyboard and responsive UI paths. The Android and Seeker Web Shell is source-ready; on-device validation and publishing remain separate steps. The optional wallet-signed USDC deploy path is off pending a funded real-wallet send and operator activation. Partner pilots, monitoring and shared retained history are next-stage work, not claimed adoption or dated commitments. RPC and market-data availability remain operational dependencies.
 
 ## 12 — Bring one workflow. Let’s make it clearer.
 
@@ -76,7 +78,7 @@ Close by opening the live product or guided demo. RWA Lens makes observable publ
 
 ### Does the product move funds?
 
-No. Public inspection and local export are read-only. No asset transaction is signed or submitted.
+Inspection, market discovery and local exports are read-only. A separate operator-enabled USDC deploy flow, off on the public deployment, asks the user’s wallet to sign and send one reviewed transaction. The server holds no signing keys and takes no custody.
 
 ### Does USDY use Token-2022?
 
@@ -104,7 +106,7 @@ No. Mint, Clock and owner calls expose their separate slots. A context spread is
 
 ### What is live and what is planned?
 
-Public mainnet inspection and JSON/CSV exports are available. Commercial packaging, monitoring, shared retained history and productized integrations are plans to validate. Cloud reports remain outside the current public launch.
+Mainnet inspection, the yield screener, issuer reserve links, JSON/CSV receipts and an installable PWA are available. The optional wallet-signed deploy path is off. Android and Seeker source is included, with device validation and publishing pending. Commercial packaging, monitoring and shared retained history remain plans to validate; cloud reports are outside the public launch.
 
 ### What happens when an upstream provider fails?
 
@@ -114,16 +116,26 @@ The UI reports the unavailable read. The server bounds retries, deadlines and re
 
 A wallet, issuer or treasury team willing to evaluate one real workflow and help define a useful integration pilot. No fundraising terms are proposed here.
 
+### Does the yield view verify reserves or guarantee returns?
+
+No. Pool figures come from Meteora and the asset catalog comes from issuer sources. Reserve badges link issuer reports without auditing them. Historical fee APY is not a future-return promise; token inspection records remain separate from market data.
+
+### Is the Android or Seeker app already released?
+
+The web product is installable as a PWA and Android Web Shell source is included. Release signing, on-device wallet validation and dApp Store publishing remain pending. No completed phone validation or published mobile app is claimed.
+
 ## Source map
 
-The content is grounded in README.md, lib/rwa/balance.ts, lib/rwa/extensions.ts, lib/rwa/readiness.ts, lib/server/rwa/inspect.ts, lib/server/rwa/rpc.ts, lib/rwa/live-assets.json and checked-in verification receipts. Current verification counts belong to the release receipt rather than evergreen pitch slides.
+The content is grounded in README.md, lib/rwa/balance.ts, lib/rwa/extensions.ts, lib/rwa/readiness.ts, lib/server/rwa/inspect.ts, lib/server/rwa/rpc.ts, lib/rwa/live-assets.json, lib/server/rwa/screener.ts, lib/server/rwa/venues.ts, docs/yield-deploy.md, docs/seeker-and-pwa.md and checked-in verification receipts. Current verification counts belong to the release receipt rather than evergreen pitch slides.
 
 - [Live product](https://rwalensonsolana.vercel.app)
 - [Guided demo](https://rwalensonsolana.vercel.app/demo)
 - [Technical breakdown](https://rwalensonsolana.vercel.app/technical)
+- [Yield screener](https://rwalensonsolana.vercel.app/yield)
+- [Issuer reserve reports](https://ondo.finance/usdy)
 - [Source repository](https://github.com/operatoruplift/rwa-lens)
 - [USDY mint address registry](https://docs.ondo.finance/addresses)
 - [Issuer USDY description](https://docs.ondo.finance/general-access-products/usdy/basics)
 - [Solana Scaled UI Amount](https://solana.com/docs/tokens/extensions/scaled-ui-amount)
 
-Official USDY and Solana sources reviewed on 23 September 2026. The commercial model and future team capabilities are proposals to validate. The deck makes no customer, revenue, adoption, backing or return claim.
+Product scope reconciled with the repository on 30 September 2026. Issuer and protocol links are primary references; report contents have not been independently verified. The commercial model and future team capabilities are proposals to validate. The deck makes no customer, revenue, adoption, backing or return claim.

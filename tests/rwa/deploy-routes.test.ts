@@ -1,10 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const mocks = vi.hoisted(() => ({ build: vi.fn(), limit: vi.fn(), chain: vi.fn(), status: vi.fn() }));
+const mocks = vi.hoisted(() => ({ build: vi.fn(), limit: vi.fn(), chain: vi.fn(), status: vi.fn(), selectedPool: vi.fn() }));
 vi.mock('@/lib/server/rwa/deploy/build', () => ({ buildDeploy: mocks.build }));
 vi.mock('@/lib/server/rwa/deploy/chain', () => ({ createDeployChain: mocks.chain }));
 vi.mock('@/lib/server/rwa/deploy/status', () => ({ readDeployStatus: mocks.status }));
 vi.mock('@/lib/server/rwa/rate-limit', () => ({ rateLimit: mocks.limit }));
+vi.mock('@/lib/server/rwa/deploy/venue', () => ({ readSelectedPool: mocks.selectedPool }));
 import { POST } from '@/app/api/rwa/deploy/route';
 import { GET } from '@/app/api/rwa/deploy/status/route';
 
@@ -61,6 +62,17 @@ describe('deploy routes', () => {
     const limited = await post(valid);
     expect(limited.status).toBe(429);
     expect(limited.headers.get('retry-after')).toBe('30');
+  });
+
+  it('validates the requested pool independently of the inspector list', async () => {
+    const listing = { state: 'ok', pools: [{ address: valid.pool }] };
+    mocks.selectedPool.mockResolvedValueOnce(listing);
+    mocks.build.mockImplementationOnce(async (request, deps) => {
+      expect(await deps.venues(request.mint)).toBe(listing);
+      return { state: 'refused', code: 'insufficient-usdc', message: 'This wallet holds 0 USDC.' };
+    });
+    expect((await post(valid)).status).toBe(422);
+    expect(mocks.selectedPool).toHaveBeenCalledExactlyOnceWith(valid.mint, valid.pool);
   });
 
   it('checks confirmation for a well-formed signature only', async () => {

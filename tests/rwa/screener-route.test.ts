@@ -13,10 +13,10 @@ beforeEach(() => { mocks.limit.mockResolvedValue({ ok: true }); mocks.read.mockR
 afterEach(() => { vi.resetAllMocks(); });
 
 describe('screener route', () => {
-  it('lets the CDN cache a good snapshot and never caches a failure', async () => {
+  it('prevents response caches from extending market-status freshness', async () => {
     const response = await get();
     expect(response.status).toBe(200);
-    expect(response.headers.get('cache-control')).toBe('public, s-maxage=300, stale-while-revalidate=3600');
+    expect(response.headers.get('cache-control')).toBe('no-store');
     expect(mocks.after).not.toHaveBeenCalled();
     mocks.read.mockResolvedValueOnce({ response: { state: 'unavailable', reason: 'down' } });
     const failed = await get();

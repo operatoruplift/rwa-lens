@@ -37,7 +37,7 @@ function Review({ ready }: { ready: ReadyDeploy }) {
     ['Deposit', `${formatUnits(s.deposit.tokenRaw, s.tokenDecimals)} ${token} + ${formatUnits(s.deposit.usdcRaw, USDC_DECIMALS)} USDC`, `Spread evenly over ${bins} bins centred on the pool price${s.position.isNew ? ', in a new position' : ', added to your existing position at this range'}`],
     ['Range', `${formatPrice(s.deposit.minPrice)} – ${formatPrice(s.deposit.maxPrice)} USDC per ${token}`, `Pool price ${formatPrice(s.deposit.poolPrice)} · swap price ${formatPrice(s.swap.price)} · ${pct(s.priceGapPct)} apart`],
     ['SOL', `${formatSol(s.sol.positionRentLamports)} SOL position rent`, `Returned when you close the position · plus ${formatSol(s.sol.otherRentLamports)} SOL for new token accounts${s.newBinArrays ? ' and pool bin arrays' : ''} and about ${formatSol(s.sol.networkFeeLamports)} SOL in network fees`],
-    ['Check', 'Simulated successfully against mainnet', `Slot ${Number(simulation.slot).toLocaleString('en-US')} · ${simulation.unitsConsumed.toLocaleString('en-US')} compute units`],
+    ['Check', 'Mainnet preflight check passed', `Slot ${Number(simulation.slot).toLocaleString('en-US')} · ${simulation.unitsConsumed.toLocaleString('en-US')} compute units`],
   ];
   return (
     <>
@@ -95,7 +95,7 @@ export default function DeployDialog({ mint, pool, onClose }: { mint: string; po
     <dialog ref={dialog} className="wallet-dialog deploy-dialog" aria-labelledby="deploy-title" onClose={onClose} onCancel={event => { if (locked) event.preventDefault(); }}>
       <div className="dialog-top"><Layers size={23} /><button type="button" aria-label="Close deploy" onClick={() => dialog.current?.close()} disabled={locked}><X size={19} /></button></div>
       <h2 id="deploy-title">Deploy USDC into {pool.pair}</h2>
-      <p>Half of your USDC is swapped into {pool.tokenSymbol} through Jupiter, then both are deposited into this Meteora pool around its current price, all in one transaction. RWA Lens builds and simulates it; your wallet signs and sends it. RWA Lens never holds keys or funds.</p>
+      <p>Half of your USDC is swapped into {pool.tokenSymbol} through Jupiter, then both are deposited into this Meteora pool around its current price, all in one transaction. RWA Lens builds it and runs a mainnet preflight check; your wallet signs and sends it. RWA Lens never holds keys or funds.</p>
 
       {deployer.connected && phase.kind !== 'wallet' && phase.kind !== 'connecting' ? (
         <p className="deploy-wallet">Wallet <strong>{deployer.connected.wallet.name} · {short(deployer.connected.account.address)}</strong>{locked ? null : <button type="button" className="text-link" onClick={deployer.changeWallet}>Change</button>}</p>
@@ -121,7 +121,7 @@ export default function DeployDialog({ mint, pool, onClose }: { mint: string; po
           <button type="submit" className="primary-button" disabled={!amountValid}>Preview deploy</button>
         </form>
       ) : null}
-      {phase.kind === 'quoting' ? <Waiting>Quoting the swap and simulating the whole transaction against mainnet…</Waiting> : null}
+      {phase.kind === 'quoting' ? <Waiting>Quoting the swap and running the full transaction through mainnet preflight…</Waiting> : null}
 
       {phase.kind === 'review' ? (
         <>

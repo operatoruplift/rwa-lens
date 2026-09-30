@@ -13,7 +13,7 @@
 The user's current task explicitly authorizes deployment. This project has no
 runtime dependency on Lotline and no Lotline tables or credentials are used.
 
-## Verified application release
+## Historical verified application release (20 September 2026)
 
 Application commit `a3e1b386fa762bb87ae894dab47cae7ca6c64b94` was automatically
 built by the existing GitHub-to-Vercel integration. Deployment
@@ -22,6 +22,9 @@ https://rwa-lens-79mz5m9zi-operatoruplift.vercel.app. The canonical and secondar
 aliases both resolved to that release. CI and hosted read/browser checks passed;
 see `rwa-demo-evidence.md` for actual run links and receipts. Evidence-only
 follow-up commits may produce another deployment with identical application code.
+This is a historical receipt, not the current production identity. The
+[30 September release record](rwa-release-2026-09-30.md) covers the resumed audit
+after the presentation, mobile, venues and yield additions.
 
 ## Release procedure
 
@@ -32,14 +35,17 @@ follow-up commits may produce another deployment with identical application code
    present under `public/`, so run this before the build; the documents already
    committed there ship as they are. Confirm every `/presentation` link on
    `/pitch`, `/demo` and `/technical` resolves on the deployed alias.
-3. Run `npm run build`, then `npm run test:e2e` against `next start`.
+3. Run `npm run build`, then `npm run test:e2e` and `npm run test:e2e:deploy`
+   against `next start`. The deploy suite uses a mocked wallet and sends no funds.
 4. Review changes and commit/push to the existing repository. Verify the GitHub
    deterministic workflow on the release commit.
 5. Deploy the linked Vercel project using `vercel --prod --yes` if the repository
    push does not already produce the intended production release. Verify the
    production alias points to the new Ready deployment.
-6. Exercise `/` and `/rwa`, live USDY inspection, fixture timeline, JSON/CSV
-   export, invalid input, optional endpoints, security headers and mobile views.
+6. Exercise `/`, `/rwa`, `/yield`, `/demo`, `/technical`, `/pitch` and `/brand-kit`,
+   live USDY inspection, production fixture rejection, JSON/CSV export,
+   presentation downloads, invalid input, optional endpoints, security headers
+   and mobile views.
 7. Run `node scripts/verify-live.mjs` and the deliberately separate hosted-read
    GitHub workflow; preserve receipts and actual outcomes.
 
@@ -65,7 +71,7 @@ legacy UUID `owner_id` table as though a base58 wallet address were `auth.uid()`
 
 Use Vercel's production rollback to the prior known Ready deployment (or
 `vercel rollback <deployment-url>` from the linked project). Confirm both
-canonical aliases, then rerun the guest/fixture smoke check. If needed, revert
+canonical aliases, then rerun the guest/mainnet smoke check. If needed, revert
 the release commit with a new Git commit; do not reset or force-push main.
 
 New durable auth tables/functions are additive and can remain unused during an

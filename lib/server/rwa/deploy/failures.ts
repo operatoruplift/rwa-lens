@@ -27,7 +27,7 @@ export function explainSimulationFailure(err: unknown, logs: readonly string[], 
   if (/insufficient funds/i.test(text)) return `The wallet does not hold enough of a token this transaction spends.${NO_TX}`;
   if (err === 'BlockhashNotFound') return 'The network moved on before the check finished. Build the deploy again.';
   const failure = typeof err === 'object' && err !== null && 'InstructionError' in err ? (err as { InstructionError: unknown }).InstructionError : null;
-  if (!Array.isArray(failure)) return `The transaction failed its simulation.${NO_TX}`;
+  if (!Array.isArray(failure)) return `The transaction failed its mainnet preflight check.${NO_TX}`;
   const index = asNumber(failure[0]);
   const program = index === null ? undefined : programs[index];
   const detail = failure[1];
@@ -37,5 +37,5 @@ export function explainSimulationFailure(err: unknown, logs: readonly string[], 
     if (custom === 6004) return `The pool’s price moved further than your slippage allows. Try again or allow more slippage.${NO_TX}`;
     return `Meteora rejected the deposit (${DLMM_ERRORS[custom] ?? `error ${custom}`}).${NO_TX}`;
   }
-  return `The simulation failed at ${program ? LABELS[program] ?? 'an unexpected program' : 'an unknown step'}.${NO_TX}`;
+  return `The mainnet preflight check failed at ${program ? LABELS[program] ?? 'an unexpected program' : 'an unknown step'}.${NO_TX}`;
 }

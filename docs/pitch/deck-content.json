@@ -9,7 +9,7 @@
       "summary": "The token behind the asset, brought into focus.",
       "kind": "cover",
       "theme": "dark",
-      "notes": "Open with the product, not a market statistic. RWA Lens gives teams a clear view of the public Solana token data behind an asset: its identity, units, display conversion and observable controls. The live product is a read-only inspector on Solana mainnet. This is an invitation to use it and shape the next integrations."
+      "notes": "RWA Lens helps teams inspect the public Solana state behind a token, discover its liquidity and carry the evidence into their workflow. The live mainnet product combines a read-only inspector, a tokenized-asset yield screener and local receipts. It is also installable as a PWA. Invite the audience to use the product and shape the next integrations."
     },
     {
       "section": "01 / THE PROBLEM",
@@ -49,7 +49,7 @@
         { "label": "03", "title": "Export", "body": "JSON + CSV evidence" }
       ],
       "note": "Guest access · No wallet required · No asset movement",
-      "notes": "Enter a mint and optionally a public owner address. The server validates inputs and reads the configured Solana network. The result separates identity, balances, extensions, readiness and source evidence. Export JSON for the complete structured record or CSV for tabular review. Guest inspection and local exports require no wallet. RWA Lens does not sign or submit transactions."
+      "notes": "Enter a mint and optionally a public owner address. The server validates inputs and reads the configured Solana network. The result separates identity, balances, extensions, readiness and source evidence. Export JSON for the complete structured record or CSV for tabular review. Inspection and local exports require no wallet and never sign or move assets. The separate operator-enabled USDC deploy flow is off on the public deployment; it prepares a transaction for the user to review, sign and send in their own wallet."
     },
     {
       "section": "04 / THE LIVE DEMO",
@@ -63,7 +63,7 @@
         { "label": "NETWORK", "title": "Mainnet", "body": "Public chain observation" }
       ],
       "note": "Open the guided demo → /demo",
-      "notes": "Open https://rwalensonsolana.vercel.app/demo and run the USDY inspection. The official mint is A1KLoBrKBde8Ty9qtNQUtq3C2ortoC3u7twggz7sEto6. Confirm the full mint address and legacy SPL Token program. Review identity, authorities, evidence and export. Explain that USDY’s legacy SPL program is separate from the product’s Token-2022 support. Issuer descriptions provide attribution; they do not independently establish backing, legal rights, eligibility or investment performance. Keep the live result visible if the provider reports an unavailable or partial observation."
+      "notes": "Open https://rwalensonsolana.vercel.app/demo and run the USDY inspection. The official mint is A1KLoBrKBde8Ty9qtNQUtq3C2ortoC3u7twggz7sEto6. Confirm the full mint address and legacy SPL Token program. Review identity, authorities, evidence and export. Explain that USDY’s legacy SPL program is separate from the product’s Token-2022 support. Issuer descriptions provide attribution; they do not independently establish backing, legal rights, eligibility or investment performance. Keep the live result visible if the provider reports an unavailable or partial observation. After exporting, open the issuer reserve link and /yield. Filter by issuer, pair and liquidity; follow a row back to the exact mint in the inspector. Market figures remain separate from the chain observation and historical fees do not promise future returns."
     },
     {
       "section": "05 / SOLANA ACCOUNTING",
@@ -104,20 +104,20 @@
         { "label": "OUTPUT", "title": "Evidence record", "body": "Typed result · context slots · export" }
       ],
       "note": "Reads have separate context slots; they are not an atomic snapshot.",
-      "notes": "The Next.js interface calls a validated server route. Bounded Solana RPC reads retrieve mint data, Clock and optional owner accounts. Official Solana codecs drive token and extension decoding. The result preserves source information, observation time, per-read context slots and incomplete states. Requests have timeout, retry and size bounds. Metadata retrieval is explicit and allowlisted, with private-address rejection and pinned connections. Secrets stay on the server. The separate reads do not form an atomic snapshot."
+      "notes": "The Next.js interface calls a validated server route. Bounded Solana RPC reads retrieve mint data, Clock and optional owner accounts. Official Solana codecs drive token and extension decoding. The result preserves source information, observation time, per-read context slots and incomplete states. Requests have timeout, retry and size bounds. Metadata retrieval is explicit and allowlisted, with private-address rejection and pinned connections. Secrets stay on the server. The separate reads do not form an atomic snapshot. A separate market-data pipeline reads the xStocks catalog and Meteora pools through bounded HTTPS requests. Cached snapshots expose their freshness. Reserve badges link recorded issuer reports without treating them as verified backing. The optional deploy pipeline prepares an unsigned Jupiter swap plus Meteora deposit, applies instruction and spend checks and runs a mainnet preflight before wallet review. It is off in the public deployment."
     },
     {
       "section": "08 / WHY RWA LENS",
-      "title": "More context.\nLess guesswork.",
-      "summary": "A focused investigation workflow for token operations.",
+      "title": "Know the token.\nSee the market.",
+      "summary": "From token evidence to liquidity discovery.",
       "kind": "cards",
       "theme": "citron",
       "items": [
-        { "label": "RECONCILE", "title": "Amounts, connected", "body": "Raw, standard and extension display in one view." },
-        { "label": "INTERPRET", "title": "Controls, explained", "body": "Technical configuration translated into operational meaning." },
-        { "label": "RETAIN", "title": "Evidence, portable", "body": "Source context and local JSON/CSV exports travel together." }
+        { "label": "DISCOVER", "title": "Find liquidity", "body": "Filter tokenized-asset pools by issuer, pair and liquidity." },
+        { "label": "TRACE", "title": "Follow the source", "body": "Inspect the exact mint. Open issuer reserve reports." },
+        { "label": "TAKE IT WITH YOU", "title": "Keep it close", "body": "Install the PWA. Carry JSON and CSV receipts." }
       ],
-      "notes": "The differentiation is the combination: amount reconciliation, controls explained in context and a portable observation. This is complementary to block explorers, issuer documentation and wallet interfaces. We are not claiming that other products cannot provide these features. The product’s focus is making the investigation easier to complete and easier to discuss across teams."
+      "notes": "The live yield screener shows Meteora DLMM pools holding supported tokenized assets, with TVL, volume, fees and issuer-reported market status. Filters live in the URL and each row opens the exact mint in the inspector. Reserve badges link issuer-published reports; RWA Lens does not read, audit or verify those reports. Market data remains outside the token observation and its exported receipt. Historical fee APY is not a promised return. The PWA is installable; Android and Seeker Web Shell source is included, while release signing, real-device verification and store publishing remain pending."
     },
     {
       "section": "09 / COMMERCIAL DIRECTION",
@@ -139,11 +139,11 @@
       "kind": "flow",
       "theme": "ivory",
       "items": [
-        { "label": "AVAILABLE", "title": "Inspect + export", "body": "Mainnet reads, token decoding and local evidence." },
+        { "label": "AVAILABLE", "title": "Inspect + discover", "body": "Mainnet reads, pool discovery, receipts and installable PWA." },
         { "label": "NEXT", "title": "Partner pilots", "body": "Validate real review and integration workflows." },
         { "label": "PLANNED", "title": "Team capabilities", "body": "Prioritize monitoring, retained history and integrations." }
       ],
-      "notes": "The current product supports public mainnet token inspection and local evidence exports. Engineering verification covers accounting, decoders, request validation, failure states, keyboard and responsive UI paths. The next step is partner workflow validation. Monitoring, shared retained history and productized external integrations are roadmap items. These are priorities, not dated delivery commitments. Production RPC availability remains an operational dependency."
+      "notes": "The current public product supports mainnet token inspection, tokenized-asset pool discovery, issuer reserve links, local evidence exports and an installable PWA. Engineering verification covers accounting, decoders, request validation, failure states, keyboard and responsive UI paths. The Android and Seeker Web Shell is source-ready; on-device validation and publishing remain separate steps. The optional wallet-signed USDC deploy path is off pending a funded real-wallet send and operator activation. Partner pilots, monitoring and shared retained history are next-stage work, not claimed adoption or dated commitments. RPC and market-data availability remain operational dependencies."
     },
     {
       "section": "11 / THE INVITATION",
@@ -168,15 +168,17 @@
     }
   ],
   "qa": [
-    { "question": "Does the product move funds?", "answer": "No. Public inspection and local export are read-only. No asset transaction is signed or submitted." },
+    { "question": "Does the product move funds?", "answer": "Inspection, market discovery and local exports are read-only. A separate operator-enabled USDC deploy flow, off on the public deployment, asks the user’s wallet to sign and send one reviewed transaction. The server holds no signing keys and takes no custody." },
     { "question": "Does USDY use Token-2022?", "answer": "The attributed USDY mint uses legacy SPL Token. The inspector also supports Token-2022 mints and decodes their observed extensions separately." },
     { "question": "Does the result prove backing or compliance?", "answer": "No. Issuer attribution, chain observations and legal or economic assurances are different things. The product reports observable token data." },
     { "question": "How are balances kept exact?", "answer": "Raw quantities remain integer strings or BigInt. Standard decimals are formatted exactly. Supported extension display conversion is isolated and never becomes an accounting input." },
     { "question": "Can every holder balance be determined?", "answer": "No. Public owner account reads can be partial, capped or unavailable, and confidential amounts are not observable. These states remain visible." },
     { "question": "Can the result certify transfer success?", "answer": "No. Recipient state, hook execution and other unresolved checks can affect execution. Known blocks and unknown checks remain separate." },
     { "question": "Are all reads from one atomic snapshot?", "answer": "No. Mint, Clock and owner calls expose their separate slots. A context spread is preserved, and a timestamp fallback is identified as an estimate." },
-    { "question": "What is live and what is planned?", "answer": "Public mainnet inspection and JSON/CSV exports are available. Commercial packaging, monitoring, shared retained history and productized integrations are plans to validate. Cloud reports remain outside the current public launch." },
+    { "question": "What is live and what is planned?", "answer": "Mainnet inspection, the yield screener, issuer reserve links, JSON/CSV receipts and an installable PWA are available. The optional wallet-signed deploy path is off. Android and Seeker source is included, with device validation and publishing pending. Commercial packaging, monitoring and shared retained history remain plans to validate; cloud reports are outside the public launch." },
     { "question": "What happens when an upstream provider fails?", "answer": "The UI reports the unavailable read. The server bounds retries, deadlines and response sizes; it does not quietly change networks or replace the result." },
-    { "question": "What is the immediate ask?", "answer": "A wallet, issuer or treasury team willing to evaluate one real workflow and help define a useful integration pilot. No fundraising terms are proposed here." }
+    { "question": "What is the immediate ask?", "answer": "A wallet, issuer or treasury team willing to evaluate one real workflow and help define a useful integration pilot. No fundraising terms are proposed here." },
+    { "question": "Does the yield view verify reserves or guarantee returns?", "answer": "No. Pool figures come from Meteora and the asset catalog comes from issuer sources. Reserve badges link issuer reports without auditing them. Historical fee APY is not a future-return promise; token inspection records remain separate from market data." },
+    { "question": "Is the Android or Seeker app already released?", "answer": "The web product is installable as a PWA and Android Web Shell source is included. Release signing, on-device wallet validation and dApp Store publishing remain pending. No completed phone validation or published mobile app is claimed." }
   ]
 }
