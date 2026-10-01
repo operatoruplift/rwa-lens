@@ -108,11 +108,38 @@ describe('confirmation', () => {
   }) as unknown as DeployChain;
   it('requires an error-free confirmed status, and expires only past the last valid height', async () => {
     expect(await readDeployStatus(chain({ slot: 9n, failed: false, confirmationStatus: 'confirmed' }), 'sig', 100n)).toEqual({ state: 'confirmed', slot: '9' });
-    expect(await readDeployStatus(chain({ slot: 9n, failed: false, confirmationStatus: 'finalized' }), 'sig', 100n)).toEqual({ state: 'confirmed', slot: '9' });
-    expect(await readDeployStatus(chain({ slot: 9n, failed: true, confirmationStatus: 'confirmed' }), 'sig', 100n)).toMatchObject({ state: 'failed' });
+    expect(await readDeployStatus(chain({ slot: 9n, failed: false, confirmationStatus: 'finalized' }), 'sig', 100n)).toEqual({ state: 'finalized', slot: '9' });
+    expect(await readDeployStatus(chain({ slot: 9n, failed: true, confirmationStatus: 'confirmed' }), 'sig', 100n)).toEqual({ state: 'pending' });
+    expect(await readDeployStatus(chain({ slot: 9n, failed: true, confirmationStatus: 'finalized' }), 'sig', 100n)).toMatchObject({ state: 'failed' });
     expect(await readDeployStatus(chain({ slot: 9n, failed: false, confirmationStatus: 'processed' }), 'sig', 100n)).toEqual({ state: 'pending' });
     expect(await readDeployStatus(chain(null, 100n), 'sig', 100n)).toEqual({ state: 'pending' });
     expect(await readDeployStatus(chain(null, 101n), 'sig', 100n)).toEqual({ state: 'expired' });
     expect(await readDeployStatus(chain(new Error('down')), 'sig', 100n)).toMatchObject({ state: 'unavailable' });
+  });
+  it('keeps a processed error pending until its fork reaches confirmation', async () => {
+    const pending = chain({ slot: 9n, failed: true, confirmationStatus: 'processed' }, 101n);
+    expect(await readDeployStatus(pending, 'sig', 100n)).toEqual({ state: 'pending' });
+    expect(pending.blockHeight).not.toHaveBeenCalled();
+  });
+  it.each([
+    ['confirmed', { slot: 100n, failed: false, confirmationStatus: 'confirmed' }, { state: 'confirmed', slot: '100' }],
+    ['finalized', { slot: 100n, failed: false, confirmationStatus: 'finalized' }, { state: 'finalized', slot: '100' }],
+    ['failed', { slot: 100n, failed: true, confirmationStatus: 'finalized' }, { state: 'failed' }],
+    ['processed', { slot: 100n, failed: false, confirmationStatus: 'processed' }, { state: 'pending' }],
+    ['still absent', null, { state: 'expired' }],
+  ])('rechecks a %s signature after observing expiry height', async (_label, lateStatus, expected) => {
+    const pending = chain(null, 101n);
+    vi.mocked(pending.blockHeight).mockImplementationOnce(async () => {
+      // A last-valid-block transaction becomes visible during the height read.
+      vi.mocked(pending.signatureStatus).mockResolvedValueOnce(lateStatus);
+      return 101n;
+    });
+    expect(await readDeployStatus(pending, 'sig', 100n)).toMatchObject(expected);
+    expect(pending.signatureStatus).toHaveBeenCalledTimes(2);
+  });
+  it('does not report expiry when its final signature lookup fails', async () => {
+    const pending = chain(null, 101n);
+    vi.mocked(pending.signatureStatus).mockResolvedValueOnce(null).mockRejectedValueOnce(new Error('RPC unavailable'));
+    expect(await readDeployStatus(pending, 'sig', 100n)).toMatchObject({ state: 'unavailable' });
   });
 });

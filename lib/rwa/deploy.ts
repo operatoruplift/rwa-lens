@@ -117,6 +117,7 @@ export const signatureSchema = z.string().regex(/^[1-9A-HJ-NP-Za-km-z]{64,90}$/)
 export const deployStatusSchema = z.discriminatedUnion('state', [
   z.object({ state: z.literal('pending') }),
   z.object({ state: z.literal('confirmed'), slot: digits }),
+  z.object({ state: z.literal('finalized'), slot: digits }),
   z.object({ state: z.literal('failed'), message: z.string().max(300) }),
   z.object({ state: z.literal('expired') }),
   z.object({ state: z.literal('unavailable'), message: z.string().max(300) }),

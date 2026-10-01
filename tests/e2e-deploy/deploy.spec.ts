@@ -85,11 +85,12 @@ async function openDeploy(page: Page, screenshot?: string) {
 const sent = (page: Page) => page.evaluate(() => (window as unknown as { __sent: Array<{ account: string; chain: string; transaction: string }> }).__sent);
 
 test.describe('operator-enabled deploy', () => {
-  test('previews, signs in the wallet and confirms on chain', async ({ page }) => {
+  test('previews, signs once and waits beyond confirmation for final settlement', async ({ page }) => {
     await installWallet(page);
     let statusCalls = 0;
+    let finalized = false;
     await page.route('**/api/rwa/deploy', route => route.fulfill({ json: readyResponse() }));
-    await page.route('**/api/rwa/deploy/status?**', route => route.fulfill({ json: ++statusCalls < 2 ? { state: 'pending' } : { state: 'confirmed', slot: '451384099' } }));
+    await page.route('**/api/rwa/deploy/status?**', route => route.fulfill({ json: ++statusCalls < 2 ? { state: 'pending' } : { state: finalized ? 'finalized' : 'confirmed', slot: '451384099' } }));
     const dialog = await openDeploy(page, 'venues-deploy-1280.png');
     await dialog.getByRole('button', { name: 'Connect Test Wallet' }).click();
     await expect(dialog).toContainText(`Test Wallet · ${WALLET.slice(0, 4)}…${WALLET.slice(-4)}`);
@@ -111,9 +112,13 @@ test.describe('operator-enabled deploy', () => {
     await page.screenshot({ path: path.join(screenshotDir, 'deploy-review-1280.png'), fullPage: false });
     await runAxe(page);
     await dialog.getByRole('button', { name: 'Sign in Test Wallet' }).click();
-    await expect(dialog).toContainText('Deployed. Your position holds USDY and USDC in USDY-USDC.');
+    await expect(dialog).toContainText('Confirmed. Waiting for finality…');
+    await expect(dialog).not.toContainText('Settled.');
+    await expect(dialog.getByRole('button', { name: 'Close deploy' })).toBeDisabled();
+    finalized = true;
+    await expect(dialog).toContainText('Settled. Your deposit into USDY-USDC is finalized on Solana.');
     expect(await sent(page)).toEqual([{ account: WALLET, chain: 'solana:mainnet', transaction: readyResponse().transaction }]);
-    expect(statusCalls).toBeGreaterThanOrEqual(2);
+    expect(statusCalls).toBeGreaterThanOrEqual(3);
     await expect(dialog.getByRole('link', { name: /View transaction/ })).toHaveAttribute('href', `https://solscan.io/tx/${SIGNATURE}`);
     await expect(dialog.getByRole('link', { name: /Manage or withdraw on Meteora/ })).toHaveAttribute('href', `https://app.meteora.ag/dlmm/${POOL}`);
     await page.screenshot({ path: path.join(screenshotDir, 'deploy-confirmed-1280.png'), fullPage: false });
@@ -159,6 +164,55 @@ test.describe('operator-enabled deploy', () => {
     await expect(dialog.getByRole('button', { name: 'Sign in Test Wallet' })).toBeVisible();
     expect(previews).toBe(2);
     expect(await sent(page)).toEqual([]);
+  });
+
+  test('an unobserved transaction after expiry keeps its signature and does not claim nothing moved', async ({ page }) => {
+    await installWallet(page);
+    let statusCalls = 0;
+    await page.route('**/api/rwa/deploy', route => route.fulfill({ json: readyResponse() }));
+    await page.route('**/api/rwa/deploy/status?**', route => {
+      expect(new URL(route.request().url()).searchParams.get('signature')).toBe(SIGNATURE);
+      return route.fulfill({ json: ++statusCalls === 1 ? { state: 'expired' } : { state: 'finalized', slot: '451384099' } });
+    });
+    const dialog = await openDeploy(page);
+    await dialog.getByRole('button', { name: 'Connect Test Wallet' }).click();
+    await dialog.getByRole('button', { name: 'Preview deploy' }).click();
+    await dialog.getByRole('button', { name: 'Sign in Test Wallet' }).click();
+    await expect(dialog.getByRole('alert')).toContainText('this RPC has not found confirmation');
+    await expect(dialog.getByRole('alert')).toContainText('Check the transaction on Solscan before building another preview');
+    await expect(dialog.getByRole('alert')).not.toContainText('Nothing moved');
+    await expect(dialog.getByRole('link', { name: 'View transaction' })).toHaveAttribute('href', `https://solscan.io/tx/${SIGNATURE}`);
+    expect(await sent(page)).toHaveLength(1);
+    await expect(dialog.getByRole('button', { name: 'Back to amount' })).toHaveCount(0);
+    await dialog.getByRole('button', { name: 'Recheck transaction' }).click();
+    await expect(dialog).toContainText('Settled. Your deposit into USDY-USDC is finalized on Solana.');
+    expect(await sent(page)).toHaveLength(1);
+  });
+
+  test('confirmation timeout retains the same signature for a read-only recheck', async ({ page }) => {
+    await installWallet(page);
+    await page.clock.install();
+    let finalized = false;
+    let previews = 0;
+    await page.route('**/api/rwa/deploy', route => { previews++; return route.fulfill({ json: readyResponse() }); });
+    await page.route('**/api/rwa/deploy/status?**', route => {
+      expect(new URL(route.request().url()).searchParams.get('signature')).toBe(SIGNATURE);
+      return route.fulfill({ json: { state: finalized ? 'finalized' : 'confirmed', slot: '451384099' } });
+    });
+    const dialog = await openDeploy(page);
+    await dialog.getByRole('button', { name: 'Connect Test Wallet' }).click();
+    await dialog.getByRole('button', { name: 'Preview deploy' }).click();
+    await dialog.getByRole('button', { name: 'Sign in Test Wallet' }).click();
+    await expect(dialog).toContainText('Confirmed. Waiting for finality…');
+    await page.clock.fastForward(180_001);
+    await expect(dialog.getByRole('alert')).toContainText('finality has not yet been observed');
+    await expect(dialog.getByRole('link', { name: 'View transaction' })).toHaveAttribute('href', `https://solscan.io/tx/${SIGNATURE}`);
+    await expect(dialog.getByRole('button', { name: 'Back to amount' })).toHaveCount(0);
+    finalized = true;
+    await dialog.getByRole('button', { name: 'Recheck transaction' }).click();
+    await expect(dialog).toContainText('Settled. Your deposit into USDY-USDC is finalized on Solana.');
+    expect(previews).toBe(1);
+    expect(await sent(page)).toHaveLength(1);
   });
 
   test('explains when no wallet can send transactions, and fits a phone', async ({ page }) => {

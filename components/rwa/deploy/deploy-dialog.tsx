@@ -49,12 +49,12 @@ function Review({ ready }: { ready: ReadyDeploy }) {
   );
 }
 
-function Outcome({ phase, pool, onBack, onChangeWallet }: { phase: Extract<DeployPhase, { kind: 'confirmed' | 'failed' }>; pool: VenuePool; onBack: () => void; onChangeWallet: () => void }) {
-  if (phase.kind === 'confirmed') {
+function Outcome({ phase, pool, onBack, onChangeWallet, onRecheck }: { phase: Extract<DeployPhase, { kind: 'finalized' | 'failed' | 'unconfirmed' }>; pool: VenuePool; onBack: () => void; onChangeWallet: () => void; onRecheck: () => void }) {
+  if (phase.kind === 'finalized') {
     const { summary } = phase.ready;
     return (
       <div className="deploy-outcome" role="status">
-        <p className="deploy-success"><CircleCheck size={18} aria-hidden="true" />Deployed. Your position holds {summary.tokenSymbol} and USDC in {summary.pair}.</p>
+        <p className="deploy-success"><CircleCheck size={18} aria-hidden="true" />Settled. Your deposit into {summary.pair} is finalized on Solana.</p>
         <div className="deploy-links">
           <a href={solscan('tx', phase.signature)} target="_blank" rel="noreferrer noopener">View transaction <ArrowUpRight size={13} /></a>
           <a href={solscan('account', summary.position.address)} target="_blank" rel="noreferrer noopener">Position {short(summary.position.address)} <ArrowUpRight size={13} /></a>
@@ -68,7 +68,9 @@ function Outcome({ phase, pool, onBack, onChangeWallet }: { phase: Extract<Deplo
       <div role="alert"><Callout tone="amber">{phase.message}</Callout></div>
       <div className="deploy-links">
         {phase.signature ? <a href={solscan('tx', phase.signature)} target="_blank" rel="noreferrer noopener">View transaction <ArrowUpRight size={13} /></a> : null}
-        <button type="button" className="text-link" onClick={phase.back === 'wallet' ? onChangeWallet : onBack}>{phase.back === 'wallet' ? 'Choose a wallet' : 'Back to amount'}</button>
+        {phase.kind === 'unconfirmed'
+          ? <button type="button" className="text-link" onClick={onRecheck}>Recheck transaction</button>
+          : <button type="button" className="text-link" onClick={phase.back === 'wallet' ? onChangeWallet : onBack}>{phase.back === 'wallet' ? 'Choose a wallet' : 'Back to amount'}</button>}
       </div>
     </div>
   );
@@ -86,7 +88,7 @@ export default function DeployDialog({ mint, pool, onClose }: { mint: string; po
   const [slippage, setSlippage] = useState<SlippageBps>(50);
   useEffect(() => { dialog.current?.showModal(); refreshWallets(); }, [refreshWallets]);
   const secondsLeft = useSecondsLeft(phase.kind === 'review' ? phase.receivedAt : null);
-  const locked = phase.kind === 'signing' || phase.kind === 'confirming';
+  const locked = phase.kind === 'signing' || phase.kind === 'confirming' || phase.kind === 'confirmed';
   const raw = parseUsdc(amount);
   const amountValid = raw !== null && withinDeployLimits(raw);
   const walletName = deployer.connected?.wallet.name ?? 'your wallet';
@@ -98,7 +100,7 @@ export default function DeployDialog({ mint, pool, onClose }: { mint: string; po
       <p>Half of your USDC is swapped into {pool.tokenSymbol} through Jupiter, then both are deposited into this Meteora pool around its current price, all in one transaction. RWA Lens builds it and runs a mainnet preflight check; your wallet signs and sends it. RWA Lens never holds keys or funds.</p>
 
       {deployer.connected && phase.kind !== 'wallet' && phase.kind !== 'connecting' ? (
-        <p className="deploy-wallet">Wallet <strong>{deployer.connected.wallet.name} · {short(deployer.connected.account.address)}</strong>{locked ? null : <button type="button" className="text-link" onClick={deployer.changeWallet}>Change</button>}</p>
+        <p className="deploy-wallet">Wallet <strong>{deployer.connected.wallet.name} · {short(deployer.connected.account.address)}</strong>{locked || phase.kind === 'unconfirmed' ? null : <button type="button" className="text-link" onClick={deployer.changeWallet}>Change</button>}</p>
       ) : null}
 
       {phase.kind === 'wallet' ? (
@@ -137,13 +139,13 @@ export default function DeployDialog({ mint, pool, onClose }: { mint: string; po
         </>
       ) : null}
       {phase.kind === 'signing' ? <Waiting>Approve the transaction in {walletName}.</Waiting> : null}
-      {phase.kind === 'confirming' ? (
+      {phase.kind === 'confirming' || phase.kind === 'confirmed' ? (
         <>
-          <Waiting>Submitted. Waiting for confirmation…</Waiting>
+          <Waiting>{phase.kind === 'confirmed' ? 'Confirmed. Waiting for finality…' : 'Submitted. Waiting for confirmation…'}</Waiting>
           <div className="deploy-links"><a href={solscan('tx', phase.signature)} target="_blank" rel="noreferrer noopener">View transaction <ArrowUpRight size={13} /></a></div>
         </>
       ) : null}
-      {phase.kind === 'confirmed' || phase.kind === 'failed' ? <Outcome phase={phase} pool={pool} onBack={deployer.back} onChangeWallet={deployer.changeWallet} /> : null}
+      {phase.kind === 'finalized' || phase.kind === 'failed' || phase.kind === 'unconfirmed' ? <Outcome phase={phase} pool={pool} onBack={deployer.back} onChangeWallet={deployer.changeWallet} onRecheck={() => void deployer.recheck()} /> : null}
     </dialog>
   );
 }

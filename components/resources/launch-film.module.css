@@ -1,0 +1,48 @@
+.film {
+  --film-ink: #172018;
+  --film-muted: #606959;
+  --film-line: #cdd4c2;
+  color: var(--film-ink);
+  margin-bottom: 72px;
+  scroll-margin-top: 28px;
+}
+.inner { min-width: 0; }
+.heading { display: flex; align-items: end; justify-content: space-between; gap: 40px; margin-bottom: 28px; }
+.eyebrow { display: flex; align-items: center; gap: 9px; font: 10px ui-monospace, monospace; letter-spacing: 1.5px; color: var(--film-muted); }
+.heading h2 { margin: 19px 0 0; font: 500 clamp(30px, 4.2vw, 56px)/1.04 var(--font-display, var(--font-inter)), sans-serif; letter-spacing: -.055em; }
+.heading h2 span { color: var(--film-muted); }
+.intro { max-width: 280px; padding-bottom: 3px; font-size: 12px; line-height: 1.85; color: var(--film-muted); }
+.frame { overflow: hidden; padding: 7px; border: 1px solid var(--film-line); border-radius: 12px; background: #101211; box-shadow: 0 20px 70px #10121112; }
+.frame video { display: block; width: 100%; height: auto; aspect-ratio: 16/9; border-radius: 6px; background: #101211; }
+.footer { display: flex; justify-content: space-between; align-items: center; gap: 16px 30px; padding-block: 12px; }
+.footer > p { font: 10px/1.8 ui-monospace, monospace; color: var(--film-muted); }
+.links { display: flex; flex-wrap: wrap; gap: 6px 24px; }
+.links a { display: inline-flex; min-height: 44px; align-items: center; gap: 7px; font-size: 11px; }
+.links a:hover { text-decoration: underline; text-underline-offset: 4px; }
+.fileSize { color: var(--film-muted); font-size: 10px; }
+.description { border-top: 1px solid var(--film-line); border-bottom: 1px solid var(--film-line); color: var(--film-muted); font-size: 11px; }
+.description summary { min-height: 48px; align-content: center; cursor: pointer; }
+.description > div { display: grid; gap: 12px; max-width: 78ch; padding: 4px 0 24px; line-height: 1.85; }
+.landing {
+  --film-ink: #f2f2e9;
+  --film-muted: #aab4a0;
+  --film-line: #f2f2e930;
+  margin: 0;
+  padding: 76px 48px 94px;
+  border-top: 1px solid var(--film-line);
+  background: #101211;
+}
+.landing .inner { max-width: 1200px; margin-inline: auto; }
+.landing .eyebrow { color: #d9ff65; }
+.landing .frame { padding: 7px; box-shadow: 0 24px 90px #0004; }
+.landing :where(a, summary, video):focus-visible { outline: 2px solid #d9ff65; outline-offset: 4px; }
+@media (max-width: 800px) {
+  .film { margin-bottom: 46px; }
+  .heading { flex-direction: column; align-items: start; gap: 18px; margin-bottom: 22px; }
+  .intro { max-width: 44ch; }
+  .footer { flex-direction: column; align-items: start; gap: 4px; padding-top: 18px; }
+  .frame { padding: 4px; border-radius: 8px; }
+  .frame video { border-radius: 4px; }
+  .landing { margin: 0; padding: 58px 22px 64px; }
+  .landing .frame { padding: 4px; }
+}

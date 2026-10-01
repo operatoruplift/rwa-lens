@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { ArrowDown, ArrowRight, ArrowUpRight, Crosshair, Pause, Play, ScanLine, ShieldCheck } from 'lucide-react';
 import { Brand } from '@/components/rwa/brand';
 import { RwaLensShell } from '@/components/rwa/rwa-lens-shell';
+import { LaunchFilm } from '@/components/resources/launch-film';
 import { repositoryState } from '@/lib/server/rwa/repository';
 import { sessionsConfigured } from '@/lib/server/rwa/session';
 import { deployEnabled, fixturesEnabled } from '@/lib/server/rwa/config';
@@ -57,7 +58,7 @@ function Hero({ cluster, deploy }: { cluster: 'mainnet-beta' | 'devnet'; deploy:
       <button type="button" className={styles.motionToggle} data-ambient-toggle aria-pressed="false" hidden><Pause size={12} className={styles.pauseIcon} aria-hidden="true" /><Play size={12} className={styles.playIcon} aria-hidden="true" /><span data-motion-label>Pause motion</span></button>
       <div className={styles.heroBottom}>
         <div className={styles.assurances}><span><ScanLine size={14} />Public data</span><span><ShieldCheck size={14} />{deploy ? 'Read-only inspection' : 'Read-only by design'}</span></div>
-        <Link href="/demo"><Play size={12} />TAKE THE PRODUCT TOUR <ArrowUpRight size={15} /></Link>
+        <a href="#launch-film" aria-label="Watch the launch film 30s"><Play size={12} aria-hidden="true" />WATCH THE LAUNCH FILM / 30S <ArrowDown size={15} aria-hidden="true" /></a>
       </div>
     </section>
   );
@@ -177,6 +178,7 @@ export function LensExperience({ compact = false, initialMint }: { compact?: boo
           <RwaLensShell cluster={cluster} reportsEnabled={reportsEnabled} fixturesEnabled={fixturesEnabled()} deployEnabled={deploy} initialMint={initialMint} />
         </section>
         <Method immersive={!compact} />
+        {compact ? null : <LaunchFilm landing />}
         {compact ? null : <Resources />}
       </main>
       <Footer deploy={deploy} />

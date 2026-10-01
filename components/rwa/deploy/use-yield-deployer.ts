@@ -15,12 +15,15 @@ export type DeployPhase =
   | { kind: 'signing'; ready: ReadyDeploy }
   | { kind: 'confirming'; ready: ReadyDeploy; signature: string }
   | { kind: 'confirmed'; ready: ReadyDeploy; signature: string }
+  | { kind: 'finalized'; ready: ReadyDeploy; signature: string }
+  | { kind: 'unconfirmed'; ready: ReadyDeploy; signature: string; confirmed: boolean; message: string }
   | { kind: 'failed'; message: string; back: 'wallet' | 'form'; signature?: string };
 
 const SEND_FEATURE = 'solana:signAndSendTransaction';
 const CHAIN = 'solana:mainnet';
 const POLL_MS = 2000;
-const POLL_LIMIT = 90;
+const CONFIRMATION_TIMEOUT_MS = 3 * 60_000;
+const STATUS_REQUEST_TIMEOUT_MS = 10_000;
 type SendFeature = {
   supportedTransactionVersions?: readonly (string | number)[];
   signAndSendTransaction: (...inputs: { account: WalletAccount; chain: string; transaction: Uint8Array; options?: { preflightCommitment?: string } }[]) => Promise<readonly { signature: Uint8Array }[]>;
@@ -74,20 +77,30 @@ export function useYieldDeployer({ mint, pool }: { mint: string; pool: string })
     update({ kind: 'review', ready: body, receivedAt: Date.now() });
   }, [connected, mint, pool, update]);
 
-  const confirm = useCallback(async (ready: ReadyDeploy, signature: string) => {
+  const confirm = useCallback(async (ready: ReadyDeploy, signature: string, confirmed = false) => {
     const query = new URLSearchParams({ signature, lastValidBlockHeight: ready.lastValidBlockHeight });
-    for (let attempt = 0; attempt < POLL_LIMIT && alive.current; attempt++) {
-      await wait(POLL_MS);
+    const deadline = Date.now() + CONFIRMATION_TIMEOUT_MS;
+    update({ kind: confirmed ? 'confirmed' : 'confirming', ready, signature });
+    while (alive.current && Date.now() < deadline) {
+      await wait(Math.min(POLL_MS, deadline - Date.now()));
+      if (!alive.current || Date.now() >= deadline) break;
       try {
-        const parsed = deployStatusSchema.safeParse(await (await fetch(`/api/rwa/deploy/status?${query}`, { cache: 'no-store' })).json());
+        const parsed = deployStatusSchema.safeParse(await (await fetch(`/api/rwa/deploy/status?${query}`, {
+          cache: 'no-store', signal: AbortSignal.timeout(Math.min(STATUS_REQUEST_TIMEOUT_MS, deadline - Date.now())),
+        })).json());
         if (!parsed.success) continue;
         const status = parsed.data;
-        if (status.state === 'confirmed') return update({ kind: 'confirmed', ready, signature });
+        if (status.state === 'finalized') return update({ kind: 'finalized', ready, signature });
+        if (status.state === 'confirmed') { confirmed = true; update({ kind: 'confirmed', ready, signature }); continue; }
         if (status.state === 'failed') return update({ kind: 'failed', message: status.message, back: 'form', signature });
-        if (status.state === 'expired') return update({ kind: 'failed', message: 'The transaction expired before it landed. Nothing moved; build a new preview.', back: 'form', signature });
+        if (status.state === 'expired') return update({ kind: 'unconfirmed', ready, signature, confirmed, message: confirmed
+          ? 'This transaction was confirmed, but finality is not currently available from the RPC provider. Recheck it or view the transaction before making another deposit.'
+          : 'The transaction’s validity window ended, but this RPC has not found confirmation. Check the transaction on Solscan before building another preview.' });
       } catch { /* a missed poll retries; the deadline below still applies */ }
     }
-    update({ kind: 'failed', message: 'Still unconfirmed after three minutes. Check the transaction on Solscan before trying again.', back: 'form', signature });
+    update({ kind: 'unconfirmed', ready, signature, confirmed, message: confirmed
+      ? 'The transaction is confirmed; finality has not yet been observed. Recheck this transaction or view it on Solscan before making another deposit.'
+      : 'Finality was not observed within three minutes. Recheck this transaction or view it on Solscan before making another deposit.' });
   }, [update]);
 
   const sign = useCallback(async () => {
@@ -107,13 +120,19 @@ export function useYieldDeployer({ mint, pool }: { mint: string; pool: string })
       } catch {
         return update({ kind: 'failed', message: 'The wallet returned without sending. If you declined, nothing moved; otherwise check the wallet’s activity before trying again.', back: 'form' });
       }
-      update({ kind: 'confirming', ready, signature });
       await confirm(ready, signature);
     } finally { sending.current = false; }
   }, [confirm, connected, phase, update]);
 
+  const recheck = useCallback(async () => {
+    if (phase.kind !== 'unconfirmed' || sending.current) return;
+    sending.current = true;
+    try { await confirm(phase.ready, phase.signature, phase.confirmed); }
+    finally { sending.current = false; }
+  }, [confirm, phase]);
+
   const back = useCallback(() => update(connected ? { kind: 'form' } : { kind: 'wallet' }), [connected, update]);
   const changeWallet = useCallback(() => { setConnected(null); refreshWallets(); update({ kind: 'wallet' }); }, [refreshWallets, update]);
 
-  return { phase, wallets, connected, refreshWallets, connect, preview, sign, back, changeWallet };
+  return { phase, wallets, connected, refreshWallets, connect, preview, sign, recheck, back, changeWallet };
 }

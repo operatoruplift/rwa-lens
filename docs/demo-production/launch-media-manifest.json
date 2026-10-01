@@ -1,0 +1,54 @@
+{
+  "verifiedAt": "2026-10-01",
+  "title": "RWA Lens launch film",
+  "source": "User-supplied rwa-lens-showreel-master.mp4 and rwa-lens-showreel-poster.jpg",
+  "originalMediaPreserved": true,
+  "video": {
+    "durationSeconds": 30,
+    "width": 1920,
+    "height": 1080,
+    "framesPerSecond": 60,
+    "codec": "H.264 High",
+    "pixelFormat": "yuv420p",
+    "colorSpace": "bt709",
+    "fastStart": true
+  },
+  "audio": {
+    "codec": "AAC LC",
+    "sampleRate": 48000,
+    "channels": 2,
+    "content": "Music and interface sound effects; no narration track"
+  },
+  "accessibility": {
+    "nativeControls": true,
+    "playsInline": true,
+    "autoplay": false,
+    "preload": "none",
+    "soundCaptions": "public/demo/rwa-lens-showreel.vtt",
+    "visualDescription": "Inline disclosure under each launch player"
+  },
+  "provenance": {
+    "format": "Motion showreel",
+    "figuresObservedOn": "2026-09-30",
+    "balanceChapter": "Labeled synthetic Treasury fixture",
+    "controlChapter": "Labeled Token-2022 fixture extensions separate from the USDY observation",
+    "scope": "Read-only token inspection; no settlement claim"
+  },
+  "files": [
+    {
+      "path": "public/demo/rwa-lens-showreel-master.mp4",
+      "bytes": 29524814,
+      "sha256": "8af4aca92138a0dc4edec7d8b53853abf10a3d0277c9f9f456f4b9bf6d995965"
+    },
+    {
+      "path": "public/demo/rwa-lens-showreel-poster.jpg",
+      "bytes": 331596,
+      "sha256": "8eaea411b30b3ead22d540527622a526c93f09f1fffb22a6f732ff50e36c5059"
+    },
+    {
+      "path": "public/demo/rwa-lens-showreel.vtt",
+      "bytes": 96,
+      "sha256": "22f4aa8d2bfbbe340474b34f266188570c9c787a5dd66cf11b85aa9b30839603"
+    }
+  ]
+}

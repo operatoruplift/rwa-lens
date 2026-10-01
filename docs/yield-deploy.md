@@ -74,26 +74,44 @@ position's rent is returned when it is closed) and the network fee, rounded up.
 ## In the browser
 
 `components/rwa/deploy/use-yield-deployer.ts` is the state machine: wallet →
-connecting → form → quoting → review → signing → confirming → confirmed or failed.
+connecting → form → quoting → review → signing → confirming → confirmed → finalized,
+with separate failed and unconfirmed recovery states.
 The client checks that the prepared transaction's fee payer and only signer is
 the connected account before calling the wallet's
 `solana:signAndSendTransaction` (Wallet Standard, v0 required; Mobile Wallet
 Adapter works the same way). A review is signable for 45 seconds, after which it
-must be rebuilt. Confirmation requires an error-free `confirmed` status; a
-signature past its blockhash's last valid height is reported as expired.
+must be rebuilt. An error-free `confirmed` status displays **Confirmed. Waiting
+for finality** and polling continues. Only an error-free `finalized` status
+displays **Settled**. Processed outcomes and errors that are not yet finalized
+remain pending; a finalized on-chain error is a failure.
+
+When no signature is found and the blockhash's last valid height has passed,
+the server checks signature history again before returning expiry. This avoids
+missing a transaction that landed between the first lookup and the height read.
+An absent RPC result is not presented as proof that no funds moved. After expiry,
+RPC uncertainty, or the three-minute polling deadline, the dialog retains the
+transaction signature and offers **Recheck transaction**. Recheck polls that
+same signature; it never rebuilds, signs, or sends another transaction.
+
+Tracking stays in the open dialog. Reloading or leaving the page does not cancel
+an on-chain transaction, but it clears this UI state; use the wallet's transaction
+history or the transaction's explorer link to recover it. There is no server-side
+custody or transaction history database.
 
 ## Verification
 
-- Unit: 7 SDK-parity tests, 28 builder tests (fakes for chain, Jupiter and
+- Unit: SDK-parity and builder tests (fakes for chain, Jupiter and
   venues, including each balance mismatch, a route reaching another of the
   wallet's token accounts, a retired lookup table and a program marked
-  writable), 26 Jupiter-acceptance, failure-explanation and status tests (every
-  way a response could smuggle a transfer, approval or cleanup), and 4 route
-  tests.
+  writable), Jupiter-acceptance, failure-explanation and status tests (every
+  way a response could smuggle a transfer, approval or cleanup), and route
+  tests. Status regressions cover confirmation versus finality, late outcomes
+  appearing during the expiry-height read, and an unavailable final lookup.
 - Browser (`npm run test:e2e:deploy`, flag on, mocked wallet and APIs): preview,
-  sign, confirm; refusals, a mismatched fee payer and a declined signature never
+  sign once, confirm, then finalize; refusals, a mismatched fee payer and a declined signature never
   send; an expired preview must be rebuilt; no-wallet state; 390px layout; axe
-  WCAG 2.1 AA on the open dialog; landing copy. The main suite asserts the button
+  WCAG 2.1 AA on the open dialog; landing copy; expiry and timeout recovery retain
+  the original signature and recheck without another preview or wallet request. The main suite asserts the button
   is absent with the flag off.
 - Live mainnet simulation (not sent), 2026-09-28, 10 USDC, 1% slippage, owner a
   funded public wallet — `tests/live/deploy.live.test.ts`:
@@ -134,6 +152,34 @@ RWA_LIVE_DEPLOY_OWNER=<funded address> RWA_CLUSTER=mainnet-beta RWA_RPC_URL=<url
 - Before enabling on the public deployment, update the pitch FAQ ("Does the
   product move funds?") in `docs/pitch/deck-content.json` and regenerate the deck
   with `scripts/build-presentation.mjs`.
+
+## Actual settlement activation
+
+The previous mainnet preflight runs and wallet browser tests do not establish a
+funded settlement. Before claiming that an owner deposit has settled:
+
+1. Confirm the canonical `RWA_APP_ORIGIN`, mainnet `RWA_RPC_URL`, public pool lookup,
+   and Jupiter quote/instruction access. Reports/Supabase sign-in are independent
+   of deposits. Turn on `RWA_DEPLOY_ENABLED` only as an intentional operator action.
+2. Obtain the owner's public wallet address, the exact USDC-paired pool and token
+   mint, a chosen budget between 1 and 25,000 USDC, and a chosen 0.5%, 1%, or 2%
+   slippage tolerance. The owner needs that USDC budget in their associated token
+   account and enough SOL for the preview's current rent and fee estimate. There
+   is no fixed SOL amount that covers every pool/range/account combination.
+3. Run a fresh preview for that exact owner. The owner reviews the swap minimum,
+   deposit range, position address, and SOL costs, then personally approves the
+   single v0 transaction in their wallet. No operator key or server signer is
+   required; an arbitrary public wallet used for a preflight is not authority to
+   sign or spend its funds.
+4. Keep the real transaction signature and verify error-free **finalized** status.
+   Check its transaction details and the resulting position: the expected owner,
+   selected pool, swap/deposit instructions, and position account must match the
+   reviewed request. A public read of the position and the Meteora management link
+   provides recovery evidence; it does not require another transaction.
+
+Only the owner's wallet signature can complete this last funded step. Until it
+occurs, describe the deployment and preflight evidence separately from completed
+settlement. Withdrawals require their own owner-approved transaction on Meteora.
 
 ## Not covered
 
