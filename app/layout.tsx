@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   applicationName: 'RWA Lens',
 };
 
-export const viewport: Viewport = { themeColor: '#101a3a', width: 'device-width', initialScale: 1, viewportFit: 'cover' };
+export const viewport: Viewport = { themeColor: '#101211', width: 'device-width', initialScale: 1, viewportFit: 'cover' };
 
 export default function RootLayout({ children }: LayoutProps<'/'>) {
   return <html lang="en" className={`${inter.variable} h-full antialiased`}><body>{children}<MobileSupport /></body></html>;

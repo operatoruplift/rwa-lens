@@ -1,9 +1,9 @@
 /* RWA Lens caches only public static assets and an offline notice. RPC reads,
  * metadata, saved reports and sign-in responses never enter Cache Storage. */
-const CACHE = 'rwa-lens-public-v2';
+const CACHE = 'rwa-lens-public-v3';
 const STATIC_PATHS = ['/icons/', '/brand/'];
 const STATIC_FILES = new Set(['/favicon.ico', '/icon.svg', '/apple-icon.png']);
-const OFFLINE_HTML = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>RWA Lens is offline</title><style>body{margin:0;min-height:100vh;display:grid;place-items:center;font-family:system-ui,sans-serif;background:#f6f7fb;color:#101a3a;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}main{max-width:28rem;padding:2rem;text-align:center}h1{font-size:1.4rem}p{color:#46516e;line-height:1.5}a{color:#5b5ce2}</style></head><body><main><h1>You’re offline.</h1><p>RWA Lens reads live Solana state, so inspection needs a connection. Reconnect and <a href="/rwa">open the inspector</a> again.</p></main></body></html>`;
+const OFFLINE_HTML = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>RWA Lens is offline</title><style>body{margin:0;min-height:100vh;display:grid;place-items:center;font-family:system-ui,sans-serif;background:#f2f2e9;color:#101211;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}main{max-width:28rem;padding:2rem;text-align:center}h1{font-size:1.4rem}p{color:#4e564b;line-height:1.5}a{color:#476522}</style></head><body><main><h1>You’re offline.</h1><p>RWA Lens reads live Solana state, so inspection needs a connection. Reconnect and <a href="/rwa">open the inspector</a> again.</p></main></body></html>`;
 
 function cachedResponse(request) {
   return caches.match(request, { cacheName: CACHE }).catch(() => undefined);

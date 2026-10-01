@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 const SOURCE = readFileSync(new URL('../../public/sw.js', import.meta.url), 'utf8');
 const ORIGIN = 'https://rwalens.test';
-const CURRENT_CACHE = 'rwa-lens-public-v2';
+const CURRENT_CACHE = 'rwa-lens-public-v3';
 type RequestKey = string | { url: string };
 type WorkerEvent = {
   request?: { url: string; method: string; mode: string };
@@ -107,7 +107,7 @@ describe('public service worker cache policy', () => {
 
   it('migrates its old cache and preserves unrelated cache namespaces', async () => {
     const sw = worker();
-    sw.seed('/brand/hero.webp', 'old', 'rwa-lens-public-v1');
+    sw.seed('/brand/hero.webp', 'old', 'rwa-lens-public-v2');
     sw.seed('/other', 'keep', 'other-app');
     await sw.lifecycle('install');
     await sw.lifecycle('activate');
