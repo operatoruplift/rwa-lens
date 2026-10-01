@@ -126,7 +126,7 @@
 .resourceLinks { border-top: 1px solid #35452a3b; }
 .resourceLinks > a { position: relative; display: grid; grid-template-columns: 180px minmax(0, 1fr) minmax(0, .85fr) 30px; gap: 24px; align-items: center; padding-block: 30px; border-bottom: 1px solid #35452a2c; color: var(--ink); transition: color .2s; }
 .resourceLinks > a:hover { color: #527026; }
-.resourceNumber { font: 8px ui-monospace, monospace; letter-spacing: 1px; color: #637153; }
+.resourceNumber { font: 8px ui-monospace, monospace; letter-spacing: 1px; color: #59664b; }
 .resourceLinks strong { font: 500 clamp(20px, 2vw, 28px)/1.25 var(--font-display, var(--font-inter)), sans-serif; letter-spacing: -.035em; }
 .resourceLinks > a > span:nth-child(3) { color: #626e56; font-size: 11px; line-height: 1.75; }
 .resourceLinks svg { justify-self: end; transition: transform .2s; }
