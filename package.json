@@ -10,7 +10,8 @@
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
     "test:e2e": "playwright test",
-    "test:e2e:deploy": "playwright test -c playwright.deploy.config.ts"
+    "test:e2e:deploy": "playwright test -c playwright.deploy.config.ts",
+    "test:e2e:reports": "playwright test -c playwright.reports.config.ts"
   },
   "dependencies": {
     "@solana-mobile/wallet-standard-mobile": "^0.6.0",
@@ -28,6 +29,7 @@
     "zod": "^4.6.2"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.8",
     "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^24.13.5",

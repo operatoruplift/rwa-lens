@@ -66,3 +66,15 @@ export async function createReport(input: {
   if (error) throw new Error('Report storage is unavailable.');
   return data ? report(data) : null;
 }
+const deletionSchema = z.object({ reports: z.number().int().nonnegative(), challenges: z.number().int().nonnegative() }).strict();
+export type DeletedWalletData = z.infer<typeof deletionSchema>;
+/** Deletes one wallet's saved reports and sign-in challenges in a single database transaction.
+ * The caller passes the owner from a verified session; the function cannot reach another wallet's rows. */
+export async function deleteWalletData(owner: string): Promise<DeletedWalletData> {
+  const address = addressSchema.parse(owner);
+  const client = serviceClient(); if (!client) throw new Error('Report storage is unavailable.');
+  const { data, error } = await client.rpc('rwa_delete_wallet_data', { p_owner_id: address });
+  const deleted = deletionSchema.safeParse(data);
+  if (error || !deleted.success) throw new Error('Report storage is unavailable.');
+  return deleted.data;
+}

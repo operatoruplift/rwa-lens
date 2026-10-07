@@ -501,6 +501,12 @@ details[open] > summary > svg:last-child, details[open] > summary > .evidence-ex
 .wallet-choices { display: grid; gap: 10px; }
 .wallet-choices button { border-radius: 7px; background: var(--navy); color: white; padding: 12px; font-size: 12px; }
 .wallet-dialog .dialog-message { font-size: 11px; color: var(--amber-ink); }
+.report-toolbar .danger-link { color: var(--red); }
+.report-toolbar .danger-link:hover { color: #8f1a30; }
+.dialog-top.danger { color: var(--red); }
+.dialog-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 18px; margin-top: 4px; }
+.danger-button { border-radius: 7px; background: var(--red); color: white; padding: 12px 18px; font-size: 12px; font-weight: 550; transition: background .15s; }
+.danger-button:hover:not(:disabled) { background: #8f1a30; }
 .header-inner > a, .footer-inner > div > a { display: inline-flex; align-items: center; min-height: 44px; }
 .token-name span:not(.token-emblem) { overflow-wrap: anywhere; }
 .conversion-formula > button { min-width: 44px; }

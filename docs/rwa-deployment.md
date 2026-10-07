@@ -63,7 +63,9 @@ Only configuration presence and provider hostname are disclosed, never secrets.
 
 Wallet authentication/cloud reports additionally require the dedicated names in
 `.env.example`, an exact application origin, strong session secret, and the
-additive durable-store migration. Do not enable an incompletely configured flow.
+additive durable-store migrations: `202609200001_rwa_wallet_reports.sql`, then
+`202610070001_rwa_delete_wallet_data.sql`, which backs Delete my data. Do not
+enable an incompletely configured flow.
 The custom wallet cookie is not a Supabase authenticated JWT. Do not re-use the
 legacy UUID `owner_id` table as though a base58 wallet address were `auth.uid()`.
 
