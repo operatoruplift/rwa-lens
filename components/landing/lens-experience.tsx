@@ -4,6 +4,7 @@ import { ArrowDown, ArrowRight, ArrowUpRight, Crosshair, Pause, Play, ScanLine, 
 import { Brand } from '@/components/rwa/brand';
 import { RwaLensShell } from '@/components/rwa/rwa-lens-shell';
 import { LaunchFilm } from '@/components/resources/launch-film';
+import { LegalLinks } from '@/components/legal/legal-links';
 import { repositoryState } from '@/lib/server/rwa/repository';
 import { sessionsConfigured } from '@/lib/server/rwa/session';
 import { deployEnabled, fixturesEnabled } from '@/lib/server/rwa/config';
@@ -150,7 +151,7 @@ function Footer({ deploy }: { deploy: boolean }) {
         <div className={styles.footerTop}>
           <Link href="/" aria-label="RWA Lens home"><Brand light /></Link>
           <p>Clarity for real-world tokens.</p>
-          <div><Link href="/yield">Yield <ArrowUpRight size={14} /></Link><Link href="/demo">Demo <ArrowUpRight size={14} /></Link><Link href="/technical">Technical <ArrowUpRight size={14} /></Link><Link href="/pitch">Pitch <ArrowUpRight size={14} /></Link><Link href="/brand-kit">Brand kit <ArrowUpRight size={14} /></Link><a href={sourceUrl} target="_blank" rel="noreferrer noopener">Source <ArrowUpRight size={14} /></a></div>
+          <div><Link href="/yield">Yield <ArrowUpRight size={14} /></Link><Link href="/demo">Demo <ArrowUpRight size={14} /></Link><Link href="/technical">Technical <ArrowUpRight size={14} /></Link><Link href="/pitch">Pitch <ArrowUpRight size={14} /></Link><Link href="/brand-kit">Brand kit <ArrowUpRight size={14} /></Link><a href={sourceUrl} target="_blank" rel="noreferrer noopener">Source <ArrowUpRight size={14} /></a><LegalLinks /></div>
         </div>
         <div className={styles.footerBottom}><span>OBSERVATIONS, NOT ATTESTATIONS.</span><p>RWA Lens does not establish asset backing, legal compliance or investment performance. {deploy ? 'Inspection never signs or moves assets; the optional deploy action asks your own wallet to sign one transaction you review first.' : 'No transaction signing or asset movement.'} Optional report sign-in uses a message, never a transaction.</p><span>RWA LENS / SOLANA</span></div>
       </footer>

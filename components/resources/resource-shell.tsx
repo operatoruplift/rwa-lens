@@ -1,10 +1,11 @@
 import Link from 'next/link';
 import { ArrowUpRight } from 'lucide-react';
 import { Brand } from '@/components/rwa/brand';
+import { LegalLinks } from '@/components/legal/legal-links';
 import styles from './resources.module.css';
 
 export function ResourceShell({ active, eyebrow, title, description, children }: {
-  active: 'demo' | 'technical' | 'pitch' | 'yield';
+  active?: 'demo' | 'technical' | 'pitch' | 'yield';
   eyebrow: string;
   title: string;
   description: string;
@@ -35,7 +36,7 @@ export function ResourceShell({ active, eyebrow, title, description, children }:
       <footer className={styles.footer}>
         <Brand />
         <p>Read the token. Understand the asset.</p>
-        <div><Link href="/brand-kit">Brand kit</Link><a href="https://github.com/operatoruplift/rwa-lens" target="_blank" rel="noreferrer noopener">Source <ArrowUpRight size={14} /></a></div>
+        <div><Link href="/brand-kit">Brand kit</Link><a href="https://github.com/operatoruplift/rwa-lens" target="_blank" rel="noreferrer noopener">Source <ArrowUpRight size={14} /></a><LegalLinks /></div>
       </footer>
     </div>
   );

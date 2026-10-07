@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { ArrowUpRight, Bookmark, ChartNoAxesCombined, ChevronRight, CircleHelp, ScanLine, ShieldCheck } from 'lucide-react';
 import { Brand } from '@/components/rwa/brand';
+import { LegalLinks } from '@/components/legal/legal-links';
 import styles from './workspace-shell.module.css';
 
 type WorkspacePage = 'inspector' | 'yield' | 'watchlist';
@@ -39,7 +40,7 @@ export function WorkspaceShell({ active, title, description, children, cluster =
         <div className={styles.intro}><div><p className={styles.eyebrow}>REAL ASSETS. CLEARER VISION.</p><h1>{title}</h1><p className={styles.description}>{description}</p></div><span className={styles.publicData}><ShieldCheck size={16} />Public data. Your perspective.</span></div>
         {children}
       </main>
-      <footer className={styles.footer}><span>RWA Lens / Independent token intelligence</span><div className={styles.footerLinks}><Link href="/demo">Watch the demo <ArrowUpRight size={13} /></Link><Link href="/brand-kit">Brand kit <ArrowUpRight size={13} /></Link><Link href="/technical">How observations work <ArrowUpRight size={13} /></Link></div></footer>
+      <footer className={styles.footer}><span>RWA Lens / Independent token intelligence</span><div className={styles.footerLinks}><Link href="/demo">Watch the demo <ArrowUpRight size={13} /></Link><Link href="/brand-kit">Brand kit <ArrowUpRight size={13} /></Link><Link href="/technical">How observations work <ArrowUpRight size={13} /></Link><LegalLinks /></div></footer>
     </div>
   </div>;
 }
