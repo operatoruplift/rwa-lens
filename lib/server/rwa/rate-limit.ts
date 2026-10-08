@@ -25,6 +25,9 @@ function clientKey(request: Request): string {
   // proxy must strip/overwrite forwarded headers; otherwise use one common bucket.
   const forwarded = process.env.VERCEL ? request.headers.get('x-vercel-forwarded-for') : null;
   const identity = forwarded?.split(',')[0]?.trim() || 'shared-unknown-client';
+  // This hash is unkeyed. It is held only in memory and sent to the database,
+  // which stores HMAC-SHA-256 of `scope:hash` under a key the server cannot read
+  // (supabase/migrations/202610080001_rwa_rate_limit_privacy.sql).
   return createHash('sha256').update(identity).digest('hex').slice(0, 32);
 }
 
@@ -46,6 +49,11 @@ async function consumeShared(key: string, limit: number): Promise<RateLimitResul
   } catch { return null; }
 }
 
+/** Forget every per-instance counter whose window has ended: the shared limiter's retention rule. */
+function forgetExpiredLocal(now: number): void {
+  for (const [id, bucket] of buckets) if (bucket.resetAt <= now) buckets.delete(id);
+}
+
 function consumeLocal(key: string, limit: number): RateLimitResult {
   const now = Date.now();
   if (buckets.size >= MAX_TRACKED_KEYS && !buckets.has(key)) {
@@ -63,6 +71,9 @@ function consumeLocal(key: string, limit: number): RateLimitResult {
 }
 
 export async function rateLimit(request: Request, scope: string): Promise<RateLimitResult> {
+  // On every request, so an in-memory counter outlives its window only until this
+  // instance next rate-limits anything, whether or not the shared limiter answers.
+  forgetExpiredLocal(Date.now());
   const limit = LIMITS[scope] ?? 20;
   const key = `${scope}:${clientKey(request)}`;
   const shared = await consumeShared(key, limit);
@@ -73,3 +84,5 @@ export async function rateLimit(request: Request, scope: string): Promise<RateLi
   return consumeLocal(key, limit);
 }
 export function resetRateLimits(): void { buckets.clear(); }
+/** Per-instance counters currently held in memory. */
+export function localCounterCount(): number { return buckets.size; }
