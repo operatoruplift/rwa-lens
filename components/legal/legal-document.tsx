@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { ResourceShell } from '@/components/resources/resource-shell';
-import { LEGAL_UPDATED, OPERATOR, supportContact } from '@/lib/legal';
+import { LEGAL_UPDATED, LEGAL_UPDATED_ISO, OPERATOR, supportContact } from '@/lib/legal';
 import styles from './legal.module.css';
 
 export type LegalSection = { id: string; title: string; body: ReactNode };
@@ -22,7 +22,7 @@ export function LegalDocument({ eyebrow, title, description, summary, sections }
     <ResourceShell eyebrow={eyebrow} title={title} description={description}>
       <div className={styles.document}>
         <div className={styles.rail}>
-          <p className={styles.updated}>Last updated: <time dateTime="2026-10-07">{LEGAL_UPDATED}</time></p>
+          <p className={styles.updated}>Last updated: <time dateTime={LEGAL_UPDATED_ISO}>{LEGAL_UPDATED}</time></p>
           <dl className={styles.facts}>
             <div><dt>Operator</dt><dd>{OPERATOR}</dd></div>
             <div><dt>Covers</dt><dd>The website, the Android app and their API</dd></div>

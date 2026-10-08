@@ -33,11 +33,12 @@ test.describe('privacy policy and terms', () => {
     await expect(page).toHaveURL(/\/privacy$/);
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Privacy policy');
     const main = page.getByRole('main');
-    await expect(main).toContainText('Last updated: 7 October 2026');
+    await expect(main).toContainText('Last updated: 8 October 2026');
     await expect(main).toContainText('RWA Lens is operated by Operator Uplift');
     for (const heading of ['Addresses you inspect', 'Wallet sign-in and saved reports', 'Rate limiting', 'Token metadata', 'Service providers', 'On your device', 'How long we keep data', 'Delete your data', 'Security', 'Children', 'Changes to this policy', 'Contact'])
       await expect(main.getByRole('heading', { level: 2, name: heading })).toBeVisible();
     for (const processor of ['Vercel', 'Supabase', 'Jupiter', 'Meteora', 'xStocks']) await expect(main).toContainText(processor);
+    await expect(main.locator('#rate-limiting')).toContainText('HMAC-SHA-256');
     await expect(main.getByRole('link', { name: 'github.com/operatoruplift/rwa-lens/issues' }).first()).toHaveAttribute('href', ISSUES);
     await expect(page).toHaveTitle('Privacy policy — RWA Lens');
     await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', 'https://rwalensonsolana.vercel.app/privacy');
@@ -47,7 +48,7 @@ test.describe('privacy policy and terms', () => {
     await page.goto('/terms');
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Terms of use');
     const main = page.getByRole('main');
-    await expect(main).toContainText('Last updated: 7 October 2026');
+    await expect(main).toContainText('Last updated: 8 October 2026');
     await expect(main).toContainText('Observations, not attestations');
     await expect(main).toContainText('not investment, legal or tax advice');
     await expect(main).toContainText('Solana Mobile is not a party to these terms and has no responsibility or liability for RWA Lens, its content, support or maintenance.');

@@ -14,7 +14,7 @@ const SOURCE = 'https://github.com/operatoruplift/rwa-lens';
 const summary = [
   'RWA Lens reads public Solana data. Inspecting a token needs no account, and we do not store the addresses you inspect.',
   'There are no analytics, advertising or tracking cookies, and we do not sell personal data.',
-  'To limit abuse, we count requests from each network using a hash of its IP address.',
+  'To limit abuse, we count requests from each network per minute. Our database stores only a keyed hash of its IP address and deletes each count after its minute ends.',
   'Saved reports are optional and off unless we enable them. If you save any, Delete my data removes all of them and ends your session.',
   'Your watchlist stays on your device.',
 ];
@@ -44,9 +44,10 @@ const sections: LegalSection[] = [
     <p>Your wallet signs and sends the transaction. Once sent, it is public on Solana permanently. To show its progress, your browser asks our server for its status by transaction signature.</p>
   </> },
   { id: 'rate-limiting', title: 'Rate limiting', body: <>
-    <p>To keep RWA Lens available, we count requests from each network per minute, for each kind of request, such as inspections. A network is identified by a shortened SHA-256 hash of the IP address your request comes from. The hash is not salted, so it could be matched back to an IP address. We treat it as personal data and use it only to count requests. It is never linked to a wallet, a report or anything you inspect.</p>
-    <p>The count is kept in our Supabase database with the kind of request and the start of its one-minute window. Without saved reports, the limiter keeps one counter for each network and kind of request, replaces it at that network’s next request, and does not delete counters that stop being used. With saved reports enabled, a newer limiter is used, which deletes every counter whose minute has passed each time it runs.</p>
-    <p>If the shared counter cannot be reached, a server counts public reads in its own memory for the current minute instead, and refuses sign-in and saving until the counter is back.</p>
+    <p>To keep RWA Lens available, we count requests from each network per minute, for each kind of request, such as inspections. Our server identifies a network by a shortened SHA-256 hash of the IP address your request comes from. That hash is not salted, so on its own it could be matched back to an IP address. We treat it as personal data and use it only to count requests. It is never linked to a wallet, a report or anything you inspect.</p>
+    <p>Our Supabase database does not store that hash. It stores a keyed hash instead: an HMAC-SHA-256 of the kind of request and the shortened hash, made with a random 256-bit key that is kept in the database and that our server cannot read. Without that key, a stored counter cannot be matched back to an IP address. Each counter holds only the keyed hash, the number of requests and the time its one-minute window ends.</p>
+    <p>Each time the limiter runs, for a request from anyone, it first deletes every counter whose minute is over. A counter is therefore kept until the limiter next runs after its minute ends.</p>
+    <p>If the shared counter cannot be reached, a server counts public reads in its own memory instead, under the shortened hash, and refuses sign-in and saving until the counter is back. Each time that server rate-limits a request, it deletes every counter in its memory whose minute is over.</p>
   </> },
   { id: 'metadata', title: 'Token metadata', body: <>
     <p>A token can point to a metadata document hosted elsewhere. RWA Lens shows that address exactly as the token records it. It requests the document only when you ask, and only from hosts on this deployment’s allowlist (<code>RWA_METADATA_ALLOWED_HOSTS</code>). With an empty allowlist, nothing is fetched.</p>
@@ -79,7 +80,7 @@ const sections: LegalSection[] = [
   { id: 'retention', title: 'How long we keep data', body: <>
     <ul>
       <li><strong>Inspections, pool lookups and metadata documents:</strong> up to one minute in server memory. They are not stored.</li>
-      <li><strong>Rate-limit counters:</strong> replaced each minute while a network is active. Without saved reports, unused counters are not deleted automatically.</li>
+      <li><strong>Rate-limit counters:</strong> until the limiter next runs after their one-minute window ends, which deletes them (see Rate limiting).</li>
       <li><strong>Sign-in challenges:</strong> until used. One that expires unused is deleted at the next sign-in request.</li>
       <li><strong>Sessions:</strong> up to 7 days, in your browser only.</li>
       <li><strong>Saved reports:</strong> until you delete them. They do not expire. If we switch saved reports off, existing reports stay stored until they are deleted.</li>
