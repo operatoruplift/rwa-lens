@@ -70,7 +70,7 @@ Bump the version for every release: raise `WEB_SHELL_VERSION_CODE` and set `WEB_
 
 ## Publish on the Solana dApp Store
 
-Winners must list on the dApp Store to claim CLOCK IN prizes, and the listing is the distribution channel for every Seeker owner. The listing copy, banner and screenshots are in [`docs/dapp-store/`](dapp-store/listing.md).
+The dApp Store is the distribution channel for every Seeker owner. The listing copy, banner and screenshots are in [`docs/dapp-store/`](dapp-store/listing.md).
 
 - **Publisher Portal:** https://publish.solanamobile.com. Registration requires KYC (individuals) or KYB (businesses).
 - **Publisher wallet:** a desktop browser-extension wallet, not a Ledger. It pays about 0.05–0.1 SOL per release plus ArDrive storage for the uploaded files, and it signs every future update, so treat it like the keystore.
@@ -84,11 +84,3 @@ Winners must list on the dApp Store to claim CLOCK IN prizes, and the listing is
 - **Application ID is permanent.** This shell uses `com.operatoruplift.rwalens`. Change it now (`webshell init . --force --application-id ...`) or never.
 - **Host is pinned.** The shell keeps navigation on `rwalensonsolana.vercel.app` and opens other hosts in the system browser. Moving to a custom domain later needs a rebuild but keeps the application ID.
 - **Deep links.** The shell opens the start URL; if you want `/rwa?mint=...`-style links to open the app, add an intent filter for the host in `android/app/src/main/AndroidManifest.xml`.
-
-## CLOCK IN checklist (Solana Mobile × RadiantsDAO, closes 8 October 2026)
-
-- [ ] Release APK built with the steps above and installed on a Seeker or Android device
-- [ ] Public GitHub repo (this one), with this branch merged
-- [ ] Demo video showing the install, the wallet handoff and the core flow on a phone
-- [ ] Pitch deck: problem, product, why mobile-first, traction, team
-- [ ] Optional SKR integration for the separate $10K SKR prize
