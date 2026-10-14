@@ -81,9 +81,9 @@ const sections: LegalSection[] = [
   </> },
   { id: 'dapp-store', title: 'Solana dApp Store', body: <>
     <Clause>
-      <p>If you obtained RWA Lens through the Solana dApp Store, these terms are between you and {OPERATOR} only. Solana Mobile is not a party to these terms and has no responsibility or liability for RWA Lens, its content, support or maintenance.</p>
+      <p>If you obtained RWA Lens through the Solana dApp Store, these terms are between you and {OPERATOR} only. Solana Mobile and its parents, subsidiaries, affiliates, officers, employees, agents, partners, suppliers and licensors (the Solana Mobile Parties) are not a party to these terms and have no responsibility or liability to you in connection with RWA Lens, its content, its support or maintenance, or any Solana Mobile program. The No warranty and Limitation of liability sections of these terms protect the Solana Mobile Parties to the same extent as they protect {OPERATOR}. {OPERATOR} alone is responsible for RWA Lens and for answering any claim about it.</p>
     </Clause>
-    <p>{OPERATOR} alone is responsible for RWA Lens and for answering any claim about it. The dApp Store’s own terms also apply to your use of the store.</p>
+    <p>The dApp Store’s own terms also apply to your use of the store.</p>
   </> },
   { id: 'law', title: 'Governing law', body: <>
     <p>These terms are governed by the laws of the jurisdiction where {OPERATOR} is established, without regard to its conflict-of-law rules. Nothing in these terms removes a protection that the law of your country of residence gives you and that cannot be waived by agreement.</p>

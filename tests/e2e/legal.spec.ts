@@ -50,7 +50,8 @@ test.describe('privacy policy and terms', () => {
     await expect(main).toContainText('Last updated: 7 October 2026');
     await expect(main).toContainText('Observations, not attestations');
     await expect(main).toContainText('not investment, legal or tax advice');
-    await expect(main).toContainText('Solana Mobile is not a party to these terms and has no responsibility or liability for RWA Lens, its content, support or maintenance.');
+    await expect(main).toContainText('(the Solana Mobile Parties) are not a party to these terms and have no responsibility or liability to you in connection with RWA Lens');
+    await expect(main).toContainText('protect the Solana Mobile Parties to the same extent');
     for (const risk of ['impermanent loss', 'out of range', 'price impact', 'slippage']) await expect(main).toContainText(risk);
     await expect(main).toContainText('RWA Lens never holds your keys or funds');
     await expect(main).toContainText('18');
