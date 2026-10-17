@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import sitemap from '@/app/sitemap';
-import { ISSUES_URL, LEGAL_LINKS, LEGAL_UPDATED, OPERATOR, supportContact } from '@/lib/legal';
+import { ISSUES_URL, LEGAL_LINKS, LEGAL_UPDATED, LEGAL_UPDATED_ISO, OPERATOR, supportContact } from '@/lib/legal';
 
 describe('support contact', () => {
   it('uses the public issue tracker when no support email is configured', () => {
@@ -21,7 +21,9 @@ describe('support contact', () => {
 describe('legal pages', () => {
   it('names the operator and the shared revision date', () => {
     expect(OPERATOR).toBe('Operator Uplift');
-    expect(LEGAL_UPDATED).toBe('7 October 2026');
+    expect(LEGAL_UPDATED).toBe('8 October 2026');
+    // The visible date and the <time dateTime> attribute are one date.
+    expect(new Date(`${LEGAL_UPDATED_ISO}T00:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })).toBe(LEGAL_UPDATED);
   });
 
   it('are linked from the footers and listed in the sitemap', () => {
