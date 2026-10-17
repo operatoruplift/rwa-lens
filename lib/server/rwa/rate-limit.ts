@@ -27,7 +27,7 @@ function clientKey(request: Request): string {
   const identity = forwarded?.split(',')[0]?.trim() || 'shared-unknown-client';
   // This hash is unkeyed. It is held only in memory and sent to the database,
   // which stores HMAC-SHA-256 of `scope:hash` under a key the server cannot read
-  // (supabase/migrations/202610080001_rwa_rate_limit_privacy.sql).
+  // (supabase/migrations/20261008142115_rwa_rate_limit_privacy.sql).
   return createHash('sha256').update(identity).digest('hex').slice(0, 32);
 }
 

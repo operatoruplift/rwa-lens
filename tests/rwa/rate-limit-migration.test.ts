@@ -1,34 +1,28 @@
 import { createHash, createHmac } from 'node:crypto';
-import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
 import { PGlite } from '@electric-sql/pglite';
-import { pgcrypto } from '@electric-sql/pglite/contrib/pgcrypto';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { LEGACY_LIMITER, apply, emptySupabase, migrationSql, splitLedger } from './ledger';
 
-/** The real migrations, applied in order to in-memory Postgres. Nothing here reaches a hosted database. */
-const sql = (path: string) => readFileSync(fileURLToPath(new URL(path, import.meta.url)), 'utf8');
-const migration = (name: string) => sql(`../../supabase/migrations/${name}`);
-const NEW_MIGRATION = migration('202610080001_rwa_rate_limit_privacy.sql');
+/** The real migration ledger, applied in production order to in-memory Postgres. Nothing here reaches a hosted database. */
+const PRIVACY_MIGRATION = '20261008142115_rwa_rate_limit_privacy.sql';
+const NEW_MIGRATION = migrationSql(PRIVACY_MIGRATION);
 const sha256 = (value: string) => createHash('sha256').update(value).digest('hex');
-/** The key the app sends: the request kind and a shortened plain SHA-256 of the client IP (lib/server/rwa/rate-limit.ts). */
+/** The key the app sends: the request kind and a shortened plain SHA-256 of the client network (lib/server/rwa/rate-limit.ts). */
 const appKey = (scope: string, ip: string) => `${scope}:${sha256(ip).slice(0, 32)}`;
 type Role = 'anon' | 'authenticated' | 'service_role';
 const API_ROLES: Role[] = ['anon', 'authenticated', 'service_role'];
 
-async function database(withLegacyLimiter: boolean): Promise<PGlite> {
-  const db = new PGlite({ extensions: { pgcrypto } });
-  // The API roles a Supabase project provides, and its default grants of every new
-  // public table and function to them, which a migration must revoke by name.
-  await db.exec(`create role anon nologin; create role authenticated nologin; create role service_role nologin bypassrls;
-    alter default privileges in schema public grant all on tables to anon, authenticated, service_role;
-    alter default privileges in schema public grant execute on functions to anon, authenticated, service_role;`);
-  if (withLegacyLimiter) {
-    // Production order: pgcrypto in extensions, the legacy limiter, then this repository's migrations.
-    await db.exec('create schema extensions; create extension pgcrypto with schema extensions;');
-    await db.exec(sql('./fixtures/legacy-rate-limiter.sql'));
-  }
-  await db.exec(migration('202609200001_rwa_wallet_reports.sql'));
-  await db.exec(migration('202610070001_rwa_delete_wallet_data.sql'));
+/**
+ * The ledger up to the privacy migration, a seed of what the database held at that
+ * point, then the privacy migration and everything after it. The production shape
+ * includes the legacy limiter; a fresh RWA database never had one.
+ */
+async function database(withLegacyLimiter: boolean, seed: (db: PGlite) => Promise<void> = async () => undefined): Promise<PGlite> {
+  const db = await emptySupabase();
+  const { before, from } = splitLedger(PRIVACY_MIGRATION, { skip: withLegacyLimiter ? [] : [LEGACY_LIMITER] });
+  await apply(db, before);
+  await seed(db);
+  await apply(db, from);
   return db;
 }
 
@@ -52,15 +46,17 @@ const expire = (db: PGlite, where = 'true') => db.exec(`update rwa_private.rate_
 // Starting Postgres compiles a WebAssembly build: a few seconds alone, but over a minute
 // while every other test file runs on a loaded machine. The budget grows instead.
 beforeAll(async () => {
-  [prod, fresh] = await Promise.all([database(true), database(false)]);
+  [prod, fresh] = await Promise.all([
+    database(true, async db => {
+      // What production held before the privacy migration: counters stored under the plain app key, most of them long expired.
+      for (let i = 0; i < 50; i++) {
+        await db.query(`insert into private.rate_limits values ($1, 1, now() - make_interval(days => $2))`, [appKey('inspect', `198.51.100.${i}`), i === 0 ? 0 : 2]);
+      }
+      await db.query(`insert into rwa_private.rate_windows values ($1, 3, now() + interval '30 seconds'), ($2, 1, now() - interval '3 days')`, [appKey('auth', '198.51.100.1'), appKey('reports', '198.51.100.2')]);
+    }),
+    database(false),
+  ]);
   legacySecret = (await prod.query<{ secret: string }>('select secret from private.rate_limit_config')).rows[0].secret;
-  // What production holds today: counters stored under the plain app key, most of them long expired.
-  for (let i = 0; i < 50; i++) {
-    await prod.query(`insert into private.rate_limits values ($1, 1, now() - make_interval(days => $2))`, [appKey('inspect', `198.51.100.${i}`), i === 0 ? 0 : 2]);
-  }
-  await prod.query(`insert into rwa_private.rate_windows values ($1, 3, now() + interval '30 seconds'), ($2, 1, now() - interval '3 days')`, [appKey('auth', '198.51.100.1'), appKey('reports', '198.51.100.2')]);
-  await prod.exec(NEW_MIGRATION);
-  await fresh.exec(NEW_MIGRATION);
 }, 240_000);
 afterAll(async () => { await Promise.all([prod?.close(), fresh?.close()]); });
 

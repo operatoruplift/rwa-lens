@@ -39,7 +39,7 @@ describe('rate limit privacy', () => {
     await rateLimit(from('203.0.113.7'), 'inspect');
     const [url, init] = fetch.mock.calls[0];
     expect(url).toBe('https://dedicated.supabase.co/rest/v1/rpc/rwa_consume_rate_limit');
-    // The contract supabase/migrations/202610080001_rwa_rate_limit_privacy.sql keys: at most 100 characters.
+    // The contract supabase/migrations/20261008142115_rwa_rate_limit_privacy.sql keys: at most 100 characters.
     expect(JSON.parse(String(init.body))).toEqual({ p_key: `inspect:${createHash('sha256').update('203.0.113.7').digest('hex').slice(0, 32)}`, p_limit: 30, p_window_seconds: 60 });
     expect(String(init.body)).not.toContain('203.0.113.7');
   });

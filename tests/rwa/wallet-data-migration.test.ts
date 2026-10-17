@@ -1,12 +1,10 @@
-import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
 import { PGlite } from '@electric-sql/pglite';
 import bs58 from 'bs58';
 import nacl from 'tweetnacl';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { apply, emptySupabase, ledger } from './ledger';
 
-/** The real migrations, applied in order to an in-memory Postgres. Nothing here reaches a hosted database. */
-const migration = (name: string) => readFileSync(fileURLToPath(new URL(`../../supabase/migrations/${name}`, import.meta.url)), 'utf8');
+/** The whole migration ledger, applied in production order to an in-memory Postgres. Nothing here reaches a hosted database. */
 const wallet = (seed: number) => bs58.encode(nacl.sign.keyPair.fromSeed(new Uint8Array(32).fill(seed)).publicKey);
 const ALICE = wallet(21);
 const BOB = wallet(22);
@@ -27,11 +25,8 @@ const challengesOf = (owner: string) => count("select count(*)::int as n from rw
 // Starting Postgres compiles a WebAssembly build: a few seconds alone, but over a minute
 // while every other test file runs on a loaded machine. The budget grows instead.
 beforeAll(async () => {
-  db = new PGlite();
-  // The API roles a Supabase project provides, which both migrations grant to and revoke from.
-  await db.exec('create role anon nologin; create role authenticated nologin; create role service_role nologin bypassrls;');
-  await db.exec(migration('202609200001_rwa_wallet_reports.sql'));
-  await db.exec(migration('202610070001_rwa_delete_wallet_data.sql'));
+  db = await emptySupabase();
+  await apply(db, ledger());
 }, 180_000);
 afterAll(async () => { await db?.close(); });
 
