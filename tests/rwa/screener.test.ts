@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import bs58 from 'bs58';
 import { DEFAULT_FILTERS, screen, screenerResponseSchema, type ScreenerResponse } from '@/lib/rwa/screener';
 import { createScreenerStore } from '@/lib/server/rwa/screener';
+import type { RateLimitResult } from '@/lib/server/rwa/rate-limit';
 
 const USDC = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
 const SOL = 'So11111111111111111111111111111111111111112';
@@ -215,6 +216,36 @@ describe('screener snapshot', () => {
     const failing = createScreenerStore({ fetchJson: fakeFetch({ failPools: true }), now: () => 0 });
     expect((await failing.read()).response).toMatchObject({ state: 'unavailable' });
     expect((await createScreenerStore({ fetchJson: fakeFetch({ failXStocks: true }), now: () => 0 }).read()).response).toMatchObject({ state: 'unavailable' });
+  });
+});
+
+describe('deployment budget', () => {
+  const meteoraReads = (fetchJson: ReturnType<typeof fakeFetch>) => fetchJson.mock.calls.filter(([uri]) => new URL(uri).hostname === 'dlmm.datapi.meteora.ag').length;
+
+  it('spends one unit of the Meteora budget per page read, and stops reading when it is spent while keeping the last snapshot', async () => {
+    let now = 0;
+    let allowed = true;
+    const fetchJson = fakeFetch();
+    const budget = vi.fn<() => Promise<RateLimitResult>>(async () => (allowed ? { ok: true, source: 'local' } : { ok: false, retryAfterSeconds: 30, source: 'shared' }));
+    const store = createScreenerStore({ fetchJson, now: () => now, budget });
+    expect((await store.read()).response.state).toBe('ok');
+    const reads = meteoraReads(fetchJson);
+    expect(reads).toBeGreaterThan(0);
+    expect(budget).toHaveBeenCalledTimes(reads);
+    allowed = false;
+    now = 20 * 60_000;
+    const stale = await store.read();
+    expect(stale.response).toMatchObject({ state: 'ok', stale: true });
+    await stale.refresh!();
+    expect(meteoraReads(fetchJson)).toBe(reads);
+    expect((await store.read()).response).toMatchObject({ state: 'ok', stale: true });
+  });
+
+  it('says so when there is no snapshot to fall back on', async () => {
+    const fetchJson = fakeFetch();
+    const cold = createScreenerStore({ fetchJson, now: () => 0, budget: async () => ({ ok: false, retryAfterSeconds: 30, source: 'shared' }) });
+    expect((await cold.read()).response).toMatchObject({ state: 'unavailable', reason: expect.stringContaining('budget') });
+    expect(meteoraReads(fetchJson)).toBe(0);
   });
 });
 
