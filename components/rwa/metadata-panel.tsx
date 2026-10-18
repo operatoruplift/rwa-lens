@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { metadataBodySchema } from '@/lib/rwa/schema';
 import { declaredUriPolicy, policyCopy } from '@/lib/rwa/metadata-policy';
 import { Callout } from './primitives';
-import type { Identity } from '@/lib/rwa/types';
+import type { Cluster, Identity } from '@/lib/rwa/types';
 
 const outcomeSchema = z.discriminatedUnion('state', [
   z.object({ state: z.literal('ok'), body: metadataBodySchema, fetchedAt: z.string(), bytes: z.number() }),
@@ -13,7 +13,7 @@ const outcomeSchema = z.discriminatedUnion('state', [
 ]);
 type Outcome = z.infer<typeof outcomeSchema>;
 
-export function MetadataPanel({ identity, uri }: { identity: Identity; uri: string }) {
+export function MetadataPanel({ identity, uri, cluster }: { identity: Identity; uri: string; cluster: Cluster }) {
   const [loading, setLoading] = useState(false);
   const [outcome, setOutcome] = useState<Outcome | null>(null);
   const declared = identity.metadata?.uri === uri ? identity.metadata.uriFetch : undefined;
@@ -22,7 +22,8 @@ export function MetadataPanel({ identity, uri }: { identity: Identity; uri: stri
     if (policy !== 'fetchable') return;
     setLoading(true);
     try {
-      const response = await fetch('/api/rwa/metadata', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ mint: identity.mint, uri }) });
+      // The server reads the URI from the mint's own metadata; the browser never names a URL to fetch.
+      const response = await fetch('/api/rwa/metadata', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ mint: identity.mint, cluster }) });
       const body: unknown = await response.json();
       const parsed = outcomeSchema.safeParse(body);
       setOutcome(parsed.success ? parsed.data : { state: 'failed', reason: 'The metadata response could not be read. Try again later.' });

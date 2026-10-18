@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
 import { metadataRequestSchema } from '@/lib/rwa/schema';
+import { inspectRequest } from '@/lib/server/rwa/inspect';
 import { fetchMetadata } from '@/lib/server/rwa/metadata-fetch';
 import { rateLimit } from '@/lib/server/rwa/rate-limit';
+import { RpcError } from '@/lib/server/rwa/rpc';
 import { readBoundedJson, requestOrigin } from '@/lib/server/rwa/http';
 
 export const runtime = 'nodejs';
@@ -16,6 +18,11 @@ const STATUS: Record<string, number> = {
   skipped: 200,
   blocked: 200,
   failed: 502,
+};
+/** The mint could not be resolved: the same statuses the inspection route answers with. */
+const INSPECTION_STATUS: Record<string, number> = {
+  'invalid-address': 400, 'not-found': 404, 'not-a-mint': 422, 'decoder-failure': 422, 'rate-limited': 429,
+  'not-configured': 503, timeout: 503, 'response-too-large': 503, 'provider-failure': 502,
 };
 
 export async function POST(request: Request) {
@@ -39,11 +46,22 @@ export async function POST(request: Request) {
   const parsed = metadataRequestSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
-      { state: 'blocked', reason: parsed.error.issues[0]?.message ?? 'Check the mint and URI.' },
+      { state: 'blocked', reason: parsed.error.issues[0]?.message ?? 'Check the mint and cluster.' },
       { status: 400 },
     );
   }
 
-  const outcome = await fetchMetadata(parsed.data.uri);
+  // The URI is the one the mint itself declares on chain, read through the
+  // inspection path and its cache. The caller never names a URL to fetch.
+  let declared: string | undefined;
+  try {
+    declared = (await inspectRequest({ mode: 'live', cluster: parsed.data.cluster, mint: parsed.data.mint })).identity?.metadata?.uri;
+  } catch (error) {
+    if (error instanceof RpcError) return NextResponse.json({ state: 'failed', reason: error.message }, { status: INSPECTION_STATUS[error.kind] ?? 502 });
+    return NextResponse.json({ state: 'failed', reason: 'The mint could not be inspected.' }, { status: 502 });
+  }
+  if (!declared) return NextResponse.json({ state: 'skipped', reason: 'This mint declares no metadata URI.' }, { status: 200 });
+
+  const outcome = await fetchMetadata(declared);
   return NextResponse.json(outcome, { status: STATUS[outcome.state] ?? 502 });
 }

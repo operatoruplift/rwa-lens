@@ -67,10 +67,11 @@ export const metadataUriSchema = z
     return true;
   }, 'Metadata URI must be https and must not target a private or loopback host.');
 
+/** A metadata request names only the mint; the server reads the URI the mint itself declares. */
 export const metadataRequestSchema = z.object({
-  uri: metadataUriSchema,
   mint: addressSchema,
-});
+  cluster: clusterSchema,
+}).strict();
 
 /** The normalised metadata body we are willing to render. */
 export const metadataBodySchema = z.object({

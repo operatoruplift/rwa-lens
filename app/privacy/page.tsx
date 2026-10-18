@@ -63,7 +63,7 @@ const sections = (savedReportsOn: boolean): LegalSection[] => [
     <p>If the shared counter cannot be reached, a server counts public reads in its own memory instead, under the shortened hash, and refuses sign-in and saving until the counter is back. Each time that server rate-limits a request, it deletes every counter in its memory whose minute is over.</p>
   </> },
   { id: 'metadata', title: 'Token metadata', body: <>
-    <p>A token can point to a metadata document hosted elsewhere. RWA Lens shows that address exactly as the token records it. It requests the document only when you ask, and only from hosts on this deployment’s allowlist (<code>RWA_METADATA_ALLOWED_HOSTS</code>). With an empty allowlist, nothing is fetched.</p>
+    <p>A token can point to a metadata document hosted elsewhere. RWA Lens shows that address exactly as the token records it. It requests the document only when you ask: your browser sends our server the mint, our server reads the address the mint itself declares on chain, and it requests that document only from hosts on this deployment’s allowlist (<code>RWA_METADATA_ALLOWED_HOSTS</code>). With an empty allowlist, nothing is fetched.</p>
     <p>The request comes from our server and carries only the document’s address, so the host sees our server rather than you. A fetched document stays in server memory for up to one minute.</p>
     <p>If we connect an issuer registry, our server also sends it the mint you inspect, to look up the issuer’s published details.</p>
   </> },
