@@ -69,7 +69,9 @@ additive durable-store migrations, named as the production ledger records them:
 `20261008142115_rwa_rate_limit_privacy.sql`, which stores rate-limit counters under
 a database-held HMAC key and deletes them after their window. That last one also
 applies to the existing production project, whose legacy limiter it rewires; it
-needs no new variable and works with the app deployed before or after it. Do not
+needs no new variable and works with the app deployed before or after it. Every
+later file in `supabase/migrations` (the `20261017` entries) follows in name
+order; each one states its own rollout and rollback in its comments. Do not
 enable an incompletely configured flow.
 The custom wallet cookie is not a Supabase authenticated JWT. Do not re-use the
 legacy UUID `owner_id` table as though a base58 wallet address were `auth.uid()`.
