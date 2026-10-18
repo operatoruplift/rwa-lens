@@ -39,6 +39,8 @@ test.describe('privacy policy and terms', () => {
       await expect(main.getByRole('heading', { level: 2, name: heading })).toBeVisible();
     for (const processor of ['Vercel', 'Supabase', 'Jupiter', 'Meteora', 'xStocks']) await expect(main).toContainText(processor);
     await expect(main.locator('#rate-limiting')).toContainText('HMAC-SHA-256');
+    // CI serves the build with saved reports off, and the policy says so instead of describing a deletion that cannot happen.
+    await expect(main.locator('#delete')).toContainText('Saved reports are switched off on this deployment. Nothing is stored per wallet, so there is nothing to delete.');
     await expect(main.getByRole('link', { name: 'github.com/operatoruplift/rwa-lens/issues' }).first()).toHaveAttribute('href', ISSUES);
     await expect(page).toHaveTitle('Privacy policy — RWA Lens');
     await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', 'https://rwalensonsolana.vercel.app/privacy');
