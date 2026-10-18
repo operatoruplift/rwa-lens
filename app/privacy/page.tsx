@@ -47,7 +47,7 @@ const sections = (savedReportsOn: boolean): LegalSection[] => [
     <ul>
       <li><strong>Sign-in.</strong> You connect a wallet and sign a message. It is never a transaction and moves no funds. For each attempt we store a single-use challenge for up to 5 minutes: your wallet address, a random value, a hash of a random code kept in a cookie in your browser, this site’s address, the network and the times. It is deleted when it is used.</li>
       <li><strong>Session.</strong> After you sign, your browser keeps a session cookie for up to 7 days. It holds your wallet address and its expiry, signed with a server secret (<code>RWA_SESSION_SECRET</code>). We keep no copy on the server.</li>
-      <li><strong>Saved report.</strong> When you save, our server inspects the token again and stores the result with your wallet address as its owner. A report holds the mint, any wallet address you inspected, the network, the full observation (public on-chain data, the RPC provider, slots and times), the decoder version, a content hash and when you saved it.</li>
+      <li><strong>Saved report.</strong> When you save, our server inspects the token again and stores the result with your wallet address as its owner. A report holds the mint, any wallet address you inspected, the network, the full observation (public on-chain data, the RPC provider, slots and times), the decoder version, a content hash and when you saved it. One wallet can keep up to 100 reports, 16 MB in total.</li>
     </ul>
     <p>Only a session for the same wallet can list, export or delete its reports.</p>
   </> },

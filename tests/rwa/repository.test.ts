@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import nacl from 'tweetnacl';
 import bs58 from 'bs58';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createReport, deleteWalletData, getReport, listReports, repositoryState } from '@/lib/server/rwa/repository';
+import { ReportQuotaError, createReport, deleteWalletData, getReport, listReports, repositoryState } from '@/lib/server/rwa/repository';
 import { getFixture } from '@/lib/rwa/fixtures';
 import { reportCreateSchema } from '@/lib/rwa/schema';
 
@@ -64,6 +64,17 @@ describe('real repository query path, mocked PostgREST transport', () => {
   it('reports storage failures instead of fabricating an empty list or not-found', async () => {
     vi.stubGlobal('fetch',vi.fn(async () => Response.json({ message:'internal-secret' },{status:500})));
     await expect(listReports(alice)).rejects.toThrow('Report storage is unavailable.');
+  });
+  it('turns the database quota codes into a quota error for the user, and nothing else', async () => {
+    const refuse = (body: Record<string, unknown>, status = 400) => vi.stubGlobal('fetch', vi.fn(async () => Response.json(body, { status })));
+    refuse({ code: 'RW001', message: 'saved report limit reached: this wallet already holds 100 reports', details: null, hint: 'Delete my data removes every report of this wallet.' });
+    const rows = await createReport(input(alice)).catch((error: unknown) => error);
+    expect(rows).toBeInstanceOf(ReportQuotaError);
+    expect(rows).toMatchObject({ limit: 'rows', message: 'This wallet already holds 100 saved reports, the most it can keep.' });
+    refuse({ code: 'RW002', message: 'saved report size limit reached' });
+    await expect(createReport(input(alice))).rejects.toMatchObject({ limit: 'bytes', message: expect.stringContaining('16 MB') });
+    refuse({ code: '42501', message: 'permission denied for table rwa_wallet_reports' }, 403);
+    await expect(createReport(input(alice))).rejects.toThrow('Report storage is unavailable.');
   });
   it('does not activate with generic credentials or flag alone', () => {
     vi.stubEnv('RWA_SUPABASE_SERVICE_ROLE_KEY',''); vi.stubEnv('SUPABASE_SECRET_KEY','sb_secret_do_not_use');

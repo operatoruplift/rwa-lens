@@ -21,6 +21,19 @@ function report(value: unknown) {
 }
 export type StoredReport = ReturnType<typeof report>;
 export type RepositoryState = 'ready' | 'disabled' | 'misconfigured';
+/** What one wallet may keep, enforced by the database (supabase/migrations/20261019103000_rwa_wallet_reports_quota.sql). */
+export const REPORT_QUOTA = { rows: 100, mebibytes: 16 } as const;
+/** The database refused a save because the wallet is at its quota; the message is written for the user. */
+export class ReportQuotaError extends Error {
+  constructor(readonly limit: 'rows' | 'bytes') {
+    super(limit === 'rows'
+      ? `This wallet already holds ${REPORT_QUOTA.rows} saved reports, the most it can keep.`
+      : `This wallet’s saved reports already hold ${REPORT_QUOTA.mebibytes} MB, the most it can keep.`);
+    this.name = 'ReportQuotaError';
+  }
+}
+/** The SQLSTATE codes the quota trigger raises. */
+const QUOTA_CODES: Record<string, ReportQuotaError['limit']> = { RW001: 'rows', RW002: 'bytes' };
 export function reportsEnabled(): boolean { return (process.env.RWA_REPORTS_ENABLED ?? '').trim() === 'true'; }
 function serviceClient() {
   const config = databaseConfig();
@@ -63,7 +76,11 @@ export async function createReport(input: {
     owner_id: input.owner, cluster: input.cluster, mint: input.mint, owner_address: input.ownerAddress ?? null,
     observation, decoder_version: input.decoderVersion, mode: input.mode, content_hash: hashObservation(observation),
   }).select(SELECT).single();
-  if (error) throw new Error('Report storage is unavailable.');
+  if (error) {
+    const limit = QUOTA_CODES[error.code];
+    if (limit) throw new ReportQuotaError(limit);
+    throw new Error('Report storage is unavailable.');
+  }
   return data ? report(data) : null;
 }
 const deletionSchema = z.object({ reports: z.number().int().nonnegative(), challenges: z.number().int().nonnegative() }).strict();

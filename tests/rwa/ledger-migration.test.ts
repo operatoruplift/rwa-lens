@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { PGlite } from '@electric-sql/pglite';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { apply, emptySupabase, ledger } from './ledger';
 
 /** The whole migration ledger on an in-memory Postgres shaped like the production project. Nothing here reaches a hosted database. */
@@ -13,6 +13,10 @@ const MINT = 'A1KLoBrKBde8Ty9qtNQUtq3C2ortoC3u7twggz7sEto6';
 async function asUser<T>(user: string | null, run: () => Promise<T>): Promise<T> {
   await db.exec(`select set_config('request.jwt.claim.sub', '${user ?? ''}', false); set role ${user ? 'authenticated' : 'anon'};`);
   try { return await run(); } finally { await db.exec("reset role; select set_config('request.jwt.claim.sub', '', false);"); }
+}
+async function asServiceRole<T>(run: () => Promise<T>): Promise<T> {
+  await db.exec('set role service_role');
+  try { return await run(); } finally { await db.exec('reset role'); }
 }
 const insertReport = (owner: string) => db.query("insert into public.rwa_reports (owner_id, cluster, mint, observation, decoder_version, content_hash) values ($1, 'mainnet-beta', $2, '{}'::jsonb, 'test', $3)", [owner, MINT, 'a'.repeat(64)]);
 const countReports = async () => Number((await db.query<{ n: number }>('select count(*)::int as n from public.rwa_reports')).rows[0].n);
@@ -76,5 +80,44 @@ describe('rwa_reports after the anon revoke', () => {
       expect(expression).toMatch(/\( ?SELECT auth\.uid\(\) AS uid ?\)/);
       expect(expression).not.toMatch(/\(auth\.uid\(\) = owner_id\)/);
     }
+  });
+});
+
+describe('saved report quota', () => {
+  const ALICE = 'H8sMJSCQxfKiFTCfDR3DUMLPwcRbM61LGFJ8N4dK3WjS';
+  const BOB = '4dLtt8WQEjkZCiRrNJA5XRqqDBsoymdBxN54dz7pbDie';
+  /** A save as the app performs it: the service role inserts, and the trigger reads as that role. */
+  const save = (owner: string, observation = "'{}'::jsonb") => asServiceRole(() => db.query(`insert into public.rwa_wallet_reports (owner_id, cluster, mint, observation, decoder_version, content_hash, mode) values ($1, 'mainnet-beta', $2, ${observation}, 'test', $3, 'live')`, [owner, MINT, 'a'.repeat(64)]));
+  const held = async (owner: string) => Number((await db.query<{ n: number }>('select count(*)::int as n from public.rwa_wallet_reports where owner_id = $1', [owner])).rows[0].n);
+  const FOUR_MIB = "jsonb_build_object('blob', repeat('x', 4 * 1024 * 1024))";
+  beforeEach(async () => { await db.exec('truncate public.rwa_wallet_reports'); });
+
+  it('refuses the 101st report of one wallet with RW001 and leaves another wallet unaffected', async () => {
+    for (let i = 0; i < 100; i++) await save(ALICE);
+    await expect(save(ALICE)).rejects.toMatchObject({ code: 'RW001', message: expect.stringContaining('100 reports'), hint: expect.stringContaining('Delete my data') });
+    expect(await held(ALICE)).toBe(100);
+    await save(BOB);
+    expect(await held(BOB)).toBe(1);
+  });
+
+  it('refuses the report that would take one wallet past 16 MiB with RW002, while a smaller one still fits', async () => {
+    for (let i = 0; i < 3; i++) await save(ALICE, FOUR_MIB);
+    await expect(save(ALICE, FOUR_MIB)).rejects.toMatchObject({ code: 'RW002', message: expect.stringContaining('16 MiB') });
+    await save(ALICE);
+    expect(await held(ALICE)).toBe(4);
+  });
+
+  it('is freed by Delete my data', async () => {
+    for (let i = 0; i < 100; i++) await save(ALICE);
+    await expect(save(ALICE)).rejects.toMatchObject({ code: 'RW001' });
+    await asServiceRole(() => db.query('select public.rwa_delete_wallet_data($1)', [ALICE]));
+    await save(ALICE);
+    expect(await held(ALICE)).toBe(1);
+  });
+
+  it('runs before every insert with an empty search path, and only as a trigger', async () => {
+    const { rows } = await db.query<{ tgname: string; tgenabled: string; prosecdef: boolean; proconfig: string[] }>("select t.tgname, t.tgenabled, p.prosecdef, p.proconfig from pg_trigger t join pg_proc p on p.oid = t.tgfoid where t.tgrelid = 'public.rwa_wallet_reports'::regclass and not t.tgisinternal");
+    expect(rows).toEqual([{ tgname: 'rwa_wallet_reports_quota', tgenabled: 'O', prosecdef: false, proconfig: ['search_path=""'] }]);
+    await expect(db.query('select rwa_private.enforce_report_quota()')).rejects.toThrow(/trigger/);
   });
 });

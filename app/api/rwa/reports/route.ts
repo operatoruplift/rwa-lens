@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { reportCreateSchema } from '@/lib/rwa/schema';
-import { createReport, listReports, repositoryState } from '@/lib/server/rwa/repository';
+import { ReportQuotaError, createReport, listReports, repositoryState } from '@/lib/server/rwa/repository';
 import { SESSION_COOKIE, readSessionToken, hasExactOrigin } from '@/lib/server/rwa/session';
 import { rateLimit } from '@/lib/server/rwa/rate-limit';
 import { readBoundedJson } from '@/lib/server/rwa/http';
@@ -48,5 +48,9 @@ export async function POST(request: Request) {
     });
     if (!report) throw new Error('storage-unavailable');
     return NextResponse.json({ state: 'success', report }, { status: 201, headers: { 'cache-control': 'no-store' } });
-  } catch { return NextResponse.json({ state: 'unavailable', message: 'The report could not be saved. Export locally or try again later.' }, { status: 503 }); }
+  } catch (error) {
+    // The database holds the per-wallet cap; the user can free it only by deleting everything.
+    if (error instanceof ReportQuotaError) return NextResponse.json({ state: 'quota-exceeded', message: `${error.message} Delete my data removes all of them; exported JSON and CSV files stay on your device.` }, { status: 409, headers: { 'cache-control': 'no-store' } });
+    return NextResponse.json({ state: 'unavailable', message: 'The report could not be saved. Export locally or try again later.' }, { status: 503 });
+  }
 }
