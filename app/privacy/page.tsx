@@ -86,7 +86,7 @@ const sections = (savedReportsOn: boolean): LegalSection[] => [
       <li><strong>Watchlist.</strong> Kept in this browser’s local storage: up to 20 mint addresses, each with an optional name and symbol and the time you saved it. The list itself is never sent to our server. Remove items on the Watchlist page, or clear this site’s data in your browser.</li>
       <li><strong>Cookies.</strong> {savedReportsOn ? 'RWA Lens sets cookies only when you sign in' : `RWA Lens sets no cookies on this deployment. ${OFF} Cookies exist only when they are on and you sign in`}: a sign-in cookie with a random code for up to 5 minutes, and a session cookie for up to 24 hours. Page scripts cannot read either one. There are no other cookies.</li>
       <li><strong>Mobile Wallet Adapter.</strong> On Android, when you connect a wallet through it, it keeps the wallet’s authorization and your account address in this browser’s storage so the wallet stays connected. Disconnect in your wallet, or clear the site’s or app’s data, to remove it.</li>
-      <li><strong>Offline files.</strong> A service worker keeps public files, such as icons and app code, and an offline notice. It keeps nothing about you.</li>
+      <li><strong>Offline files.</strong> A service worker keeps public files, such as icons and app code, and an offline notice. It keeps nothing about you, and each new release removes the files kept for the releases before it.</li>
       <li><strong>Exports.</strong> JSON and CSV files you export are saved on your device. We do not keep a copy.</li>
     </ul>
   </> },

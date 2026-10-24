@@ -16,7 +16,10 @@ export function MobileSupport() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
     if (process.env.NODE_ENV === 'production' && 'serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js', { scope: '/', updateViaCache: 'none' }).catch(() => {});
+      // The release id (next.config.ts) versions the worker's cache: a new release
+      // installs a new worker, which deletes the caches of the releases before it.
+      const release = process.env.NEXT_PUBLIC_RELEASE_ID ?? 'unversioned';
+      navigator.serviceWorker.register(`/sw.js?v=${encodeURIComponent(release)}`, { scope: '/', updateViaCache: 'none' }).catch(() => {});
     }
     if (registered) return;
     registered = true;

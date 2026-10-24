@@ -1,6 +1,20 @@
 /* RWA Lens caches only public static assets and an offline notice. RPC reads,
- * metadata, saved reports and sign-in responses never enter Cache Storage. */
-const CACHE = 'rwa-lens-public-v3';
+ * metadata, saved reports and sign-in responses never enter Cache Storage.
+ *
+ * The registration URL names the release (sw.js?v=<release>, see
+ * components/app/mobile-support.tsx), so every release installs a worker of its
+ * own with a cache of its own, and `activate` deletes the caches of earlier
+ * releases. Build-addressed Next assets of old releases therefore no longer
+ * accumulate for as long as the cache name stays the same. */
+const RELEASE = (() => {
+  try {
+    const version = new URL(self.location.href).searchParams.get('v') || '';
+    return /^[A-Za-z0-9._-]{1,64}$/.test(version) ? version : 'unversioned';
+  } catch {
+    return 'unversioned';
+  }
+})();
+const CACHE = `rwa-lens-public-${RELEASE}`;
 const STATIC_PATHS = ['/icons/', '/brand/'];
 const STATIC_FILES = new Set(['/favicon.ico', '/icon.svg', '/apple-icon.png']);
 const OFFLINE_HTML = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>RWA Lens is offline</title><style>body{margin:0;min-height:100vh;display:grid;place-items:center;font-family:system-ui,sans-serif;background:#f2f2e9;color:#101211;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}main{max-width:28rem;padding:2rem;text-align:center}h1{font-size:1.4rem}p{color:#4e564b;line-height:1.5}a{color:#476522}</style></head><body><main><h1>You’re offline.</h1><p>RWA Lens reads live Solana state, so inspection needs a connection. Reconnect and <a href="/rwa">open the inspector</a> again.</p></main></body></html>`;
@@ -32,6 +46,7 @@ self.addEventListener('install', (event) => {
 
 self.addEventListener('activate', (event) => {
   event.waitUntil((async () => {
+    // Every cache of an earlier release goes, including the unversioned 'rwa-lens-public-v3' of releases before this scheme.
     const keys = await caches.keys();
     await Promise.all(keys.filter((key) => key.startsWith('rwa-lens-public-') && key !== CACHE).map((key) => caches.delete(key)));
     await self.clients.claim();
