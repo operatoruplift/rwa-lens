@@ -86,7 +86,7 @@ describe('durable sign-in challenges', () => {
   // Four keys x forty fresh challenges is 160 signing round trips, which is well past
   // the 5s default on a loaded machine. The repetition is the point of the test, so the
   // budget grows rather than the coverage shrinking.
-  it('rejects small-order public keys that an all-zero signature would satisfy', { timeout: 60_000 }, async () => {
+  it('rejects small-order and non-canonical public keys that an all-zero signature would satisfy', { timeout: 90_000 }, async () => {
     // RFC 8032 verification accepts these points, so a zero signature validates against
     // them for roughly one message in four. Repeat across many fresh challenges: a
     // single-challenge assertion passes by luck about three times in four.
@@ -95,6 +95,8 @@ describe('durable sign-in challenges', () => {
       bs58.encode(Buffer.from('0000000000000000000000000000000000000000000000000000000000000080', 'hex')),
       bs58.encode(Buffer.from('0100000000000000000000000000000000000000000000000000000000000000', 'hex')),
       bs58.encode(Buffer.from('ecffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f', 'hex')),
+      // The identity again, encoded non-canonically as y = p + 1: outside any denylist, refused by strict decoding.
+      bs58.encode(Buffer.from('eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f', 'hex')),
     ];
     const zeroSignature = bs58.encode(Buffer.alloc(64));
     for (const address of lowOrder) {
@@ -105,6 +107,22 @@ describe('durable sign-in challenges', () => {
         expect(verifyChallenge(challenge, zeroSignature)).toBe(false);
       }
     }
+  });
+  it('rejects every encoding of the eight small-order points and of y = p, with a real signature over a real message', async () => {
+    const pair = nacl.sign.keyPair.fromSeed(new Uint8Array(32).fill(7));
+    const { nonce, message } = await issueNonce(ADDRESS, BROWSER);
+    const signature = bs58.encode(nacl.sign.detached(new TextEncoder().encode(message), pair.secretKey));
+    const challenge = (await consumeNonce(nonce, ADDRESS, BROWSER))!;
+    expect(verifyChallenge(challenge, signature)).toBe(true);
+    const torsion = [
+      '0000000000000000000000000000000000000000000000000000000000000000', '0000000000000000000000000000000000000000000000000000000000000080',
+      '0100000000000000000000000000000000000000000000000000000000000000', 'ecffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f',
+      '26e8958fc2b227b045c3f489f2ef98f0d5dfac05d3c63339b13802886d53fc05', '26e8958fc2b227b045c3f489f2ef98f0d5dfac05d3c63339b13802886d53fc85',
+      'c7176a703d4dd84fba3c0b760d10670f2a2053fa2c39ccc64ec7fd7792ac037a', 'c7176a703d4dd84fba3c0b760d10670f2a2053fa2c39ccc64ec7fd7792ac03fa',
+      // Non-canonical: y = p + 1 (the identity) and y = p with either sign bit.
+      'eeffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f', 'edffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff7f', 'edffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
+    ];
+    for (const hex of torsion) expect(verifyChallenge({ ...challenge, address: bs58.encode(Buffer.from(hex, 'hex')) }, signature), hex).toBe(false);
   });
   it('rejects a signature whose R component is the identity element', async () => {
     const pair = nacl.sign.keyPair.fromSeed(new Uint8Array(32).fill(7));

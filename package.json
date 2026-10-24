@@ -14,6 +14,7 @@
     "test:e2e:reports": "playwright test -c playwright.reports.config.ts"
   },
   "dependencies": {
+    "@noble/curves": "2.4.0",
     "@solana-mobile/wallet-standard-mobile": "^0.6.0",
     "@solana-program/token-2022": "^0.17.0",
     "@solana/kit": "^8.3.0",
