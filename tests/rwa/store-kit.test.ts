@@ -31,10 +31,13 @@ describe('dApp Store listing copy', () => {
     expect(field('What\'s new')).toBe('First release');
   });
 
-  it('describes Deploy USDC only as an operator option and promises no returns', () => {
+  it('describes only what this release ships: read-only, no Deploy USDC, no promised returns', () => {
     const description = field('Description');
-    expect(description).toContain('Read-only by default');
-    expect(description).toContain('When enabled by the operator, Deploy USDC');
+    expect(description).toContain('Read-only');
+    expect(description).toContain('never holds keys or funds');
+    // Deploy USDC is off in this release, so the store copy must not describe it; the reviewer note says it is off.
+    expect(description).not.toMatch(/deploy usdc|add liquidity|impermanent loss|slippage/i);
+    expect(field('Reviewer notes')).toContain('Saved reports and Deploy USDC are switched off in this release.');
     expect(description).not.toMatch(/\b(earn|guaranteed|profit|returns?)\b/i);
   });
 

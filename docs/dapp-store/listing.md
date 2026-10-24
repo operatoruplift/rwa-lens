@@ -35,9 +35,7 @@ Paste a mint address, or start with a listed asset such as Ondo USDY or an xStoc
 • Yield screener: pools holding tokenized assets from xStocks and Ondo, filterable by issuer, pair and liquidity.
 • Watchlist: keep the mint addresses you follow on your device.
 
-Read-only by default. Inspecting a token needs no account and no wallet, and never asks you to sign anything.
-
-When enabled by the operator, Deploy USDC prepares one transaction that you review, sign and send in your own wallet, to add liquidity to a USDC-paired Meteora pool. RWA Lens never holds keys or funds. Providing liquidity carries risks, including impermanent loss, price impact and slippage.
+Read-only. Inspecting a token needs no account and no wallet, and nothing in this release asks you to sign anything. RWA Lens never holds keys or funds.
 
 RWA Lens shows observations of public data. It does not certify asset backing, compliance, eligibility or redemption, and it is not investment, legal or tax advice. Tokenized securities are offered only to eligible people under their issuers' terms.
 
