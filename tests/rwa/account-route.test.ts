@@ -23,19 +23,30 @@ type Row = { owner_id: string; id: string };
 const reports: Row[] = [];
 const challenges: Array<{ nonce: string; address: string }> = [];
 const storageCalls: Array<{ path: string; body: Record<string, unknown> }> = [];
+const epochs = new Map<string, number>();
 
-/** PostgREST transport for rwa_delete_wallet_data, applying the function's owner filter to in-memory rows. */
+/** PostgREST transport: the session epoch function as the migration behaves, and rwa_delete_wallet_data with its owner filter on in-memory rows. */
 function fakeStorage(status = 200) {
   vi.stubGlobal('fetch', vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
     const url = new URL(input instanceof Request ? input.url : input.toString());
     const body = JSON.parse((init?.body as string) ?? '{}') as Record<string, unknown>;
-    storageCalls.push({ path: url.pathname, body });
     if (status !== 200) return Response.json({ message: 'internal storage detail' }, { status });
+    if (url.pathname === '/rest/v1/rpc/rwa_session_epoch') {
+      const owner = body.p_owner_id as string;
+      const current = epochs.get(owner) ?? 0;
+      if (body.p_action === 'read') return Response.json(current);
+      const next = body.p_action === 'bump' && current > 0 ? current + 1 : Math.max(current, 1);
+      epochs.set(owner, next);
+      return Response.json(next);
+    }
+    storageCalls.push({ path: url.pathname, body });
     expect(url.pathname).toBe('/rest/v1/rpc/rwa_delete_wallet_data');
-    const owner = body.p_owner_id;
+    const owner = body.p_owner_id as string;
     const before = { reports: reports.length, challenges: challenges.length };
     reports.splice(0, reports.length, ...reports.filter(row => row.owner_id !== owner));
     challenges.splice(0, challenges.length, ...challenges.filter(row => row.address !== owner));
+    // The deletion bumps the wallet's epoch in the same transaction.
+    epochs.set(owner, (epochs.get(owner) ?? 0) + 1);
     return Response.json({ reports: before.reports - reports.length, challenges: before.challenges - challenges.length });
   }));
 }
@@ -46,10 +57,10 @@ function request({ base = ORIGIN, origin = ORIGIN as string | null, query = '', 
     ...(body ? { body: JSON.stringify(body) } : {}),
   });
 }
-const signIn = (address: string) => { jar.values.set(SESSION_COOKIE, createSessionToken(address)!); jar.values.set(CHALLENGE_COOKIE, 'pending-browser-token'); };
+const signIn = async (address: string) => { jar.values.set(SESSION_COOKIE, (await createSessionToken(address))!); jar.values.set(CHALLENGE_COOKIE, 'pending-browser-token'); };
 
 beforeEach(() => {
-  jar.values.clear(); jar.deleted.length = 0; storageCalls.length = 0;
+  jar.values.clear(); jar.deleted.length = 0; storageCalls.length = 0; epochs.clear();
   reports.splice(0, reports.length, { owner_id: ALICE, id: 'a1' }, { owner_id: ALICE, id: 'a2' }, { owner_id: BOB, id: 'b1' });
   challenges.splice(0, challenges.length, { nonce: 'n-alice', address: ALICE }, { nonce: 'n-bob', address: BOB });
   vi.stubEnv('RWA_REPORTS_ENABLED', 'true'); vi.stubEnv('RWA_SESSION_SECRET', 's'.repeat(48));
@@ -62,7 +73,7 @@ afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs(); vi.resetAllMocks();
 
 describe('DELETE /api/rwa/account', () => {
   it('deletes only the signed-in wallet’s reports and challenges, then ends its session', async () => {
-    signIn(ALICE);
+    await signIn(ALICE);
     // A client-supplied owner is ignored: the session alone names the wallet.
     const response = await DELETE(request({ query: `?owner=${BOB}`, body: { owner: BOB } }));
     expect(response.status).toBe(200);
@@ -77,10 +88,10 @@ describe('DELETE /api/rwa/account', () => {
 
   it('requires a signed-in wallet session', async () => {
     expect((await DELETE(request())).status).toBe(401);
-    jar.values.set(SESSION_COOKIE, `${createSessionToken(ALICE)!.slice(0, -2)}xx`);
+    jar.values.set(SESSION_COOKIE, `${(await createSessionToken(ALICE))!.slice(0, -2)}xx`);
     expect((await DELETE(request())).status).toBe(401);
     // A session issued for another configured origin is not a session here.
-    jar.values.set(SESSION_COOKIE, createSessionToken(ALICE)!);
+    jar.values.set(SESSION_COOKIE, (await createSessionToken(ALICE))!);
     vi.stubEnv('RWA_APP_ORIGIN', 'https://other.example.com');
     expect((await DELETE(request({ base: 'https://other.example.com', origin: 'https://other.example.com' }))).status).toBe(401);
     expect(storageCalls).toHaveLength(0);
@@ -88,7 +99,7 @@ describe('DELETE /api/rwa/account', () => {
   });
 
   it('refuses a missing or different origin before reading the session', async () => {
-    signIn(ALICE);
+    await signIn(ALICE);
     for (const origin of [null, 'https://evil.example', 'https://rwa.example.com:444', 'http://rwa.example.com']) {
       const response = await DELETE(request({ origin }));
       expect(response.status).toBe(403);
@@ -100,7 +111,7 @@ describe('DELETE /api/rwa/account', () => {
   });
 
   it('is rate limited, and fails closed when the shared limiter is unavailable', async () => {
-    signIn(ALICE);
+    await signIn(ALICE);
     limiter.rateLimit.mockResolvedValueOnce({ ok: false, retryAfterSeconds: 12, source: 'shared' });
     const limited = await DELETE(request());
     expect(limited.status).toBe(429);
@@ -112,7 +123,7 @@ describe('DELETE /api/rwa/account', () => {
   });
 
   it('does not exist while saved reports are switched off', async () => {
-    signIn(ALICE);
+    await signIn(ALICE);
     vi.stubEnv('RWA_REPORTS_ENABLED', 'false');
     const response = await DELETE(request());
     expect(response.status).toBe(503);
@@ -121,8 +132,17 @@ describe('DELETE /api/rwa/account', () => {
     expect(storageCalls).toHaveLength(0);
   });
 
+  it('ends every copy of the session: the cookie it just deleted no longer works, and a copy kept elsewhere does not either', async () => {
+    await signIn(ALICE);
+    const copy = jar.values.get(SESSION_COOKIE)!;
+    expect((await DELETE(request())).status).toBe(200);
+    jar.values.set(SESSION_COOKIE, copy);
+    expect((await DELETE(request())).status).toBe(401);
+    expect(storageCalls).toHaveLength(1);
+  });
+
   it('keeps the session when storage fails, so the user can try again', async () => {
-    signIn(ALICE);
+    await signIn(ALICE);
     fakeStorage(500);
     const response = await DELETE(request());
     expect(response.status).toBe(503);

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { deleteWalletData, repositoryState } from '@/lib/server/rwa/repository';
-import { CHALLENGE_COOKIE, SESSION_COOKIE, hasExactOrigin, readSessionToken } from '@/lib/server/rwa/session';
+import { CHALLENGE_COOKIE, SESSION_COOKIE, hasExactOrigin, readSessionToken, sessionRefusal } from '@/lib/server/rwa/session';
 import { rateLimit } from '@/lib/server/rwa/rate-limit';
 
 export const runtime = 'nodejs';
@@ -18,11 +18,13 @@ export async function DELETE(request: Request) {
   const limited = await rateLimit(request, 'reports');
   if (!limited.ok) return NextResponse.json({ state: 'unavailable', message: 'Report storage is busy or unavailable. Try again later.' }, { status: limited.source === 'unavailable' ? 503 : 429, headers: { 'retry-after': String(limited.retryAfterSeconds) } });
   const store = await cookies();
-  const owner = readSessionToken(store.get(SESSION_COOKIE)?.value)?.address;
-  if (!owner) return NextResponse.json({ state: 'unauthenticated', message: 'Sign in with your wallet to delete its data.' }, { status: 401, headers: NO_STORE });
+  const session = await readSessionToken(store.get(SESSION_COOKIE)?.value);
+  const refusal = sessionRefusal(session);
+  if (refusal || session.state !== 'session') return NextResponse.json(refusal?.body ?? { state: 'unauthenticated' }, { status: refusal?.status ?? 401, headers: NO_STORE });
+  const owner = session.address;
   try {
     const deleted = await deleteWalletData(owner);
-    // The session is stateless, so ending it means clearing its cookie.
+    // The deletion moved the wallet's session epoch on, so every copy of the cookie is dead; this one is cleared for tidiness.
     store.delete(SESSION_COOKIE); store.delete(CHALLENGE_COOKIE);
     return NextResponse.json({ state: 'deleted', ...deleted }, { headers: NO_STORE });
   } catch {

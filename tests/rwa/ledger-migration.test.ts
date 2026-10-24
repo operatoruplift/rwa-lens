@@ -1,7 +1,11 @@
 import { randomUUID } from 'node:crypto';
 import { PGlite } from '@electric-sql/pglite';
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { apply, emptySupabase, ledger } from './ledger';
+
+// A hundred inserts or four 4 MiB rows take seconds alone and far longer while every
+// other test file runs on a loaded machine. The budget grows instead of the coverage.
+vi.setConfig({ testTimeout: 60_000 });
 
 /** The whole migration ledger on an in-memory Postgres shaped like the production project. Nothing here reaches a hosted database. */
 let db: PGlite;
@@ -119,5 +123,60 @@ describe('saved report quota', () => {
     const { rows } = await db.query<{ tgname: string; tgenabled: string; prosecdef: boolean; proconfig: string[] }>("select t.tgname, t.tgenabled, p.prosecdef, p.proconfig from pg_trigger t join pg_proc p on p.oid = t.tgfoid where t.tgrelid = 'public.rwa_wallet_reports'::regclass and not t.tgisinternal");
     expect(rows).toEqual([{ tgname: 'rwa_wallet_reports_quota', tgenabled: 'O', prosecdef: false, proconfig: ['search_path=""'] }]);
     await expect(db.query('select rwa_private.enforce_report_quota()')).rejects.toThrow(/trigger/);
+  });
+});
+
+describe('session epochs', () => {
+  const CAROL = 'So11111111111111111111111111111111111111112';
+  const DAVE = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
+  const epoch = (owner: string | null, action = 'read') => asServiceRole(async () => Number((await db.query<{ e: number }>('select public.rwa_session_epoch($1, $2) as e', [owner, action])).rows[0].e));
+  const rows = async () => (await db.query<{ owner_id: string }>('select owner_id from rwa_private.session_epochs order by owner_id')).rows.map(row => row.owner_id);
+  beforeEach(async () => { await db.exec('truncate rwa_private.session_epochs'); });
+
+  it('starts at 0, is set by a sign-in, kept by another sign-in and moved on by a sign-out', async () => {
+    expect(await epoch(CAROL)).toBe(0);
+    expect(await epoch(CAROL, 'touch')).toBe(1);
+    expect(await epoch(CAROL, 'touch')).toBe(1);
+    expect(await epoch(CAROL, 'bump')).toBe(2);
+    expect(await epoch(CAROL)).toBe(2);
+    expect(await epoch(DAVE)).toBe(0);
+  });
+
+  it('is moved on by Delete my data in the same call', async () => {
+    await epoch(CAROL, 'touch');
+    await asServiceRole(() => db.query('select public.rwa_delete_wallet_data($1)', [CAROL]));
+    expect(await epoch(CAROL)).toBe(2);
+  });
+
+  it('forgets a wallet about a day after its last sign-in or sign-out, once no session can still carry its epoch', async () => {
+    await epoch(CAROL, 'touch');
+    await epoch(DAVE, 'bump');
+    await db.query("update rwa_private.session_epochs set touched_at = now() - interval '26 hours' where owner_id = $1", [DAVE]);
+    expect(await epoch(DAVE)).toBe(1);
+    await epoch(CAROL, 'touch');
+    expect(await rows()).toEqual([CAROL]);
+    expect(await epoch(DAVE)).toBe(0);
+  });
+
+  it.each([null, 'short', "' or true --"])('rejects an owner that is not a Solana address: %s', async owner => {
+    await expect(epoch(owner, 'touch')).rejects.toThrow(/invalid owner/);
+    expect(await rows()).toEqual([]);
+  });
+
+  it('rejects an unknown action', async () => {
+    await expect(epoch(CAROL, 'reset')).rejects.toThrow(/invalid action/);
+  });
+
+  it('is reachable only by the service role, and the table by no API role at all', async () => {
+    for (const role of ['anon', 'authenticated'] as const) {
+      await db.exec(`set role ${role}`);
+      try { await expect(db.query('select public.rwa_session_epoch($1, $2)', [CAROL, 'read'])).rejects.toThrow(/permission denied/); } finally { await db.exec('reset role'); }
+    }
+    for (const role of ['anon', 'authenticated', 'service_role'] as const) {
+      await db.exec(`set role ${role}`);
+      try { await expect(db.query('select * from rwa_private.session_epochs')).rejects.toThrow(/permission denied/); } finally { await db.exec('reset role'); }
+    }
+    const { rows: definers } = await db.query<{ proname: string; prosecdef: boolean; proconfig: string[] }>("select proname, prosecdef, proconfig from pg_proc where proname in ('rwa_session_epoch', 'rwa_delete_wallet_data') order by proname");
+    expect(definers.map(row => [row.proname, row.prosecdef, row.proconfig])).toEqual([['rwa_delete_wallet_data', true, ['search_path=""']], ['rwa_session_epoch', true, ['search_path=""']]]);
   });
 });

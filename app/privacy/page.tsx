@@ -46,7 +46,7 @@ const sections = (savedReportsOn: boolean): LegalSection[] => [
       : <p><strong>{OFF}</strong> Nothing is stored per wallet: no sign-in challenge, no session cookie and no report. When we enable them, this is what they store:</p>}
     <ul>
       <li><strong>Sign-in.</strong> You connect a wallet and sign a message. It is never a transaction and moves no funds. For each attempt we store a single-use challenge for up to 5 minutes: your wallet address, a random value, a hash of a random code kept in a cookie in your browser, this site’s address, the network and the times. It is deleted when it is used.</li>
-      <li><strong>Session.</strong> After you sign, your browser keeps a session cookie for up to 7 days. It holds your wallet address and its expiry, signed with a server secret (<code>RWA_SESSION_SECRET</code>). We keep no copy on the server.</li>
+      <li><strong>Session.</strong> After you sign, your browser keeps a session cookie for up to 24 hours. It holds your wallet address, its expiry and a sign-in count, signed with a server secret (<code>RWA_SESSION_SECRET</code>). We keep no copy of the cookie. Our database keeps, for each wallet that has signed in, only that count and the time of its last sign-in or sign-out, and checks it on every request. Signing out or Delete my data moves the count on, which ends every copy of the session at once; the row is deleted about a day after the wallet last signed in or out.</li>
       <li><strong>Saved report.</strong> When you save, our server inspects the token again and stores the result with your wallet address as its owner. A report holds the mint, any wallet address you inspected, the network, the full observation (public on-chain data, the RPC provider, slots and times), the decoder version, a content hash and when you saved it. One wallet can keep up to 100 reports, 16 MB in total.</li>
     </ul>
     <p>Only a session for the same wallet can list, export or delete its reports.</p>
@@ -84,7 +84,7 @@ const sections = (savedReportsOn: boolean): LegalSection[] => [
   { id: 'device', title: 'On your device', body: <>
     <ul>
       <li><strong>Watchlist.</strong> Kept in this browser’s local storage: up to 20 mint addresses, each with an optional name and symbol and the time you saved it. The list itself is never sent to our server. Remove items on the Watchlist page, or clear this site’s data in your browser.</li>
-      <li><strong>Cookies.</strong> {savedReportsOn ? 'RWA Lens sets cookies only when you sign in' : `RWA Lens sets no cookies on this deployment. ${OFF} Cookies exist only when they are on and you sign in`}: a sign-in cookie with a random code for up to 5 minutes, and a session cookie for up to 7 days. Page scripts cannot read either one. There are no other cookies.</li>
+      <li><strong>Cookies.</strong> {savedReportsOn ? 'RWA Lens sets cookies only when you sign in' : `RWA Lens sets no cookies on this deployment. ${OFF} Cookies exist only when they are on and you sign in`}: a sign-in cookie with a random code for up to 5 minutes, and a session cookie for up to 24 hours. Page scripts cannot read either one. There are no other cookies.</li>
       <li><strong>Mobile Wallet Adapter.</strong> On Android, when you connect a wallet through it, it keeps the wallet’s authorization and your account address in this browser’s storage so the wallet stays connected. Disconnect in your wallet, or clear the site’s or app’s data, to remove it.</li>
       <li><strong>Offline files.</strong> A service worker keeps public files, such as icons and app code, and an offline notice. It keeps nothing about you.</li>
       <li><strong>Exports.</strong> JSON and CSV files you export are saved on your device. We do not keep a copy.</li>
@@ -96,7 +96,7 @@ const sections = (savedReportsOn: boolean): LegalSection[] => [
       <li><strong>Rate-limit counters:</strong> until the limiter next runs after their one-minute window ends, which deletes them (see Rate limiting).</li>
       {savedReportsOn ? <>
         <li><strong>Sign-in challenges:</strong> until used. One that expires unused is deleted at the next sign-in request.</li>
-        <li><strong>Sessions:</strong> up to 7 days, in your browser only.</li>
+        <li><strong>Sessions:</strong> up to 24 hours, in your browser. The per-wallet sign-in count that can end them sooner: about a day after the wallet last signed in or out.</li>
         <li><strong>Saved reports:</strong> until you delete them. They do not expire. If we switch saved reports off, existing reports stay stored until they are deleted.</li>
       </> : <li><strong>Sign-in challenges, sessions and saved reports:</strong> none. {OFF} Nothing is stored per wallet.</li>}
       <li><strong>Hosting logs:</strong> as set by Vercel.</li>
@@ -105,14 +105,14 @@ const sections = (savedReportsOn: boolean): LegalSection[] => [
   </> },
   { id: 'delete', title: 'Delete your data', body: <>
     {savedReportsOn
-      ? <p><strong>Saved reports.</strong> Inspect any token, open its Evidence section, choose <strong>My reports</strong> and sign in with the wallet that saved them. Then choose <strong>Delete my data</strong> and confirm. This deletes every report that wallet saved and any sign-in challenge still pending for it, then signs you out. It cannot be undone. Files you exported stay on your device.</p>
+      ? <p><strong>Saved reports.</strong> Inspect any token, open its Evidence section, choose <strong>My reports</strong> and sign in with the wallet that saved them. Then choose <strong>Delete my data</strong> and confirm. This deletes every report that wallet saved and any sign-in challenge still pending for it, then signs you out everywhere: every copy of the session ends. It cannot be undone. Files you exported stay on your device. The sign-in count that ends your sessions is kept for about a day afterwards, so that no copy of the cookie can be reused; it holds the wallet address, a number and a time, nothing else.</p>
       : <p><strong>Saved reports.</strong> {OFF} Nothing is stored per wallet, so there is nothing to delete.</p>}
     <p><strong>Watchlist and device storage.</strong> Remove watchlist items on the Watchlist page, or clear this site’s data in your browser.</p>
     <p>Rate-limit counters and hosting logs are not linked to a wallet, so we cannot find them by wallet address.</p>
     <p>Depending on where you live, you may have the right to access, correct or delete personal data, or to object to how it is used. {savedReportsOn ? 'If you cannot use Delete my data, contact us. We may ask you to show that you control the wallet.' : 'Contact us with any request.'}</p>
   </> },
   { id: 'security', title: 'Security', body: <>
-    <p>Connections use HTTPS. Our database key stays on our server, and the database refuses direct public access to reports, challenges and counters. Every report query is limited to the signed-in wallet. Session cookies are signed, sent only to this site and unreadable by page scripts. Sign-in checks this site’s exact address and uses each challenge once. RWA Lens holds no keys that can move your funds.</p>
+    <p>Connections use HTTPS. Our database key stays on our server, and the database refuses direct public access to reports, challenges and counters. Every report query is limited to the signed-in wallet. Session cookies are signed, sent only to this site, unreadable by page scripts, checked against the wallet’s sign-in count on every request and ended everywhere when you sign out. Sign-in checks this site’s exact address and uses each challenge once. RWA Lens holds no keys that can move your funds.</p>
     <p>No system is perfectly secure. If you find a problem, tell us through the contact below.</p>
   </> },
   { id: 'children', title: 'Children', body: <>

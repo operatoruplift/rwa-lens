@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { reportCreateSchema } from '@/lib/rwa/schema';
 import { ReportQuotaError, createReport, listReports, repositoryState } from '@/lib/server/rwa/repository';
-import { SESSION_COOKIE, readSessionToken, hasExactOrigin } from '@/lib/server/rwa/session';
+import { SESSION_COOKIE, readSessionToken, hasExactOrigin, sessionRefusal } from '@/lib/server/rwa/session';
 import { rateLimit } from '@/lib/server/rwa/rate-limit';
 import { readBoundedJson } from '@/lib/server/rwa/http';
 import { inspectRequest } from '@/lib/server/rwa/inspect';
@@ -10,8 +10,12 @@ import { inspectRequest } from '@/lib/server/rwa/inspect';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 const DISABLED = { state: 'feature-disabled', message: 'Saved reports are not enabled. JSON and CSV export work without an account.' };
-async function currentOwner(): Promise<string | null> {
-  return readSessionToken((await cookies()).get(SESSION_COOKIE)?.value)?.address ?? null;
+const NO_STORE = { 'cache-control': 'no-store' };
+/** The signed-in wallet, or the response that says why there is none. */
+async function currentOwner(): Promise<{ owner: string } | { refused: NextResponse }> {
+  const session = await readSessionToken((await cookies()).get(SESSION_COOKIE)?.value);
+  const refusal = sessionRefusal(session);
+  return refusal ? { refused: NextResponse.json(refusal.body, { status: refusal.status, headers: NO_STORE }) } : { owner: (session as { address: string }).address };
 }
 async function gate(request: Request) {
   if (repositoryState() !== 'ready') return NextResponse.json(DISABLED, { status: 503 });
@@ -21,17 +25,19 @@ async function gate(request: Request) {
 }
 export async function GET(request: Request) {
   const blocked = await gate(request); if (blocked) return blocked;
-  const owner = await currentOwner();
-  if (!owner) return NextResponse.json({ state: 'unauthenticated' }, { status: 401 });
-  try { return NextResponse.json({ state: 'success', reports: await listReports(owner) }, { headers: { 'cache-control': 'no-store' } }); }
+  const current = await currentOwner();
+  if ('refused' in current) return current.refused;
+  const { owner } = current;
+  try { return NextResponse.json({ state: 'success', reports: await listReports(owner) }, { headers: NO_STORE }); }
   catch { return NextResponse.json({ state: 'unavailable', message: 'Report storage is unavailable. Try again later.' }, { status: 503 }); }
 }
 export async function POST(request: Request) {
   if (repositoryState() !== 'ready') return NextResponse.json(DISABLED, { status: 503 });
   if (!hasExactOrigin(request)) return NextResponse.json({ state: 'invalid', message: 'Saving requires this site’s exact origin.' }, { status: 403 });
   const blocked = await gate(request); if (blocked) return blocked;
-  const owner = await currentOwner();
-  if (!owner) return NextResponse.json({ state: 'unauthenticated' }, { status: 401 });
+  const current = await currentOwner();
+  if ('refused' in current) return current.refused;
+  const { owner } = current;
   let body: unknown;
   try { body = await readBoundedJson(request); }
   catch { return NextResponse.json({ state: 'invalid', message: 'Send a small JSON inspection request.' }, { status: 400 }); }

@@ -6,7 +6,11 @@ const mocks = vi.hoisted(() => ({ createReport: vi.fn(), inspect: vi.fn(), limit
 vi.mock('next/headers', () => ({ cookies: async () => ({ get: (name: string) => ({ name, value: 'session-cookie' }) }) }));
 vi.mock('@/lib/server/rwa/rate-limit', () => ({ rateLimit: mocks.limit }));
 vi.mock('@/lib/server/rwa/inspect', () => ({ inspectRequest: mocks.inspect }));
-vi.mock('@/lib/server/rwa/session', () => ({ SESSION_COOKIE: 'rwa_lens_session', readSessionToken: mocks.session, hasExactOrigin: () => true }));
+vi.mock('@/lib/server/rwa/session', async importOriginal => ({
+  ...(await importOriginal<typeof import('@/lib/server/rwa/session')>()),
+  readSessionToken: mocks.session,
+  hasExactOrigin: () => true,
+}));
 vi.mock('@/lib/server/rwa/repository', async importOriginal => ({
   ...(await importOriginal<typeof import('@/lib/server/rwa/repository')>()),
   repositoryState: () => 'ready',
@@ -22,7 +26,7 @@ const save = () => POST(new Request(`${ORIGIN}/api/rwa/reports`, { method: 'POST
 
 beforeEach(() => {
   mocks.limit.mockResolvedValue({ ok: true, source: 'shared' });
-  mocks.session.mockReturnValue({ address: WALLET });
+  mocks.session.mockResolvedValue({ state: 'session', address: WALLET });
   mocks.inspect.mockResolvedValue(getFixture('treasury-scaled')!.result);
 });
 afterEach(() => { vi.resetAllMocks(); });
@@ -48,6 +52,16 @@ describe('POST /api/rwa/reports', () => {
     const response = await save();
     expect(response.status).toBe(503);
     expect(await response.text()).not.toContain('internal detail');
+  });
+
+  it('answers 401 without a live session and 503 while the session store cannot say', async () => {
+    mocks.session.mockResolvedValue({ state: 'none' });
+    expect((await save()).status).toBe(401);
+    mocks.session.mockResolvedValue({ state: 'unavailable' });
+    const response = await save();
+    expect(response.status).toBe(503);
+    expect(await response.json()).toMatchObject({ state: 'unavailable' });
+    expect(mocks.createReport).not.toHaveBeenCalled();
   });
 
   it('stores the reproduced observation for the session wallet when there is room', async () => {

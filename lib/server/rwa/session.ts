@@ -8,7 +8,8 @@ import { requestOrigin } from '@/lib/server/rwa/http';
 export const SESSION_COOKIE = 'rwa_lens_session';
 export const CHALLENGE_COOKIE = 'rwa_lens_challenge';
 const NONCE_TTL_MS = 5 * 60 * 1000;
-const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+/** A session lives one day; the per-wallet epoch below can end it sooner, everywhere at once. */
+const SESSION_TTL_MS = 24 * 60 * 60 * 1000;
 const PURPOSE = 'save-rwa-observation';
 
 function secret(): string | null {
@@ -156,14 +157,28 @@ export function verifyChallenge(challenge: Challenge, signature: string): boolea
   } catch { return false; }
 }
 
-export function createSessionToken(address: string): string | null {
+const epochSchema = z.number().int().nonnegative();
+type EpochAction = 'read' | 'touch' | 'bump';
+/**
+ * The wallet's session epoch, kept in rwa_private.session_epochs (migration
+ * 20261019110000). A session carries the epoch it was issued under; sign-out and
+ * Delete my data move the epoch on, so every copy of the cookie stops working.
+ */
+async function sessionEpoch(address: string, action: EpochAction): Promise<number> {
+  return epochSchema.parse(await authRpc('rwa_session_epoch', { p_owner_id: address, p_action: action }));
+}
+
+export async function createSessionToken(address: string): Promise<string | null> {
   const key = secret();
   if (!key || !sessionsConfigured() || !addressSchema.safeParse(address).success) return null;
-  const payload = Buffer.from(JSON.stringify({ address, expiresAt: Date.now() + SESSION_TTL_MS, origin: configuredOrigin(), purpose: PURPOSE })).toString('base64url');
+  const epoch = await sessionEpoch(address, 'touch');
+  const payload = Buffer.from(JSON.stringify({ address, epoch, expiresAt: Date.now() + SESSION_TTL_MS, origin: configuredOrigin(), purpose: PURPOSE })).toString('base64url');
   return `${payload}.${createHmac('sha256', key).update(payload).digest('base64url')}`;
 }
 
-export function readSessionToken(token: string | undefined): { address: string } | null {
+export type SessionClaims = { address: string; epoch: number };
+/** What a cookie claims, checked offline: signature, shape, origin and expiry. Not yet a live session. */
+export function parseSessionToken(token: string | undefined): SessionClaims | null {
   const key = secret();
   if (!key || !sessionsConfigured() || !token || token.length > 2000) return null;
   const parts = token.split('.');
@@ -172,10 +187,34 @@ export function readSessionToken(token: string | undefined): { address: string }
   const expected = createHmac('sha256', key).update(payload).digest('base64url');
   if (signature.length !== expected.length || !timingSafeEqual(Buffer.from(signature), Buffer.from(expected))) return null;
   try {
-    const data = z.object({ address: addressSchema, expiresAt: z.number().int().finite(), origin: z.literal(configuredOrigin()!), purpose: z.literal(PURPOSE) }).strict().parse(JSON.parse(Buffer.from(payload, 'base64url').toString('utf8')));
+    const data = z.object({ address: addressSchema, epoch: z.number().int().positive(), expiresAt: z.number().int().finite(), origin: z.literal(configuredOrigin()!), purpose: z.literal(PURPOSE) }).strict().parse(JSON.parse(Buffer.from(payload, 'base64url').toString('utf8')));
     if (data.expiresAt <= Date.now() || data.expiresAt > Date.now() + SESSION_TTL_MS) return null;
-    return { address: data.address };
+    return { address: data.address, epoch: data.epoch };
   } catch { return null; }
+}
+
+export type Session = { state: 'session'; address: string } | { state: 'none' } | { state: 'unavailable' };
+/** A live session: valid claims whose epoch is still the wallet's current one, checked on every request. */
+export async function readSessionToken(token: string | undefined): Promise<Session> {
+  const claims = parseSessionToken(token);
+  if (!claims) return { state: 'none' };
+  let current: number;
+  try { current = await sessionEpoch(claims.address, 'read'); }
+  catch { return { state: 'unavailable' }; }
+  return current === claims.epoch ? { state: 'session', address: claims.address } : { state: 'none' };
+}
+
+/** The answer a route gives when there is no live session: 401 without one, 503 while storage cannot say. */
+export function sessionRefusal(session: Session): { status: 401 | 503; body: { state: 'unauthenticated' | 'unavailable'; message: string } } | null {
+  if (session.state === 'session') return null;
+  return session.state === 'none'
+    ? { status: 401, body: { state: 'unauthenticated', message: 'Sign in with your wallet first.' } }
+    : { status: 503, body: { state: 'unavailable', message: 'Sign-in storage is unavailable. Try again later.' } };
+}
+
+/** Ends every session of the wallet, in every browser, by moving its epoch on. */
+export async function endSessions(address: string): Promise<void> {
+  await sessionEpoch(addressSchema.parse(address), 'bump');
 }
 
 export const SESSION_COOKIE_OPTIONS = { httpOnly: true, sameSite: 'strict' as const, secure: process.env.NODE_ENV === 'production', path: '/', maxAge: SESSION_TTL_MS / 1000 };

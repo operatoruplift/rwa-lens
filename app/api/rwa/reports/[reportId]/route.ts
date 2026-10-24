@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { reportIdSchema } from '@/lib/rwa/schema';
 import { getReport, repositoryState } from '@/lib/server/rwa/repository';
-import { SESSION_COOKIE, readSessionToken } from '@/lib/server/rwa/session';
+import { SESSION_COOKIE, readSessionToken, sessionRefusal } from '@/lib/server/rwa/session';
 import { rateLimit } from '@/lib/server/rwa/rate-limit';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -10,8 +10,10 @@ export async function GET(request: Request, context: { params: Promise<{ reportI
   if (repositoryState() !== 'ready') return NextResponse.json({ state: 'feature-disabled' }, { status: 503 });
   const limited = await rateLimit(request, 'reports');
   if (!limited.ok) return NextResponse.json({ state: 'unavailable' }, { status: limited.source === 'unavailable' ? 503 : 429, headers: { 'retry-after': String(limited.retryAfterSeconds) } });
-  const owner = readSessionToken((await cookies()).get(SESSION_COOKIE)?.value)?.address;
-  if (!owner) return NextResponse.json({ state: 'unauthenticated' }, { status: 401 });
+  const session = await readSessionToken((await cookies()).get(SESSION_COOKIE)?.value);
+  const refusal = sessionRefusal(session);
+  if (refusal || session.state !== 'session') return NextResponse.json(refusal?.body ?? { state: 'unauthenticated' }, { status: refusal?.status ?? 401, headers: { 'cache-control': 'no-store' } });
+  const owner = session.address;
   const parsed = reportIdSchema.safeParse((await context.params).reportId);
   if (!parsed.success) return NextResponse.json({ state: 'not-found' }, { status: 404 });
   try {
