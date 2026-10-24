@@ -33,7 +33,7 @@ test.describe('privacy policy and terms', () => {
     await expect(page).toHaveURL(/\/privacy$/);
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Privacy policy');
     const main = page.getByRole('main');
-    await expect(main).toContainText('Last updated: 8 October 2026');
+    await expect(main).toContainText('Last updated: 24 October 2026');
     await expect(main).toContainText('RWA Lens is operated by Operator Uplift');
     for (const heading of ['Addresses you inspect', 'Wallet sign-in and saved reports', 'Rate limiting', 'Token metadata', 'Service providers', 'On your device', 'How long we keep data', 'Delete your data', 'Security', 'Children', 'Changes to this policy', 'Contact'])
       await expect(main.getByRole('heading', { level: 2, name: heading })).toBeVisible();
@@ -50,7 +50,7 @@ test.describe('privacy policy and terms', () => {
     await page.goto('/terms');
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Terms of use');
     const main = page.getByRole('main');
-    await expect(main).toContainText('Last updated: 8 October 2026');
+    await expect(main).toContainText('Last updated: 24 October 2026');
     await expect(main).toContainText('Observations, not attestations');
     await expect(main).toContainText('not investment, legal or tax advice');
     await expect(main).toContainText('(the Solana Mobile Parties) are not a party to these terms and have no responsibility or liability to you in connection with RWA Lens');

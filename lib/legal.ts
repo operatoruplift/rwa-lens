@@ -1,8 +1,8 @@
 /** Shared facts for the privacy policy and terms. Change LEGAL_UPDATED and LEGAL_UPDATED_ISO with every revision. */
 export const OPERATOR = 'Operator Uplift';
-export const LEGAL_UPDATED = '8 October 2026';
+export const LEGAL_UPDATED = '24 October 2026';
 /** The same date for the machine-readable `<time dateTime>`. */
-export const LEGAL_UPDATED_ISO = '2026-10-08';
+export const LEGAL_UPDATED_ISO = '2026-10-24';
 export const ISSUES_URL = 'https://github.com/operatoruplift/rwa-lens/issues';
 export const LEGAL_LINKS = [{ href: '/privacy', label: 'Privacy' }, { href: '/terms', label: 'Terms' }] as const;
 

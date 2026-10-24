@@ -21,7 +21,7 @@ describe('support contact', () => {
 describe('legal pages', () => {
   it('names the operator and the shared revision date', () => {
     expect(OPERATOR).toBe('Operator Uplift');
-    expect(LEGAL_UPDATED).toBe('8 October 2026');
+    expect(LEGAL_UPDATED).toBe('24 October 2026');
     // The visible date and the <time dateTime> attribute are one date.
     expect(new Date(`${LEGAL_UPDATED_ISO}T00:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })).toBe(LEGAL_UPDATED);
   });
