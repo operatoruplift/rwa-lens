@@ -2,36 +2,42 @@
 
 import { useRef, useState } from 'react';
 import bs58 from 'bs58';
-import { ArrowDownToLine, LockKeyhole, X } from 'lucide-react';
+import { ArrowDownToLine, LockKeyhole, Trash2, X } from 'lucide-react';
 import { z } from 'zod';
 import { inspectResultSchema, addressSchema, reportIdSchema } from '@/lib/rwa/schema';
 import type { InspectRequest } from '@/lib/rwa/types';
 import { discoverWallets, type Wallet, type WalletAccount } from '@/lib/client/wallet-standard';
 import { Callout } from './primitives';
 
-type Phase = 'idle' | 'connecting' | 'signing' | 'saving' | 'listing';
+type Phase = 'idle' | 'connecting' | 'signing' | 'saving' | 'listing' | 'deleting';
+/** What a completed sign-in continues to: saving the current observation, or opening the saved list. */
+type AfterSignIn = 'save' | 'list';
 // Only message signing is requested.
 const wallets = () => discoverWallets(['solana:signMessage', 'standard:connect']);
 const reportSchema = z.object({ id: reportIdSchema, mint: z.string(), createdAt: z.string(), mode: z.string(), contentHash: z.string() }).passthrough();
+const deletedSchema = z.object({ state: z.literal('deleted'), reports: z.number().int().nonnegative() }).passthrough();
 type SavedReport = z.infer<typeof reportSchema>;
 async function responseBody(response: Response) { return await response.json().catch(() => ({})) as Record<string, unknown>; }
 function messageFrom(body: Record<string, unknown>, fallback: string) { return typeof body.message === 'string' ? body.message : fallback; }
 
 export function ReportActions({ request }: { request: InspectRequest }) {
   const dialog = useRef<HTMLDialogElement>(null);
+  const confirmDelete = useRef<HTMLDialogElement>(null);
   const [phase, setPhase] = useState<Phase>('idle');
+  const [afterSignIn, setAfterSignIn] = useState<AfterSignIn>('save');
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [choices, setChoices] = useState<Wallet[]>([]);
   const [signedIn, setSignedIn] = useState(false);
   const [reports, setReports] = useState<SavedReport[] | null>(null);
   const busy = phase !== 'idle';
-  const openSignIn = () => { setChoices(wallets()); dialog.current?.showModal(); };
+  const openSignIn = (next: AfterSignIn) => { setAfterSignIn(next); setChoices(wallets()); dialog.current?.showModal(); };
 
   async function save() {
     setMessage(null); setPhase('saving');
     try {
       const response = await fetch('/api/rwa/reports', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ request }) });
-      if (response.status === 401) { openSignIn(); return; }
+      if (response.status === 401) { openSignIn('save'); return; }
       const body = await responseBody(response);
       if (!response.ok) throw new Error(messageFrom(body, 'The report could not be saved. Export locally or try again.'));
       setSignedIn(true); setMessage('Saved to your account. The server reproduced this observation; a live read may have a newer timestamp.');
@@ -58,8 +64,8 @@ export function ReportActions({ request }: { request: InspectRequest }) {
       const verifiedBody = await responseBody(verified);
       if (!verified.ok) throw new Error(messageFrom(verifiedBody, 'The message could not be verified. Try again.'));
       setSignedIn(true); dialog.current?.close();
-      await save();
-    } catch { setMessage('Sign-in was cancelled or could not be verified. No report was saved. Try again, or use local export.'); }
+      await (afterSignIn === 'list' ? list() : save());
+    } catch { setMessage(afterSignIn === 'list' ? 'Sign-in was cancelled or could not be verified. Try again to open your saved reports.' : 'Sign-in was cancelled or could not be verified. No report was saved. Try again, or use local export.'); }
     finally { setPhase('idle'); }
   }
 
@@ -67,7 +73,7 @@ export function ReportActions({ request }: { request: InspectRequest }) {
     setMessage(null); setPhase('listing');
     try {
       const response = await fetch('/api/rwa/reports');
-      if (response.status === 401) { setMessage('Save a report to sign in and access your saved observations.'); return; }
+      if (response.status === 401) { setSignedIn(false); openSignIn('list'); return; }
       const body = await responseBody(response);
       if (!response.ok) throw new Error(messageFrom(body, 'Reports could not be loaded. Try again.'));
       setReports(z.array(reportSchema).parse(body.reports)); setSignedIn(true);
@@ -86,10 +92,31 @@ export function ReportActions({ request }: { request: InspectRequest }) {
     } catch (error) { setMessage(error instanceof Error ? error.message : 'Export unavailable. Try again.'); }
   }
 
+  function openDeleteConfirmation() { setDeleteError(null); confirmDelete.current?.showModal(); }
+
+  /** Delete my data: the server takes the wallet from the session cookie, so the request names no owner. */
+  async function deleteData() {
+    setDeleteError(null); setPhase('deleting');
+    try {
+      const response = await fetch('/api/rwa/account', { method: 'DELETE' });
+      const body = await responseBody(response);
+      if (response.status === 401) {
+        setSignedIn(false); setReports(null); confirmDelete.current?.close();
+        setMessage('Your session has ended. Open My reports and sign in again to delete your data.');
+        return;
+      }
+      const deleted = deletedSchema.safeParse(body);
+      if (!response.ok || !deleted.success) { setDeleteError(messageFrom(body, 'Your data could not be deleted. Try again later.')); return; }
+      setSignedIn(false); setReports(null); confirmDelete.current?.close();
+      setMessage(`Deleted ${deleted.data.reports} saved report${deleted.data.reports === 1 ? '' : 's'} and signed you out. Public inspection and export remain available.`);
+    } catch { setDeleteError('Your data could not be deleted. Check your connection and try again.'); }
+    finally { setPhase('idle'); }
+  }
+
   async function signOut() {
     try { const response = await fetch('/api/rwa/auth', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'sign-out' }) }); if (!response.ok) throw new Error(); setSignedIn(false); setReports(null); setMessage('Signed out. Public inspection and export remain available.'); }
     catch { setMessage('Sign-out could not be completed. Check your connection and try again.'); }
   }
 
-  return <section className="reports-panel" aria-label="Saved reports"><div className="report-toolbar"><button type="button" onClick={() => void save()} disabled={busy} className="primary-button">{phase === 'saving' ? 'Saving…' : 'Save this report'}</button><button type="button" className="text-link" onClick={() => void list()} disabled={busy}>My reports</button>{signedIn ? <button type="button" className="text-link" onClick={() => void signOut()} disabled={busy}>Sign out</button> : null}<p>Optional message sign-in. No transaction is requested.</p></div>{message ? <div role="status" className="mt-3"><Callout tone="slate">{message}</Callout></div> : null}{reports ? <div className="saved-reports">{reports.length ? reports.map(report => <div key={report.id}><p><strong>{report.mode} observation</strong><span>{report.createdAt}</span><span className="tabular">{report.mint}</span></p><button type="button" aria-label={`Export saved report ${report.id}`} onClick={() => void exportSaved(report.id)}><ArrowDownToLine size={15} />JSON</button></div>) : <p>No saved reports yet. Save the current observation to start your list.</p>}</div> : null}<dialog ref={dialog} className="wallet-dialog" aria-labelledby="wallet-title"><div className="dialog-top"><LockKeyhole size={23} /><button type="button" aria-label="Close wallet sign-in" onClick={() => dialog.current?.close()} disabled={busy}><X size={19} /></button></div><h2 id="wallet-title">Keep an observation in your account.</h2><p>Connect a wallet, then sign a message to prove ownership of your report account. This is never a transaction and moves no assets.</p>{choices.length ? <div className="wallet-choices">{choices.map((wallet, index) => <button type="button" key={`${wallet.name}-${index}`} disabled={busy} onClick={() => void signIn(wallet)}>{busy ? phase === 'signing' ? 'Waiting for message signature…' : 'Connecting…' : `Connect ${wallet.name}`}</button>)}</div> : <Callout tone="slate">No Wallet Standard wallet with message signing is available. Enable one and retry, or close this dialog and export JSON or CSV.</Callout>}{message ? <p className="dialog-message" role="status">{message}</p> : null}<button type="button" className="text-link" disabled={busy} onClick={() => setChoices(wallets())}>Refresh wallet list</button></dialog></section>;
+  return <section className="reports-panel" aria-label="Saved reports"><div className="report-toolbar"><button type="button" onClick={() => void save()} disabled={busy} className="primary-button">{phase === 'saving' ? 'Saving…' : 'Save this report'}</button><button type="button" className="text-link" onClick={() => void list()} disabled={busy}>My reports</button>{signedIn ? <><button type="button" className="text-link" onClick={() => void signOut()} disabled={busy}>Sign out</button><button type="button" className="text-link danger-link" onClick={openDeleteConfirmation} disabled={busy}><Trash2 size={14} aria-hidden="true" />Delete my data</button></> : null}<p>Optional message sign-in. No transaction is requested.</p></div>{message ? <div role="status" className="mt-3"><Callout tone="slate">{message}</Callout></div> : null}{reports ? <div className="saved-reports">{reports.length ? reports.map(report => <div key={report.id}><p><strong>{report.mode} observation</strong><span>{report.createdAt}</span><span className="tabular">{report.mint}</span></p><button type="button" aria-label={`Export saved report ${report.id}`} onClick={() => void exportSaved(report.id)}><ArrowDownToLine size={15} />JSON</button></div>) : <p>No saved reports yet. Save the current observation to start your list.</p>}</div> : null}<dialog ref={dialog} className="wallet-dialog" aria-labelledby="wallet-title"><div className="dialog-top"><LockKeyhole size={23} /><button type="button" aria-label="Close wallet sign-in" onClick={() => dialog.current?.close()} disabled={busy}><X size={19} /></button></div><h2 id="wallet-title">{afterSignIn === 'list' ? 'Open your saved reports.' : 'Keep an observation in your account.'}</h2><p>Connect a wallet, then sign a message to prove ownership of your report account. This is never a transaction and moves no assets.</p>{choices.length ? <div className="wallet-choices">{choices.map((wallet, index) => <button type="button" key={`${wallet.name}-${index}`} disabled={busy} onClick={() => void signIn(wallet)}>{busy ? phase === 'signing' ? 'Waiting for message signature…' : 'Connecting…' : `Connect ${wallet.name}`}</button>)}</div> : <Callout tone="slate">No Wallet Standard wallet with message signing is available. Enable one and retry, or close this dialog and export JSON or CSV.</Callout>}{message ? <p className="dialog-message" role="status">{message}</p> : null}<button type="button" className="text-link" disabled={busy} onClick={() => setChoices(wallets())}>Refresh wallet list</button></dialog><dialog ref={confirmDelete} className="wallet-dialog" aria-labelledby="delete-title" aria-describedby="delete-description"><div className="dialog-top danger"><Trash2 size={23} aria-hidden="true" /><button type="button" aria-label="Close without deleting" onClick={() => confirmDelete.current?.close()} disabled={busy}><X size={19} /></button></div><h2 id="delete-title">Delete your saved data?</h2><p id="delete-description">This permanently deletes every report this wallet saved and any sign-in request still pending for it, then signs you out. Files you exported stay on your device. This cannot be undone.</p>{deleteError ? <p className="dialog-message" role="alert">{deleteError}</p> : null}<div className="dialog-actions"><button type="button" className="danger-button" onClick={() => void deleteData()} disabled={busy}>{phase === 'deleting' ? 'Deleting…' : 'Delete my data'}</button><button type="button" className="text-link" onClick={() => confirmDelete.current?.close()} disabled={busy}>Keep my data</button></div></dialog></section>;
 }

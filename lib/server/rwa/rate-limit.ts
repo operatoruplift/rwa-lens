@@ -1,11 +1,18 @@
 import 'server-only';
 import { createHash } from 'node:crypto';
+import { isIP } from 'node:net';
 import { z } from 'zod';
 import { databaseConfig } from './session';
 
 type Bucket = { count: number; resetAt: number };
 const WINDOW_SECONDS = 60;
 const LIMITS: Record<string, number> = { inspect: 30, fixture: 120, metadata: 20, reports: 30, auth: 10, venues: 30, deploy: 10, 'deploy-status': 120, screener: 30 };
+/** Deployment-wide ceilings per upstream and minute, across every instance and every client (see upstreamBudget). */
+export type Upstream = 'rpc' | 'meteora';
+const UPSTREAM_DEFAULTS: Record<Upstream, number> = { rpc: 300, meteora: 120 };
+const UPSTREAM_OVERRIDES: Record<Upstream, string> = { rpc: 'RWA_UPSTREAM_RPC_PER_MINUTE', meteora: 'RWA_UPSTREAM_METEORA_PER_MINUTE' };
+/** The database limiter accepts limits up to 1000 per window. */
+const MAX_LIMIT = 1000;
 const MAX_TRACKED_KEYS = 5000;
 const buckets = new Map<string, Bucket>();
 
@@ -20,12 +27,31 @@ function sharedConfig() {
 }
 export function sharedLimiterConfigured(): boolean { return sharedConfig() !== null; }
 
+/**
+ * The network a request comes from: an IPv4 address whole, an IPv6 address by its
+ * /64 prefix. A provider hands one IPv6 connection a whole /64 (or more), so counting
+ * each address on its own would give one client up to 2^64 fresh buckets.
+ */
+export function clientNetwork(address: string): string {
+  if (isIP(address) !== 6) return address;
+  const mapped = /^::ffff:(\d{1,3}(?:\.\d{1,3}){3})$/i.exec(address);
+  if (mapped) return mapped[1];
+  const [head, tail = ''] = address.split('::');
+  const left = head ? head.split(':') : [];
+  const right = tail ? tail.split(':') : [];
+  const hextets = [...left, ...Array.from({ length: Math.max(0, 8 - left.length - right.length) }, () => '0'), ...right];
+  return `${hextets.slice(0, 4).map(part => part.toLowerCase().padStart(4, '0')).join(':')}::/64`;
+}
+
 function clientKey(request: Request): string {
   // Vercel overwrites this platform-specific header. Outside Vercel an operator
   // proxy must strip/overwrite forwarded headers; otherwise use one common bucket.
   const forwarded = process.env.VERCEL ? request.headers.get('x-vercel-forwarded-for') : null;
   const identity = forwarded?.split(',')[0]?.trim() || 'shared-unknown-client';
-  return createHash('sha256').update(identity).digest('hex').slice(0, 32);
+  // This hash of the network is unkeyed. It is held only in memory and sent to the
+  // database, which stores HMAC-SHA-256 of `scope:hash` under a key the server
+  // cannot read (supabase/migrations/20261008142115_rwa_rate_limit_privacy.sql).
+  return createHash('sha256').update(clientNetwork(identity)).digest('hex').slice(0, 32);
 }
 
 async function consumeShared(key: string, limit: number): Promise<RateLimitResult | null> {
@@ -46,10 +72,15 @@ async function consumeShared(key: string, limit: number): Promise<RateLimitResul
   } catch { return null; }
 }
 
+/** Forget every per-instance counter whose window has ended: the shared limiter's retention rule. */
+function forgetExpiredLocal(now: number): void {
+  for (const [id, bucket] of buckets) if (bucket.resetAt <= now) buckets.delete(id);
+}
+
 function consumeLocal(key: string, limit: number): RateLimitResult {
   const now = Date.now();
   if (buckets.size >= MAX_TRACKED_KEYS && !buckets.has(key)) {
-    for (const [id, bucket] of buckets) if (bucket.resetAt <= now) buckets.delete(id);
+    forgetExpiredLocal(now);
     if (buckets.size >= MAX_TRACKED_KEYS) return { ok: false, retryAfterSeconds: WINDOW_SECONDS, source: 'local' };
   }
   const existing = buckets.get(key);
@@ -58,11 +89,14 @@ function consumeLocal(key: string, limit: number): RateLimitResult {
     return { ok: true, source: 'local' };
   }
   if (existing.count >= limit) return { ok: false, retryAfterSeconds: Math.max(1, Math.ceil((existing.resetAt - now) / 1000)), source: 'local' };
-  existing.count += 1;
+  buckets.set(key, { ...existing, count: existing.count + 1 });
   return { ok: true, source: 'local' };
 }
 
 export async function rateLimit(request: Request, scope: string): Promise<RateLimitResult> {
+  // On every request, so an in-memory counter outlives its window only until this
+  // instance next rate-limits anything, whether or not the shared limiter answers.
+  forgetExpiredLocal(Date.now());
   const limit = LIMITS[scope] ?? 20;
   const key = `${scope}:${clientKey(request)}`;
   const shared = await consumeShared(key, limit);
@@ -72,4 +106,25 @@ export async function rateLimit(request: Request, scope: string): Promise<RateLi
   if (scope === 'auth' || scope === 'reports') return { ok: false, retryAfterSeconds: WINDOW_SECONDS, source: 'unavailable' };
   return consumeLocal(key, limit);
 }
+
+function upstreamLimit(upstream: Upstream): number {
+  const configured = Number(process.env[UPSTREAM_OVERRIDES[upstream]]);
+  return Number.isSafeInteger(configured) && configured >= 1 && configured <= MAX_LIMIT ? configured : UPSTREAM_DEFAULTS[upstream];
+}
+
+/**
+ * The deployment-wide ceiling for one upstream. The key is fixed, so every instance
+ * and every client count in the same shared bucket and the deployment as a whole
+ * cannot send that upstream more than its budget in a minute, whatever the per-IP
+ * limits add up to. Without the shared counter each instance bounds itself.
+ */
+export async function upstreamBudget(upstream: Upstream): Promise<RateLimitResult> {
+  forgetExpiredLocal(Date.now());
+  const limit = upstreamLimit(upstream);
+  const key = `upstream:${upstream}`;
+  return (await consumeShared(key, limit)) ?? consumeLocal(key, limit);
+}
+
 export function resetRateLimits(): void { buckets.clear(); }
+/** Per-instance counters currently held in memory. */
+export function localCounterCount(): number { return buckets.size; }

@@ -12,32 +12,41 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
+    primary = Citron,
+    onPrimary = Ink,
+    secondary = Ivory,
+    onSecondary = Ink,
+    tertiary = Green,
+    onTertiary = Ivory,
+    background = Ink,
+    onBackground = Ivory,
+    surface = InkRaised,
+    onSurface = Ivory,
+    surfaceVariant = InkRaised,
+    onSurfaceVariant = MutedOnInk,
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
-
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
+    primary = Ink,
+    onPrimary = Ivory,
+    secondary = Green,
+    onSecondary = Ivory,
+    tertiary = Citron,
+    onTertiary = Ink,
+    background = Ivory,
+    onBackground = Ink,
+    surface = Paper,
+    onSurface = Ink,
+    surfaceVariant = Sunken,
+    onSurfaceVariant = Muted,
 )
 
 @Composable
 fun WebShellTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
+    // The shell frames the RWA Lens website, so it keeps the brand palette
+    // instead of the wallpaper-derived dynamic colours of Android 12+.
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {

@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import nacl from 'tweetnacl';
 import bs58 from 'bs58';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createReport, getReport, listReports, repositoryState } from '@/lib/server/rwa/repository';
+import { ReportQuotaError, createReport, deleteWalletData, getReport, listReports, repositoryState } from '@/lib/server/rwa/repository';
 import { getFixture } from '@/lib/rwa/fixtures';
 import { reportCreateSchema } from '@/lib/rwa/schema';
 
@@ -65,8 +65,63 @@ describe('real repository query path, mocked PostgREST transport', () => {
     vi.stubGlobal('fetch',vi.fn(async () => Response.json({ message:'internal-secret' },{status:500})));
     await expect(listReports(alice)).rejects.toThrow('Report storage is unavailable.');
   });
+  it('turns the database quota codes into a quota error for the user, and nothing else', async () => {
+    const refuse = (body: Record<string, unknown>, status = 400) => vi.stubGlobal('fetch', vi.fn(async () => Response.json(body, { status })));
+    refuse({ code: 'RW001', message: 'saved report limit reached: this wallet already holds 100 reports', details: null, hint: 'Delete my data removes every report of this wallet.' });
+    const rows = await createReport(input(alice)).catch((error: unknown) => error);
+    expect(rows).toBeInstanceOf(ReportQuotaError);
+    expect(rows).toMatchObject({ limit: 'rows', message: 'This wallet already holds 100 saved reports, the most it can keep.' });
+    refuse({ code: 'RW002', message: 'saved report size limit reached' });
+    await expect(createReport(input(alice))).rejects.toMatchObject({ limit: 'bytes', message: expect.stringContaining('16 MB') });
+    refuse({ code: '42501', message: 'permission denied for table rwa_wallet_reports' }, 403);
+    await expect(createReport(input(alice))).rejects.toThrow('Report storage is unavailable.');
+  });
   it('does not activate with generic credentials or flag alone', () => {
     vi.stubEnv('RWA_SUPABASE_SERVICE_ROLE_KEY',''); vi.stubEnv('SUPABASE_SECRET_KEY','sb_secret_do_not_use');
     expect(repositoryState()).toBe('misconfigured');
+  });
+});
+
+describe('deleting a wallet’s data', () => {
+  function storage(respond: (body: Record<string, unknown>) => Response) {
+    const calls: Array<{ method: string; url: URL; body: Record<string, unknown> }> = [];
+    vi.stubGlobal('fetch', vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
+      const url = new URL(input instanceof Request ? input.url : input.toString());
+      const body = JSON.parse((init?.body as string) ?? '{}') as Record<string, unknown>;
+      calls.push({ method: init?.method ?? 'GET', url, body });
+      return respond(body);
+    }));
+    return calls;
+  }
+
+  it('calls only the owner-scoped function, with the owner the server supplies', async () => {
+    const calls = storage(() => Response.json({ reports: 3, challenges: 1 }));
+    expect(await deleteWalletData(alice)).toEqual({ reports: 3, challenges: 1 });
+    expect(calls).toHaveLength(1);
+    expect(calls[0].method).toBe('POST');
+    expect(calls[0].url.pathname).toBe('/rest/v1/rpc/rwa_delete_wallet_data');
+    expect(calls[0].body).toEqual({ p_owner_id: alice });
+  });
+
+  it('refuses an owner that is not a wallet address before any request', async () => {
+    const calls = storage(() => Response.json({ reports: 0, challenges: 0 }));
+    for (const owner of ['', 'not-an-address', `${alice}0`]) await expect(deleteWalletData(owner)).rejects.toThrow();
+    expect(calls).toHaveLength(0);
+  });
+
+  it('reports a storage failure or an unexpected reply instead of claiming success', async () => {
+    storage(() => Response.json({ message: 'internal-secret' }, { status: 500 }));
+    await expect(deleteWalletData(alice)).rejects.toThrow('Report storage is unavailable.');
+    storage(() => Response.json({ reports: -1, challenges: 0 }));
+    await expect(deleteWalletData(alice)).rejects.toThrow('Report storage is unavailable.');
+    storage(() => Response.json(null));
+    await expect(deleteWalletData(alice)).rejects.toThrow('Report storage is unavailable.');
+  });
+
+  it('is unavailable while reports are switched off', async () => {
+    const calls = storage(() => Response.json({ reports: 0, challenges: 0 }));
+    vi.stubEnv('RWA_REPORTS_ENABLED', 'false');
+    await expect(deleteWalletData(alice)).rejects.toThrow('Report storage is unavailable.');
+    expect(calls).toHaveLength(0);
   });
 });

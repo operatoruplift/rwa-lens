@@ -63,7 +63,17 @@ Only configuration presence and provider hostname are disclosed, never secrets.
 
 Wallet authentication/cloud reports additionally require the dedicated names in
 `.env.example`, an exact application origin, strong session secret, and the
-additive durable-store migration. Do not enable an incompletely configured flow.
+additive durable-store migrations, named as the production ledger records them:
+`20260919180305_rwa_wallet_reports_durable_auth.sql`, then
+`20261008081848_rwa_delete_wallet_data.sql`, which backs Delete my data, then
+`20261008142115_rwa_rate_limit_privacy.sql`, which stores rate-limit counters under
+a database-held HMAC key and deletes them after their window. That last one also
+applies to the existing production project, whose legacy limiter it rewires; it
+needs no new variable and works with the app deployed before or after it. Every
+later file in `supabase/migrations` follows in name order; each one states its
+own rollout and rollback in its comments, and `20261019110000_rwa_session_epochs.sql`
+must be applied before an app that includes it is deployed. Do not
+enable an incompletely configured flow.
 The custom wallet cookie is not a Supabase authenticated JWT. Do not re-use the
 legacy UUID `owner_id` table as though a base58 wallet address were `auth.uid()`.
 
@@ -78,7 +88,10 @@ New durable auth tables/functions are additive and can remain unused during an
 application rollback. Keep `RWA_REPORTS_ENABLED=false` until their configuration
 and live owner-isolation checks are complete. Preserve report records; avoid
 rolling back by dropping populated tables. See migration comments for forward
-repair. Existing read rate-limiter storage is preserved.
+repair. The legacy read limiter keeps its signature and grants. Since
+`20261008142115_rwa_rate_limit_privacy.sql` it counts in the keyed, self-pruning
+`rwa_private.rate_windows` and leaves `private.rate_limits` empty; that
+migration's comments give its rollback and key-rotation steps.
 
 ## API compatibility
 

@@ -7,7 +7,7 @@ import { rateLimit } from '@/lib/server/rwa/rate-limit';
 import { readBoundedJson } from '@/lib/server/rwa/http';
 import {
   SESSION_COOKIE, SESSION_COOKIE_OPTIONS, CHALLENGE_COOKIE, CHALLENGE_COOKIE_OPTIONS,
-  consumeNonce, createSessionToken, issueNonce, sessionsConfigured, hasExactOrigin, verifyChallenge,
+  consumeNonce, createSessionToken, endSessions, issueNonce, parseSessionToken, sessionsConfigured, hasExactOrigin, verifyChallenge,
 } from '@/lib/server/rwa/session';
 
 export const runtime = 'nodejs';
@@ -31,6 +31,10 @@ export async function POST(request: Request) {
   if (!parsed.success) return NextResponse.json({ state: 'invalid', message: 'Unsupported request.' }, { status: 400 });
   const store = await cookies();
   if (parsed.data.action === 'sign-out') {
+    // Move the wallet's session epoch on, so every copy of this session ends, then drop this browser's cookies.
+    const claims = parseSessionToken(store.get(SESSION_COOKIE)?.value);
+    try { if (claims) await endSessions(claims.address); }
+    catch { return NextResponse.json({ state: 'unavailable', message: 'Sign-out could not be recorded. Try again later.' }, { status: 503 }); }
     store.delete(SESSION_COOKIE); store.delete(CHALLENGE_COOKIE);
     return NextResponse.json({ state: 'signed-out' });
   }
@@ -46,7 +50,7 @@ export async function POST(request: Request) {
     store.delete(CHALLENGE_COOKIE);
     if (!challenge) return NextResponse.json({ state: 'invalid', message: 'That sign-in challenge expired or did not match this browser. Try again.' }, { status: 400 });
     if (!verifyChallenge(challenge, signature)) return NextResponse.json({ state: 'invalid', message: 'That signature did not match the address.' }, { status: 401 });
-    const token = createSessionToken(address);
+    const token = await createSessionToken(address);
     if (!token) return NextResponse.json({ state: 'feature-disabled' }, { status: 503 });
     store.set(SESSION_COOKIE, token, SESSION_COOKIE_OPTIONS);
     return NextResponse.json({ state: 'signed-in', address }, { headers: { 'cache-control': 'no-store' } });

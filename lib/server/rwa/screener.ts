@@ -5,6 +5,7 @@ import liveAssets from '@/lib/rwa/live-assets.json';
 import { screenerResponseSchema, type ScreenerAsset, type ScreenerResponse } from '@/lib/rwa/screener';
 import { METEORA_DLMM_API, METEORA_DLMM_HOST, MIN_LISTED_TVL_USD, normalizeVenuePools } from '@/lib/rwa/venues';
 import { fetchAllowedJson, type MetadataOutcome } from './metadata-fetch';
+import { upstreamBudget, type RateLimitResult } from './rate-limit';
 
 export const XSTOCKS_HOST = 'api.xstocks.fi';
 /** Fifty assets answer in about a second; a hundred take seven, past the fetch deadline. */
@@ -25,6 +26,8 @@ const MAX_AGE_MS = 60 * 60_000;
 
 /** A bounded scan must fail explicitly instead of advertising partial coverage. */
 class IncompleteCoverageError extends Error {}
+/** The deployment's per-minute Meteora budget is spent; a snapshot already in hand keeps serving. */
+class UpstreamBudgetError extends Error {}
 
 const isMint = (value: string) => { try { return /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(value) && bs58.decode(value).length === 32; } catch { return false; } };
 
@@ -40,8 +43,9 @@ const xStocksPageSchema = z.object({ nodes: z.array(z.unknown()).max(XSTOCKS_PAG
 const poolPageSchema = z.object({ total: z.number().int().min(0), data: z.array(z.unknown()).max(POOLS_PER_QUERY) }).passthrough();
 
 type FetchJson = (uri: string, hosts: string[], schema: z.ZodType<Record<string, unknown>>, limits: { maxBytes: number }) => Promise<MetadataOutcome>;
-type Dependencies = { fetchJson: FetchJson; now: () => number };
-const defaults: Dependencies = { fetchJson: (uri, hosts, schema, limits) => fetchAllowedJson(uri, hosts, schema, limits), now: Date.now };
+type Dependencies = { fetchJson: FetchJson; now: () => number; budget: () => Promise<RateLimitResult> };
+// The Meteora ceiling is deployment-wide and shared with the per-mint venue reader.
+const defaults: Dependencies = { fetchJson: (uri, hosts, schema, limits) => fetchAllowedJson(uri, hosts, schema, limits), now: Date.now, budget: () => upstreamBudget('meteora') };
 
 /** Ondo and any other curated attribution, from the same manifest the inspector uses. */
 function curatedAssets(): ScreenerAsset[] {
@@ -113,6 +117,7 @@ async function readPools(mints: readonly string[], deps: Dependencies): Promise<
     for (let page = 1; page <= MAX_POOL_PAGES; page++) {
       const url = new URL(query);
       url.searchParams.set('page', String(page));
+      if (!(await deps.budget()).ok) throw new UpstreamBudgetError('The deployment’s Meteora budget for this minute is spent.');
       const outcome = await deps.fetchJson(url.href, [METEORA_DLMM_HOST], poolPageSchema, { maxBytes: MAX_POOL_BYTES });
       if (outcome.state !== 'ok') throw new Error('Meteora pools unavailable');
       const body = poolPageSchema.parse(outcome.body);
@@ -141,7 +146,8 @@ function snapshotValue(snapshot: Snapshot, now: number): Snapshot['value'] {
     : { ...snapshot.value, assets: snapshot.value.assets.map(asset => ({ ...asset, market: null })) };
 }
 
-export function createScreenerStore(deps: Dependencies = defaults) {
+export function createScreenerStore(overrides: Partial<Dependencies> = {}) {
+  const deps: Dependencies = { ...defaults, ...overrides };
   let snapshot: Snapshot | null = null;
   let inflight: Promise<Snapshot> | null = null;
   let catalog: { at: number; assets: ScreenerAsset[] } | null = null;
@@ -181,7 +187,12 @@ export function createScreenerStore(deps: Dependencies = defaults) {
       if (snapshot && now - snapshot.at < FRESH_MS) return { response: snapshotValue(snapshot, now) };
       if (snapshot && now - snapshot.at < MAX_AGE_MS) return { response: { ...snapshotValue(snapshot, now), stale: true }, refresh: () => refresh().catch(() => undefined) };
       try { return { response: snapshotValue(await refresh(), deps.now()) }; }
-      catch (error) { return { response: { state: 'unavailable', reason: error instanceof IncompleteCoverageError ? 'The complete pool or issuer list could not be read within the scan limits. Try again shortly.' : 'The pool or issuer data could not be read. Try again shortly.' } }; }
+      catch (error) {
+        const reason = error instanceof IncompleteCoverageError ? 'The complete pool or issuer list could not be read within the scan limits. Try again shortly.'
+          : error instanceof UpstreamBudgetError ? 'The pool list is paused for a moment: RWA Lens has reached its per-minute budget for Meteora’s data API. Try again shortly.'
+          : 'The pool or issuer data could not be read. Try again shortly.';
+        return { response: { state: 'unavailable', reason } };
+      }
     },
   };
 }

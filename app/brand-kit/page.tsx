@@ -3,6 +3,7 @@ import Image from 'next/image';
 import type { Metadata } from 'next';
 import { ArrowDownToLine, ArrowUpRight, ArrowRight, FileText } from 'lucide-react';
 import { Brand } from '@/components/rwa/brand';
+import { LegalLinks } from '@/components/legal/legal-links';
 import styles from './brand-kit.module.css';
 
 export const metadata: Metadata = {
@@ -92,6 +93,6 @@ export default function BrandKitPage() {
         <div className={styles.guide}><div><h3>The details make the difference.</h3><p>Clear space, typography, source resolutions and guidance for using the identity.</p></div><a className={styles.guideLink} href="/brand-kit/brand-guide.md" download><FileText size={18} aria-hidden="true" /> Download the brand guide <ArrowDownToLine size={17} aria-hidden="true" /></a></div>
       </section>
     </main>
-    <footer className={styles.footer}><div><Link href="/" aria-label="RWA Lens home"><Brand light /></Link><p>Real assets. Clearer vision.</p></div><p>Use these assets to identify RWA Lens.<br />They do not imply an endorsement or partnership.</p><Link href="/rwa">Open the inspector <ArrowUpRight size={18} aria-hidden="true" /></Link></footer>
+    <footer className={styles.footer}><div><Link href="/" aria-label="RWA Lens home"><Brand light /></Link><p>Real assets. Clearer vision.</p></div><p>Use these assets to identify RWA Lens.<br />They do not imply an endorsement or partnership.</p><nav aria-label="Legal" className={styles.legal}><LegalLinks /></nav><Link href="/rwa">Open the inspector <ArrowUpRight size={18} aria-hidden="true" /></Link></footer>
   </div>;
 }

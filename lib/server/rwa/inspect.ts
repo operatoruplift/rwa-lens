@@ -9,7 +9,8 @@ import { getFixture, treasuryAtBoundary } from '@/lib/rwa/fixtures';
 import { addressSchema, inspectResultSchema } from '@/lib/rwa/schema';
 import { DECODER_VERSION } from '@/lib/rwa/types';
 import type { AccountState, Cluster, Identity, InspectRequest, InspectResult, ProvenanceSource, RawBalance, TokenProgram } from '@/lib/rwa/types';
-import { RpcError, createClient, readAccount, readChainTime, readOwnerTokenAccounts, resolveRpcConfig } from './rpc';
+import { RpcError, createClient, readAccount, readChainTime, readOwnerTokenAccounts, resolveRpcConfig, type RpcFailureKind } from './rpc';
+import { upstreamBudget } from './rate-limit';
 import { metadataUriPolicy } from './metadata-fetch';
 import { lookupRegistry } from './registry';
 
@@ -214,6 +215,15 @@ export async function inspectOnChain(input: InspectInput): Promise<InspectResult
 }
 
 const inspectionCache = new Map<string, { expiresAt: number; savedAt: number; result: InspectResult }>();
+/** Mints that resolved to nothing: no account there, or an account that is not a mint. Kept for a minute, so a stream of random identifiers stops reaching the provider. */
+const absenceCache = new Map<string, { expiresAt: number; kind: RpcFailureKind; message: string }>();
+const ABSENCE_KINDS = new Set<RpcFailureKind>(['not-found', 'not-a-mint']);
+const ABSENCE_TTL_MS = 60_000;
+const MAX_CACHE_ENTRIES = 100;
+function remember<T>(cache: Map<string, T>, key: string, entry: T): void {
+  if (cache.size >= MAX_CACHE_ENTRIES) cache.delete(cache.keys().next().value!);
+  cache.set(key, entry);
+}
 /** Canonical server-generated response for the API and owner-scoped report creation. */
 export async function inspectRequest(input: InspectRequest): Promise<InspectResult> {
   if (input.mode === 'fixture') {
@@ -223,14 +233,25 @@ export async function inspectRequest(input: InspectRequest): Promise<InspectResu
     return inspectResultSchema.parse(input.fixtureId === 'treasury-scaled' ? treasuryAtBoundary(input.scenario) : fixture.result);
   }
   const config = resolveRpcConfig(input.cluster);
+  const now = Date.now();
   const key = JSON.stringify([config.url, input.cluster, input.mint, input.owner ?? null, DECODER_VERSION]);
   const cached = inspectionCache.get(key);
-  if (cached && cached.expiresAt > Date.now()) return { ...cached.result, provenance: { ...cached.result.provenance, cacheAgeMs: Date.now() - cached.savedAt } };
-  const result = inspectResultSchema.parse(await inspectOnChain(input));
-  const seconds = Math.min(60, Math.max(0, Number(process.env.RWA_INSPECT_CACHE_SECONDS ?? 15) || 0));
-  if (result.status === 'verified' && seconds > 0) {
-    if (inspectionCache.size >= 100) inspectionCache.delete(inspectionCache.keys().next().value!);
-    inspectionCache.set(key, { result, savedAt: Date.now(), expiresAt: Date.now() + seconds * 1000 });
+  if (cached && cached.expiresAt > now) return { ...cached.result, provenance: { ...cached.result.provenance, cacheAgeMs: now - cached.savedAt } };
+  const mintKey = JSON.stringify([config.url, input.cluster, input.mint]);
+  const absent = absenceCache.get(mintKey);
+  if (absent && absent.expiresAt > now) throw new RpcError(absent.kind, absent.message);
+  // One budget for the whole deployment; an inspection is at most four provider reads.
+  const budget = await upstreamBudget('rpc');
+  if (!budget.ok) throw new RpcError('rate-limited', 'RWA Lens has reached its per-minute network budget across all users.');
+  let result: InspectResult;
+  try { result = inspectResultSchema.parse(await inspectOnChain(input)); }
+  catch (error) {
+    if (error instanceof RpcError && ABSENCE_KINDS.has(error.kind)) remember(absenceCache, mintKey, { expiresAt: Date.now() + ABSENCE_TTL_MS, kind: error.kind, message: error.message });
+    throw error;
   }
+  const seconds = Math.min(60, Math.max(0, Number(process.env.RWA_INSPECT_CACHE_SECONDS ?? 15) || 0));
+  if (result.status === 'verified' && seconds > 0) remember(inspectionCache, key, { result, savedAt: Date.now(), expiresAt: Date.now() + seconds * 1000 });
   return result;
 }
+/** Per-instance memory only; for tests. */
+export function resetInspectionCaches(): void { inspectionCache.clear(); absenceCache.clear(); }

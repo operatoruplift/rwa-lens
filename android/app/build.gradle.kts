@@ -104,6 +104,11 @@ android {
         compose = true
         buildConfig = true
     }
+    androidResources {
+        // English only. Without this, AndroidX libraries add translations for
+        // 86 locales, which the dApp Store would list as supported languages.
+        localeFilters += listOf("en")
+    }
 }
 
 dependencies {

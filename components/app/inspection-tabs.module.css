@@ -10,5 +10,5 @@
 .panel :global(.empty-balance) { min-height:300px; }
 .panel :global(.control-results) { margin-top:0; }
 .panel :global(.issuer-attribution) { margin-bottom:18px; }
-@media(max-width:600px) { .tabs { gap:2px; } .tabs button { min-width:0; padding:10px 4px; font-size:10.5px; gap:6px; } .tabs button svg { display:none; } .panel { padding-top:16px; } }
+@media(max-width:600px) { .tabs { gap:2px; } .tabs button { min-width:0; padding:10px 4px; font-size:11px; gap:6px; } .tabs button svg { display:none; } .panel { padding-top:16px; } }
 @media(prefers-reduced-motion:reduce) { .tabs button { transition:none; } }

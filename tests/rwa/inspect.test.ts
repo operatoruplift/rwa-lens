@@ -2,7 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { address, none, getAddressDecoder, type UnixTimestamp, type Address, type OptionOrNullable } from '@solana/kit';
 import { getMintEncoder, getTokenEncoder, getMultisigEncoder, getMultisigSize, TOKEN_PROGRAM_ADDRESS, TOKEN_2022_PROGRAM_ADDRESS } from '@solana-program/token-2022';
 import { getSysvarClockEncoder, SYSVAR_CLOCK_ADDRESS } from '@solana/sysvars';
-import { accountState, decodeTokenData, identifyProgram, inspectOnChain, inspectRequest } from '@/lib/server/rwa/inspect';
+import { accountState, decodeTokenData, identifyProgram, inspectOnChain, inspectRequest, resetInspectionCaches } from '@/lib/server/rwa/inspect';
+import { resetRateLimits } from '@/lib/server/rwa/rate-limit';
 import { createBoundedTransport, createClient, readAccount, type RpcConfig } from '@/lib/server/rwa/rpc';
 import { inspectResultSchema } from '@/lib/rwa/schema';
 
@@ -15,13 +16,15 @@ const tokenBytes = (over: Partial<Parameters<ReturnType<typeof getTokenEncoder>[
 const encoded = (bytes: ArrayLike<number>, owner: string) => ({ data: [Buffer.from(Uint8Array.from(bytes)).toString('base64'), 'base64'], owner, executable: false, lamports: 1, rentEpoch: 0, space: bytes.length });
 const clockBytes = getSysvarClockEncoder().encode({ slot: 100n, epochStartTimestamp: 900n as UnixTimestamp, epoch: 1n, leaderScheduleEpoch: 1n, unixTimestamp: 1000n as UnixTimestamp });
 const config: RpcConfig = { cluster: 'mainnet-beta', url: 'https://rpc.example.test', timeoutMs: 1000, maxAccounts: 100, commitment: 'confirmed', provider: 'rpc.example.test' };
-type Reply = { program?: string; mint?: Uint8Array | Readonly<Uint8Array>; accounts?: Array<{ pubkey: string; account: ReturnType<typeof encoded> }>; ownerSlot?: number; ownerFailure?: boolean; clockFailure?: boolean; metadataAccount?: ReturnType<typeof encoded> | null; metadataSlot?: number };
+type Reply = { program?: string; mint?: Uint8Array | Readonly<Uint8Array>; accounts?: Array<{ pubkey: string; account: ReturnType<typeof encoded> }>; ownerSlot?: number; ownerFailure?: boolean; clockFailure?: boolean; metadataAccount?: ReturnType<typeof encoded> | null; metadataSlot?: number; missingMint?: boolean; providerDown?: boolean };
 function rpcMock(options: Reply = {}) {
   const seen: Array<{ method: string; params: unknown[] }> = [];
   vi.stubGlobal('fetch', vi.fn(async (_url, init: RequestInit) => {
     const request = JSON.parse(init.body as string); seen.push(request);
     let result: unknown;
     if (request.method === 'getAccountInfo') {
+      if (options.providerDown) return new Response('{}', { status: 503 });
+      if (options.missingMint && request.params[0] === MINT) return Response.json({ jsonrpc: '2.0', id: request.id, result: { context: { slot: 100 }, value: null } });
       if (request.params[0] === SYSVAR_CLOCK_ADDRESS) {
         if (options.clockFailure) return Response.json({ jsonrpc: '2.0', id: request.id, result: { context: { slot: 100 }, value: null } });
         result = { context: { slot: 100 }, value: encoded(clockBytes, 'Sysvar1111111111111111111111111111111111111') };
@@ -222,5 +225,48 @@ describe('bounded pointed metadata observations', () => {
     expect(result.status).toBe('verified');
     expect(seen.filter(call => call.method === 'getAccountInfo')).toHaveLength(2);
     expect(result.provenance.sources.find(source => source.method === 'getAccountInfo(metadata)')?.status).toBe('skipped');
+  });
+});
+
+describe('absent mints and the deployment budget', () => {
+  const live = { mode: 'live', cluster: 'mainnet-beta', mint: MINT } as const;
+  afterEach(() => { resetInspectionCaches(); resetRateLimits(); });
+
+  it('remembers a mint that resolved to nothing for a minute instead of asking the provider again', async () => {
+    const seen = rpcMock({ missingMint: true });
+    await expect(inspectRequest(live)).rejects.toMatchObject({ kind: 'not-found' });
+    const reads = seen.length;
+    await expect(inspectRequest(live)).rejects.toMatchObject({ kind: 'not-found' });
+    // The absence is a fact about the mint, whichever wallet is asked about.
+    await expect(inspectRequest({ ...live, owner: OWNER })).rejects.toMatchObject({ kind: 'not-found' });
+    expect(seen.length).toBe(reads);
+    const later = vi.spyOn(Date, 'now').mockReturnValue(Date.now() + 61_000);
+    try {
+      await expect(inspectRequest(live)).rejects.toMatchObject({ kind: 'not-found' });
+      expect(seen.length).toBeGreaterThan(reads);
+    } finally { later.mockRestore(); }
+  });
+
+  it('remembers an account that is not a mint, but never a provider failure', async () => {
+    const notAMint = rpcMock({ program: OWNER });
+    await expect(inspectRequest(live)).rejects.toMatchObject({ kind: 'not-a-mint' });
+    const reads = notAMint.length;
+    await expect(inspectRequest(live)).rejects.toMatchObject({ kind: 'not-a-mint' });
+    expect(notAMint.length).toBe(reads);
+    resetInspectionCaches();
+    const down = rpcMock({ providerDown: true });
+    await expect(inspectRequest(live)).rejects.toMatchObject({ kind: 'provider-failure' });
+    const attempts = down.length;
+    await expect(inspectRequest(live)).rejects.toMatchObject({ kind: 'provider-failure' });
+    expect(down.length).toBeGreaterThan(attempts);
+  });
+
+  it('refuses an inspection once the deployment’s RPC budget for the minute is spent, without a provider read', async () => {
+    vi.stubEnv('RWA_UPSTREAM_RPC_PER_MINUTE', '1');
+    const seen = rpcMock();
+    expect((await inspectRequest(live)).status).toBe('verified');
+    const reads = seen.length;
+    await expect(inspectRequest(live)).rejects.toMatchObject({ kind: 'rate-limited', message: expect.stringContaining('budget') });
+    expect(seen.length).toBe(reads);
   });
 });

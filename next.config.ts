@@ -21,8 +21,17 @@ const CSP = [
   "object-src 'none'",
 ].join('; ');
 
+/**
+ * One id per build: the commit on Vercel or GitHub, otherwise the build time. It
+ * versions the service worker's cache (public/sw.js), so each release drops the
+ * caches of the releases before it. Letters, digits, dot, dash and underscore only.
+ */
+const releaseId = (process.env.VERCEL_GIT_COMMIT_SHA ?? process.env.GITHUB_SHA ?? '').slice(0, 12)
+  || new Date().toISOString().replace(/\D/g, '').slice(0, 14);
+
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  env: { NEXT_PUBLIC_RELEASE_ID: releaseId },
   async headers() {
     return [
       {

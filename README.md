@@ -184,12 +184,17 @@ npm test
 npm run build
 npm run test:e2e
 npm run test:e2e:deploy
+npm run test:e2e:reports
 ```
 
 Playwright launches `next start` against the production build on port 3300.
 The deterministic suite uses mocked mainnet responses and requires no secrets.
 The separate deploy suite runs on port 3301 with a mocked wallet and mocked
 transaction responses; it never signs or sends funds.
+The reports suite runs on port 3302 with saved reports enabled, placeholder
+storage settings and every API response mocked in the browser; it covers sign-in
+from My reports and Delete my data. Migration tests apply the SQL migrations to
+an in-memory Postgres (PGlite), so no database is needed.
 Landing checks cover desktop/mobile scrolling, anchor focus, dynamic reduced
 motion, and marketing content plus fragment links that stay usable with
 JavaScript turned off in the browser.
@@ -247,6 +252,7 @@ optional remote registry and NAV adapters cannot supply invented fiat values.
 | `POST /api/rwa/auth` | Optional exact-origin wallet message authentication and sign-out; durable single-use challenge required. |
 | `GET/POST /api/rwa/reports` | Optional session-owned reports; the server re-inspects instead of trusting uploaded observations. |
 | `GET /api/rwa/reports/[reportId]` | Session-owner lookup; another owner's opaque ID returns 404. |
+| `DELETE /api/rwa/account` | Delete my data: exact-origin, rate-limited; deletes the session wallet's reports and pending sign-in challenges, then clears the session. |
 | `GET /api/rwa/venues` | Meteora DLMM pools holding the exact mint; third-party market data, never part of an observation. |
 | `GET /api/rwa/screener` | Server-cached snapshot of pools holding known tokenized assets (xStocks catalog, Ondo attribution); no parameters, HTTP no-store. |
 | `POST /api/rwa/deploy` | Only with `RWA_DEPLOY_ENABLED`: same-origin, rate-limited; returns an unsigned, simulated v0 transaction for the caller's wallet, or a plain refusal. |

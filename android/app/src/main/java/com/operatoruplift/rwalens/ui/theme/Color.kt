@@ -2,10 +2,15 @@ package com.operatoruplift.rwalens.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val Purple80 = Color(0xFFD0BCFF)
-val PurpleGrey80 = Color(0xFFCCC2DC)
-val Pink80 = Color(0xFFEFB8C8)
+// RWA Lens brand palette, matching the web app's tokens in app/globals.css.
+val Ink = Color(0xFF101211)
+val Ivory = Color(0xFFF2F2E9)
+val Citron = Color(0xFFD9FF65)
+val Green = Color(0xFF0F7450)
 
-val Purple40 = Color(0xFF6650a4)
-val PurpleGrey40 = Color(0xFF625b71)
-val Pink40 = Color(0xFF7D5260)
+// Supporting tones for surfaces and secondary text.
+val Paper = Color(0xFFFCFDF9)
+val Sunken = Color(0xFFE6E8DC)
+val InkRaised = Color(0xFF1C201D)
+val Muted = Color(0xFF4E564B)
+val MutedOnInk = Color(0xFFA4AAA2)

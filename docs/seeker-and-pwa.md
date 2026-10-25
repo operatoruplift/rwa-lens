@@ -25,43 +25,62 @@ Mobile Wallet Adapter registers itself only on Android in a secure context (or i
 
 The shell in `android/` was generated with `@solana-mobile/webshell-cli`, which the Solana Mobile docs now recommend over Bubblewrap. It wraps `https://rwalensonsolana.vercel.app/rwa` in a WebView with native wallet-intent handling, so the deployed site is the app: redeploying the web app updates the app without a new APK.
 
-Prerequisites: Node 24+, `adb`, and about 2 GB of disk for the Android SDK. The CLI installs a managed JDK 17 and the SDK packages it needs on the first `build` (`doctor --fix` does the same without building).
+Build it with Gradle directly. Prerequisites: JDK 21 and the Android SDK with platform 36 and build-tools 36.1.0. On macOS these are Homebrew's `openjdk@21` and the SDK Android Studio installs.
 
 ```bash
-npm install -g @solana-mobile/webshell-cli
+export JAVA_HOME=/usr/local/opt/openjdk@21 ANDROID_HOME=$HOME/Library/Android/sdk
 cd android
 
-# First build only: choose a release keystore. The CLI creates it if the file
-# does not exist. Keep it and its passwords outside the repo; losing it means
-# you can never update the app on the dApp Store.
-export WEB_SHELL_KEYSTORE_PASSWORD='...'
-export WEB_SHELL_KEY_PASSWORD='...'
-webshell build . --keystore-path ~/keys/rwalens-release.keystore --keystore-alias rwalens
-
-adb install -r app/build/outputs/apk/release/app-release.apk
+# Debug build, for testing on a device. No key needed.
+./gradlew --no-daemon assembleDebug
+adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
-Bump `--version-code` on every release (`webshell init . --force --version-code 2 --version-name 1.1.0` rewrites `gradle.properties`; the URL, id and icons are already recorded in `twa-manifest.json`).
+### Signed release build
+
+The dApp Store accepts only a signed release APK. Create the release keystore once, with a **new** key never used on Google Play, and keep it and its passwords outside the repo. Losing it means you can never update the app on the dApp Store.
+
+```bash
+keytool -genkeypair -v -keystore ~/keys/rwalens-release.keystore -alias rwalens \
+  -keyalg RSA -keysize 2048 -validity 10000
+```
+
+JDK 21's `keytool` writes a PKCS12 keystore, which has a single password: the key password is the store password. Give both variables below that same value; a different key password fails at packaging with `Failed to read key rwalens from store`.
+
+Then build with the signing properties Gradle reads (`android/app/build.gradle.kts`). The passwords come from the environment; the store file and alias are Gradle properties:
+
+```bash
+export JAVA_HOME=/usr/local/opt/openjdk@21 ANDROID_HOME=$HOME/Library/Android/sdk
+cd android
+WEB_SHELL_SIGNING_STORE_PASSWORD=… WEB_SHELL_SIGNING_KEY_PASSWORD=… ./gradlew --no-daemon assembleRelease -PWEB_SHELL_SIGNING_STORE_FILE=$HOME/keys/rwalens-release.keystore -PWEB_SHELL_SIGNING_KEY_ALIAS=rwalens
+```
+
+> **A missing property silently produces an unsigned APK.** Gradle signs only when the store file, store password and key alias are all set. If one is missing, the build still succeeds and writes `app/build/outputs/apk/release/app-release-unsigned.apk`. The key password falls back to the store password. Older notes used `WEB_SHELL_KEYSTORE_PASSWORD` and `WEB_SHELL_KEY_PASSWORD`; Gradle never reads those names.
+
+Check the APK before you upload it. It must be signed by your release key and declare English only:
+
+```bash
+$ANDROID_HOME/build-tools/36.1.0/apksigner verify --print-certs app/build/outputs/apk/release/app-release.apk
+$ANDROID_HOME/build-tools/36.1.0/aapt2 dump badging app/build/outputs/apk/release/app-release.apk | grep -E '^locales'
+```
+
+The second command must print `locales: '--_--' 'en'`. `'--_--'` is the default, unqualified resource set, not a language. `android/app/build.gradle.kts` limits resources to English (`androidResources.localeFilters`) and `res/values-en/` declares it. Without the filter the APK declares 86 locales, almost all from AndroidX translations, and the store would list each one as a supported language.
+
+Bump the version for every release: raise `WEB_SHELL_VERSION_CODE` and set `WEB_SHELL_VERSION_NAME` in `android/gradle.properties`, or pass them as `-P` properties. The URL, application ID and icons are already recorded there and in `twa-manifest.json`.
 
 ## Publish on the Solana dApp Store
 
-Winners must list on the dApp Store to claim CLOCK IN prizes, and the listing is the distribution channel for every Seeker owner.
+The dApp Store is the distribution channel for every Seeker owner. The listing copy, banner and screenshots are in [`docs/dapp-store/`](dapp-store/listing.md).
 
-- Register at the Publisher Portal (https://docs.solanamobile.com/dapp-publishing/intro): KYC/KYB, and a publisher wallet holding about 0.2 SOL. That wallet signs every future update, so treat it like the keystore.
-- Signing key: a **new** key never used on Google Play. The keystore above qualifies.
-- Assets: the 512×512 icon (`icons/icon-512.png` or equivalent here), a 1200×600 banner, and at least four phone screenshots.
-- Submit the release APK; review currently takes 3–5 business days. Updates go through the `dapp-store` CLI with the same publisher wallet.
+- **Publisher Portal:** https://publish.solanamobile.com. Registration requires KYC (individuals) or KYB (businesses).
+- **Publisher wallet:** a desktop browser-extension wallet, not a Ledger. It pays about 0.05–0.1 SOL per release plus ArDrive storage for the uploaded files, and it signs every future update, so treat it like the keystore.
+- **APK:** a signed release APK only, built as above. Debug and unsigned builds are rejected.
+- **Listing limits:** app name up to 25 characters, subtitle up to 30.
+- **Assets:** the 512×512 icon (`public/icons/icon-512.png`), a banner of exactly 1200×600, and 4 to 8 portrait screenshots at least 1080 px wide.
+- **Review:** 3 to 5 business days. Each update is a new release, signed with the same key and paid from the same publisher wallet.
 
 ## Decisions to make before the first publish
 
 - **Application ID is permanent.** This shell uses `com.operatoruplift.rwalens`. Change it now (`webshell init . --force --application-id ...`) or never.
 - **Host is pinned.** The shell keeps navigation on `rwalensonsolana.vercel.app` and opens other hosts in the system browser. Moving to a custom domain later needs a rebuild but keeps the application ID.
 - **Deep links.** The shell opens the start URL; if you want `/rwa?mint=...`-style links to open the app, add an intent filter for the host in `android/app/src/main/AndroidManifest.xml`.
-
-## CLOCK IN checklist (Solana Mobile × RadiantsDAO, closes 8 October 2026)
-
-- [ ] Release APK built with the steps above and installed on a Seeker or Android device
-- [ ] Public GitHub repo (this one), with this branch merged
-- [ ] Demo video showing the install, the wallet handoff and the core flow on a phone
-- [ ] Pitch deck: problem, product, why mobile-first, traction, team
-- [ ] Optional SKR integration for the separate $10K SKR prize

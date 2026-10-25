@@ -164,6 +164,7 @@ test.describe('RWA Lens mainnet product', () => {
     await ready(page);
     await page.getByRole('tab', { name: 'Evidence', exact: true }).click();
     await expect(page.getByRole('button', { name: 'Save this report' })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Delete my data' })).toHaveCount(0);
     await expect(page.getByText(/cloud reports are not enabled on this deployment/i)).toBeVisible();
     await expect(page.getByRole('button', { name: 'Export JSON' })).toBeEnabled();
   });

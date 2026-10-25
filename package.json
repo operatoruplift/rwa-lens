@@ -10,9 +10,11 @@
     "typecheck": "next typegen && tsc --noEmit",
     "test": "vitest run",
     "test:e2e": "playwright test",
-    "test:e2e:deploy": "playwright test -c playwright.deploy.config.ts"
+    "test:e2e:deploy": "playwright test -c playwright.deploy.config.ts",
+    "test:e2e:reports": "playwright test -c playwright.reports.config.ts"
   },
   "dependencies": {
+    "@noble/curves": "2.4.0",
     "@solana-mobile/wallet-standard-mobile": "^0.6.0",
     "@solana-program/token-2022": "^0.17.0",
     "@solana/kit": "^8.3.0",
@@ -21,13 +23,14 @@
     "@supabase/supabase-js": "^2.116.0",
     "bs58": "^6.0.0",
     "lucide-react": "^1.46.0",
-    "next": "16.3.5",
+    "next": "16.4.3",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "server-only": "^0.0.1",
-    "zod": "^4.6.2"
+    "zod": "4.6.7"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.8",
     "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^24.13.5",
@@ -35,11 +38,11 @@
     "@types/react-dom": "^19",
     "axe-core": "4.13.0",
     "eslint": "^9",
-    "eslint-config-next": "16.3.5",
+    "eslint-config-next": "16.3.8",
     "tailwindcss": "^4",
     "tweetnacl": "^1.0.3",
     "typescript": "^5",
-    "vitest": "^5.0.1"
+    "vitest": "5.0.5"
   },
   "engines": {
     "node": ">=22.19.0"

@@ -2,9 +2,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { formatPct, formatUsd, MAX_LISTED_POOLS, MIN_LISTED_TVL_USD, normalizeVenues, venuesResponseSchema, venuesUpstreamUrl } from '@/lib/rwa/venues';
 import { createVenueReader } from '@/lib/server/rwa/venues';
 import type { MetadataOutcome } from '@/lib/server/rwa/metadata-fetch';
+import type { RateLimitResult } from '@/lib/server/rwa/rate-limit';
 
-const mocks = vi.hoisted(() => ({ readVenues: vi.fn(), limit: vi.fn() }));
-vi.mock('@/lib/server/rwa/rate-limit', () => ({ rateLimit: mocks.limit }));
+const mocks = vi.hoisted(() => ({ readVenues: vi.fn(), limit: vi.fn(), budget: vi.fn() }));
+// The route tests mock the per-IP limiter; the reader's default dependency is the deployment budget from the same module.
+vi.mock('@/lib/server/rwa/rate-limit', () => ({ rateLimit: mocks.limit, upstreamBudget: mocks.budget }));
 
 const USDY = 'A1KLoBrKBde8Ty9qtNQUtq3C2ortoC3u7twggz7sEto6';
 const USDC = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
@@ -70,6 +72,7 @@ describe('Meteora venue normalization', () => {
 
 describe('venue reader', () => {
   const ok = (body: unknown): MetadataOutcome => ({ state: 'ok', body: body as Record<string, unknown>, fetchedAt: AT, bytes: 100 });
+  beforeEach(() => { mocks.budget.mockResolvedValue({ ok: true, source: 'local' }); });
   it('reads the fixed Meteora URL once per minute per mint and reports cache age', async () => {
     let now = Date.parse(AT);
     const fetchJson = vi.fn(async () => ok({ total: 1, data: [pool()] }));
@@ -82,6 +85,28 @@ describe('venue reader', () => {
     now += 31_000;
     await read(USDY);
     expect(fetchJson).toHaveBeenCalledTimes(2);
+  });
+  it('remembers a mint with no pools for a minute, so random identifiers stop costing Meteora calls', async () => {
+    let now = Date.parse(AT);
+    const fetchJson = vi.fn(async () => ok({ total: 0, data: [] }));
+    const read = createVenueReader({ fetchJson, now: () => now });
+    expect(await read(OTHER)).toMatchObject({ state: 'none', matched: 0 });
+    now += 59_000;
+    expect(await read(OTHER)).toMatchObject({ state: 'none' });
+    expect(fetchJson).toHaveBeenCalledTimes(1);
+    now += 2_000;
+    await read(OTHER);
+    expect(fetchJson).toHaveBeenCalledTimes(2);
+  });
+  it('pauses new lookups while the deployment’s Meteora budget is spent, but keeps serving what it has', async () => {
+    const budget = vi.fn<() => Promise<RateLimitResult>>(async () => ({ ok: true, source: 'local' }));
+    const fetchJson = vi.fn(async () => ok({ total: 1, data: [pool()] }));
+    const read = createVenueReader({ fetchJson, now: () => Date.parse(AT), budget });
+    expect(await read(USDY)).toMatchObject({ state: 'ok' });
+    budget.mockResolvedValue({ ok: false, retryAfterSeconds: 30, source: 'shared' });
+    expect(await read(USDY)).toMatchObject({ state: 'ok' });
+    expect(await read(OTHER)).toMatchObject({ state: 'unavailable', reason: expect.stringContaining('budget') });
+    expect(fetchJson).toHaveBeenCalledTimes(1);
   });
   it('turns transport failures and unexpected shapes into an uncached unavailable state', async () => {
     const fetchJson = vi.fn<(uri: string) => Promise<MetadataOutcome>>()
