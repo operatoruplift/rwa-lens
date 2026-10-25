@@ -9,7 +9,7 @@
 .heroArt { object-fit: cover; object-position: center; opacity: .85; }
 .hero::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, #101211 0%, #101211db 25%, #10121100 68%); pointer-events: none; }
 .heroContent { position: relative; z-index: 1; padding: 72px 4.6% 110px; }
-.eyebrow, .kicker { font-size: 10px; font-weight: 550; letter-spacing: 2px; }
+.eyebrow, .kicker { font-size:11px; font-weight: 550; letter-spacing: 2px; }
 .eyebrow { display: flex; align-items: center; gap: 10px; color: var(--acid); }
 .eyebrow span { width: 6px; height: 6px; border-radius: 50%; background: var(--acid); }
 .hero h1 { font-size: clamp(66px, 7.8vw, 114px); font-weight: 450; letter-spacing: -.075em; line-height: .98; margin: 38px 0 28px; }
