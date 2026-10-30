@@ -1,6 +1,12 @@
 {
   "name": "rwa-lens",
   "version": "0.1.0",
+  "description": "A read-only Solana inspector for tokenized real-world assets: identity, balances, Token-2022 controls and exportable evidence.",
+  "homepage": "https://rwalensonsolana.vercel.app",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/operatoruplift/rwa-lens.git"
+  },
   "private": true,
   "scripts": {
     "dev": "next dev --hostname 127.0.0.1",
